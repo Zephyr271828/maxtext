@@ -87,6 +87,22 @@ MODEL_PARAMS_DICT = {
         "dims_per_head": 128,
         "vocab": 32000,
     },
+    "llama3-4b-width": {
+      "num_layers": 32,
+      "num_heads": 32,
+      "num_kv_heads": 8,
+      "dims_per_head": 128,
+      "vocab": 128256,
+      "base_emb_dim": 3072,
+      "base_mlp_dim": 9216,
+    },
+    "llama3-4b-depth": {
+      "num_layers": 16,
+      "num_heads": 32,
+      "num_kv_heads": 8,
+      "dims_per_head": 128,
+      "vocab": 128256,
+    },
     "llama3-8b": {
         "num_layers": 32,
         "num_heads": 32,
@@ -589,6 +605,7 @@ def _convert_huggingface_to_jax_weights(base_model_path: str, model_size: str, m
   Returns:
     jax_weights (dict): Dictionary containing the converted weights.
   """
+  base_emb_dim = model_params["base_emb_dim"]
   base_num_decoder_layers = model_params["num_layers"]
   base_num_query_heads = model_params["num_heads"]
   head_dim = model_params["dims_per_head"]
@@ -749,9 +766,9 @@ def _convert_huggingface_to_jax_weights(base_model_path: str, model_size: str, m
     wk = chkpt_vars[f"layers.{layer_idx}.attention.wk.weight"].to(torch.float32).numpy().astype(CAST_DTYPE).transpose()
     wv = chkpt_vars[f"layers.{layer_idx}.attention.wv.weight"].to(torch.float32).numpy().astype(CAST_DTYPE).transpose()
 
-    wq = np.reshape(wq, [base_num_query_heads * head_dim, base_num_query_heads, head_dim])
-    wk = np.reshape(wk, [base_num_query_heads * head_dim, base_num_kv_heads, head_dim])
-    wv = np.reshape(wv, [base_num_query_heads * head_dim, base_num_kv_heads, head_dim])
+    wq = np.reshape(wq, [base_emb_dim, base_num_query_heads, head_dim])
+    wk = np.reshape(wk, [base_emb_dim, base_num_kv_heads, head_dim])
+    wv = np.reshape(wv, [base_emb_dim, base_num_kv_heads, head_dim])
 
     if model_size[:8] == "llama3.1":
       wq = max_utils.permute_to_match_maxtext_rope(wq)
@@ -759,7 +776,7 @@ def _convert_huggingface_to_jax_weights(base_model_path: str, model_size: str, m
 
     w_post = chkpt_vars[f"layers.{layer_idx}.attention.wo.weight"].to(torch.float32).numpy().astype(CAST_DTYPE)
 
-    w_post = np.reshape(w_post, [base_num_query_heads * head_dim, base_num_query_heads, head_dim])
+    w_post = np.reshape(w_post, [base_emb_dim, base_num_query_heads, head_dim])
 
     if self_attention["query"]["kernel"] is None:
       self_attention["query"]["kernel"] = np.zeros(stack_shape + wq.shape, dtype=CAST_DTYPE)
