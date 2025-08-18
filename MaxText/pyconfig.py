@@ -302,6 +302,7 @@ def validate_model_name(s: str) -> bool:
   valid_model_names = (
       "default",
       "deepseek_r1_distill_llama3.1_8b",
+      "llama2-2.7b",
       "llama2-7b",
       "llama2-13b",
       "llama2-70b",

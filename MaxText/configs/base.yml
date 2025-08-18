@@ -46,6 +46,7 @@ load_full_state_path: ""
 enable_checkpointing: True
 async_checkpointing: True
 checkpoint_period: 10_000
+max_to_keep: null
 # enables one replica to read the ckpt then broadcast to the rest
 enable_single_replica_ckpt_restoring: False
 

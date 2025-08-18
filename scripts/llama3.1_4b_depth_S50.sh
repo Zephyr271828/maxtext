@@ -1,28 +1,31 @@
 #!/bin/bash
 
 # export TPU_PREFIX=llm-pruning-v6e
-if [ -z "${TPU_PREFIX}" ]; then
-  echo "ERROR: Please set the environment variable 'TPU_PREFIX' before running this script."
-  echo "Example: export TPU_PREFIX=llm-pruning-v6e"
-  exit 1
-fi
+required_vars=(
+    "BUCKET_NAME"
+    "TPU_PREFIX"
+)
+for var in "${required_vars[@]}"; do
+  if [[ -z "${!var:-}" ]]; then
+    echo "[ERROR] $var is not set"
+    exit 1
+  fi
+done
 
-export bucket_name=llm_pruning_us_east1_d
-export MODEL_NAME='llama3.1-4b-width'
-export RUN_NAME="${MODEL_NAME}_dclm_50B"
+export MODEL_NAME='llama3.1-4b-depth'
+export RUN_NAME="${MODEL_NAME}_dclm_S50"
 export ASYNC_CHECKPOINTING=false
-export CONVERTED_CHECKPOINT="gs://$bucket_name/model_ckpts/maxtext/llama3_4b_width_orbax/0/items"
-export BASE_OUTPUT_DIRECTORY="gs://$bucket_name/model_ckpts/maxtext/${RUN_NAME}"
+export BASE_OUTPUT_DIRECTORY="gs://$BUCKET_NAME/model_ckpts/maxtext"
 export DATASET_PATH='/home/zephyr/gcs-bucket/datasets/'
+STEPS=12500
 
 # source ~/gcs-bucket/miniconda3/etc/profile.d/conda.sh
 # conda activate ~/gcs-bucket/conda_envs/maxtext
 
 LOG_FILE="logs/${RUN_NAME}_$(date +%Y%m%d_%H%M%S).log"
 
-gcloud config set compute/zone us-east1-d
 
-python multihost_runner.py \
+python -u multihost_runner.py \
     --TPU_PREFIX=$TPU_PREFIX \
     --INTERNAL_IP=true \
     --COMMAND="
@@ -43,7 +46,6 @@ python multihost_runner.py \
         export PYTHONPATH=/home/zephyr/maxtext:\$PYTHONPATH
         python3.10 -m MaxText.train MaxText/configs/base.yml \
             run_name=$RUN_NAME \
-            load_parameters_path=${CONVERTED_CHECKPOINT} \
             base_output_directory=${BASE_OUTPUT_DIRECTORY} \
             dataset_type=grain \
             grain_train_files='/home/zephyr/gcs-bucket/datasets/dclm/llama3_256_arrayrecord/*.array_record' \
@@ -54,13 +56,13 @@ python multihost_runner.py \
             max_target_length=8192 \
             async_checkpointing=${ASYNC_CHECKPOINTING} \
             model_name=${MODEL_NAME} \
-            steps=12500 \
-            per_device_batch_size=1 \
-            gradient_accumulation_steps=32 \
+            steps=${STEPS} \
+            per_device_batch_size=4 \
+            gradient_accumulation_steps=1 \
             learning_rate=3.e-4 \
             cosine_learning_rate_final_fraction=0.1 \
             warmup_steps_fraction=0.05 \
-            checkpoint_period=50 \
+            checkpoint_period=250 \
             packing=false
         \"
     "
