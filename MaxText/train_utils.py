@@ -68,6 +68,7 @@ def create_training_tools(config, model, mesh):
     # TODO(b/368121306): Remove this once zarr3 support is plumbed on the backend
     use_ocdbt = config.checkpoint_storage_use_ocdbt
     use_zarr3 = config.checkpoint_storage_use_zarr3
+    max_to_keep = config.checkpoint_max_to_keep
     if config.enable_single_controller:
       use_ocdbt, use_zarr3 = False, False
 
@@ -83,6 +84,7 @@ def create_training_tools(config, model, mesh):
         logger,
         use_ocdbt,
         use_zarr3,
+        max_to_keep
     )
 
   return init_rng, checkpoint_manager, learning_rate_schedule, tx
