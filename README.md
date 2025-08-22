@@ -32,7 +32,7 @@ In order to train on MaxText with DCLM, I
 1. download the raw `jsonl.zst` files from huggingface.
 2. decompress to `.jsonl` files.
 3. convert each `.jsonl` file to an `.array_record` file.
-See my scripts at `gs://llm_pruning_us_central2_b/datasets/dclm/scripts/{download.py, jsonl2arrayrecord.py}` for verification.
+See my scripts at `gs://llm_pruning_us_central2_b/datasets/dclm/scripts/{download.py, jsonl2arrayrecord.py}` for verification. You can also check an example of jsonl file at `gs://llm_pruning_us_central2_b/datasets/dclm/dclm_baseline/dclm_baseline_1.0.chunk.00000.jsonl`
 
 ### Training Script
 Check my training script at [`pretrain/llama3_8b_L200.sh`](pretrain/llama3_8b_L200.sh).
