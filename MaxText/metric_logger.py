@@ -58,6 +58,10 @@ class MetricLogger:
     self.learning_rate_schedule = learning_rate_schedule
     self.cumulative_eval_metrics = {"scalar": defaultdict(float)}
     self.buffered_train_metrics = None
+    
+    self.use_wandb = getattr(config, "use_wandb", False) and jax.process_index() == 0
+    if self.use_wandb:
+      wandb.init(project=config.wandb_project, name=config.wandb_run_name, config=config.to_dict())
 
   def write_metrics(self, metrics, step, is_training=True):
     """Entry point for all metrics writing in Train's Main."""
@@ -72,6 +76,9 @@ class MetricLogger:
 
       if self.config.gcs_metrics and jax.process_index() == 0:
         self.write_metrics_for_gcs(metrics, step, is_training)
+        
+      if self.use_wandb:
+        self.write_metrics_to_wandb(metrics, step)
 
   def log_metrics(self, metrics, step, is_training):
     """Logs metrics via max_logging."""
@@ -86,6 +93,8 @@ class MetricLogger:
           f"loss: {loss:.3f}, "
           f"lr: {self.learning_rate_schedule(step):.3e}"
       )
+      if "learning/zeros" in metrics['scalar']:
+        log_message += f", sparsity: {metrics['scalar']['learning/zeros'] / metrics['scalar']['learning/params']}"
 
       if self.config.mtp_num_layers > 0:
         mtp_loss = metrics["scalar"].get("learning/mtp_loss", 0.0)
@@ -150,6 +159,15 @@ class MetricLogger:
       if full_log and jax.process_index() == 0:
         max_logging.log(f"To see full metrics 'tensorboard --logdir={self.config.tensorboard_dir}'")
         self.writer.flush()
+        
+  def write_metrics_to_wandb(self, metrics, step):
+    flat_metrics = {}
+    for key, val in metrics.get("scalar", {}).items():
+      flat_metrics[key] = float(val)
+    for key, val in metrics.get("scalars", {}).items():
+      for subkey, subval in val.items():
+        flat_metrics[f"{key}/{subkey}"] = float(subval)
+    wandb.log(flat_metrics, step=step)
 
   def write_setup_info_to_tensorboard(self, params):
     """Writes setup information like train config params, num model params, and XLA flags to TensorBoard."""
@@ -254,3 +272,6 @@ class MetricLogger:
       self.write_metrics(metrics_to_write, step_to_write)
 
     max_utils.close_summary_writer(self.writer)
+    
+    if self.use_wandb:
+      wandb.finish()

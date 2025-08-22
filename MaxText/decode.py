@@ -138,6 +138,7 @@ def main(argv: Sequence[str]) -> None:
 
   # Prefill
   rng, rng_prefill = jax.random.split(rng)  # Split RNG before calling prefill
+  import pdb; pdb.set_trace()
   for i in range(_NUM_STREAMS):
     with jax.profiler.StepTraceAnnotation("prefill", stream=i):
       prefill_result, first_token = engine.prefill(

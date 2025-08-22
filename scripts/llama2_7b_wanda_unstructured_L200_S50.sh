@@ -12,12 +12,14 @@ for var in "${required_vars[@]}"; do
   fi
 done
 
-export MODEL_NAME='llama3.1-4b-depth'
-export RUN_NAME="${MODEL_NAME}_dclm_S50"
+export MODEL_NAME='llama2-7b'
+export RUN_NAME="${MODEL_NAME}_wanda_unstructured_L200_S50"
 export ASYNC_CHECKPOINTING=false
 export BASE_OUTPUT_DIRECTORY="gs://$BUCKET_NAME/model_ckpts/maxtext"
+# export CONVERTED_CHECKPOINT="gs://$BUCKET_NAME/model_ckpts/maxtext/llama2-7b"
+export CONVERTED_CHECKPOINT="gs://$BUCKET_NAME/model_ckpts/maxtext/llama2-7b_unstructured_0.5_hf/0/items"
 export DATASET_PATH='/home/zephyr/gcs-bucket/datasets/'
-STEPS=12500
+STEPS=50000
 
 # source ~/gcs-bucket/miniconda3/etc/profile.d/conda.sh
 # conda activate ~/gcs-bucket/conda_envs/maxtext
@@ -41,29 +43,28 @@ python -u multihost_runner.py \
         -e PYTHONPATH=/home/zephyr/maxtext \
         yx3038/maxtext_base_image:latest \
         bash -c \"
-        pip show jax
-        pip show libtpu
         export PYTHONPATH=/home/zephyr/maxtext:\$PYTHONPATH
         python3.10 -m MaxText.train MaxText/configs/base.yml \
             run_name=$RUN_NAME \
+            load_parameters_path=${CONVERTED_CHECKPOINT} \
             base_output_directory=${BASE_OUTPUT_DIRECTORY} \
             dataset_type=grain \
-            grain_train_files='/home/zephyr/gcs-bucket/datasets/dclm/llama3_256_arrayrecord/*.array_record' \
+            grain_train_files='/home/zephyr/gcs-bucket/datasets/dclm/llama2_256_arrayrecord/*.array_record' \
             grain_file_type='arrayrecord' \
             grain_worker_count=1 \
             tokenize_train_data=False \
             tokenize_eval_data=False \
-            max_target_length=8192 \
+            max_target_length=4096 \
             async_checkpointing=${ASYNC_CHECKPOINTING} \
             model_name=${MODEL_NAME} \
             steps=${STEPS} \
-            per_device_batch_size=4 \
+            per_device_batch_size=8 \
             gradient_accumulation_steps=1 \
+            sparse_model_training=True \
             learning_rate=3.e-4 \
             cosine_learning_rate_final_fraction=0.1 \
             warmup_steps_fraction=0.05 \
             checkpoint_period=250 \
-            checkpoint_max_to_keep=1 \
             packing=false
         \"
     "

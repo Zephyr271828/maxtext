@@ -18,6 +18,8 @@ limitations under the License.
 """ Utils that are only interesting for training in MaxText. """
 
 import jax
+import jax.numpy as jnp
+
 from MaxText.layers import quantizations
 from MaxText.layers import models
 from MaxText import optimizers
@@ -144,3 +146,23 @@ def jit_train_and_eval_step(
     p_eval_step = jit_eval_step(config, model, state_mesh_shardings, data_sharding, eval_step)
 
   return p_train_step, p_eval_step
+
+def apply_gradient_mask(grads, params, ref_params=None):
+  def mask_fn(g, p):
+    return jnp.where(p == 0, 0.0, g)
+
+  if ref_params:
+    return jax.tree_util.tree_map(mask_fn, grads, ref_params)
+  else:
+    return jax.tree_util.tree_map(mask_fn, grads, params)
+ 
+def check_sparsity(params):
+  # Compute zeros and total per tensor
+  zero_counts = jax.tree_util.tree_map(lambda x: jnp.sum(x == 0).astype(jnp.float32), params)
+  total_counts = jax.tree_util.tree_map(lambda x: jnp.array(x.size, dtype=jnp.float32), params)
+
+  # JAX-safe reductions (avoid Python sum/int())
+  total_zeros = jax.tree_util.tree_reduce(lambda a, b: a + b, zero_counts)
+  total_params = jax.tree_util.tree_reduce(lambda a, b: a + b, total_counts)
+
+  return total_zeros, total_params

@@ -81,6 +81,7 @@ MODEL_PARAMS_DICT = {
         "vocab": 32000,
     },
     "llama2-7b": {
+        "base_emb_dim": 4096,
         "num_layers": 32,
         "num_heads": 32,
         "num_kv_heads": 32,
@@ -135,6 +136,7 @@ MODEL_PARAMS_DICT = {
         "vocab": 128256,
     },
     "llama3.1-8b": {
+        "base_emb_dim": 4096,
         "num_layers": 32,
         "num_heads": 32,
         "num_kv_heads": 8,
@@ -231,7 +233,10 @@ SIMULATED_CPU_DEVICES_COUNT = 16
 # NOTE: it's incredibly silly but you can't directly cast from
 # a torch tensor of type bfloat16 to a numpy array of type bfloat16
 # so we have to cast to float32 first
-CAST_DTYPE = ml_dtypes.bfloat16
+# CAST_DTYPE = ml_dtypes.bfloat16
+CAST_DTYPE = np.float16
+
+print(f"USING DTYPE {CAST_DTYPE}")
 
 
 def _incoming_ckpt_to_maxtext_mapping(layer_idx: int = -1, expert_idx: int = -1, model_size="") -> dict:

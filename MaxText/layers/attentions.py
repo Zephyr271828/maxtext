@@ -810,6 +810,7 @@ class AttentionOp(nnx.Module):
             "shard_head_size",
         ],
     )
+    
     def wrap_splash_kernel(multi_head_mask, shard_head_size=1):
       splash_kernel = splash_attention_kernel.make_splash_mha(
           mask=multi_head_mask,

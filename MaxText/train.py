@@ -337,7 +337,7 @@ def loss_fn(model, config, data, dropout_rng, params, is_train=True):
   return loss, aux
 
 
-def train_step(model, config, state_mesh_shardings, state, data, dropout_rng):
+def train_step(model, config, state_mesh_shardings, state, data, dropout_rng, sparse=False):
   """
 
   Args:
@@ -418,6 +418,9 @@ def train_step(model, config, state_mesh_shardings, state, data, dropout_rng):
             jax.tree_util.tree_map(lambda x: x.with_memory_kind(kind="device"), state_mesh_shardings.opt_state),
         )
     )
+  if config.sparse_model_training:
+    zeros, param_counts = train_utils.check_sparsity(state.params)
+    grads = train_utils.apply_gradient_mask(grads, state.params)
   # Move all parameters to device before optimizer update
   if config.parameter_memory_host_offload:
     max_logging.log("\nMoving all parameters to device before optimizer update")
@@ -435,11 +438,14 @@ def train_step(model, config, state_mesh_shardings, state, data, dropout_rng):
   new_state = state.apply_gradients(grads=grads)
 
   scalar_metrics = {
-      "learning/loss": loss,
-      "learning/moe_lb_loss": moe_lb_loss,
-      "learning/mtp_loss": mtp_loss,
-      "learning/total_weights": total_weights,
+    "learning/loss": loss,
+    "learning/moe_lb_loss": moe_lb_loss,
+    "learning/mtp_loss": mtp_loss,
+    "learning/total_weights": total_weights,
   }
+  if config.sparse_model_training:
+    scalar_metrics["learning/zeros"] = zeros
+    scalar_metrics["learning/params"] = param_counts
   if not config.optimizer_memory_host_offload:
     scalar_metrics["learning/grad_norm"] = max_utils.l2norm_pytree(grads)
     scalar_metrics["learning/raw_grad_norm"] = max_utils.l2norm_pytree(raw_grads)

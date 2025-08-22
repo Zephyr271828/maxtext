@@ -15,7 +15,7 @@ done
 export MODEL_NAME='llama2-7b'
 export RUN_NAME="${MODEL_NAME}_dclm_L200"
 export ASYNC_CHECKPOINTING=false
-export BASE_OUTPUT_DIRECTORY="gs://$BUCKET_NAME/model_ckpts/maxtext/${RUN_NAME}"
+export BASE_OUTPUT_DIRECTORY="gs://$BUCKET_NAME/model_ckpts/maxtext"
 export DATASET_PATH='/home/zephyr/gcs-bucket/datasets/'
 STEPS=50000
 

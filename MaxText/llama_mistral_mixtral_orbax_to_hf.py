@@ -75,8 +75,8 @@ def load_hf_model(model_size):
   elif model_size == "mixtral-8x7b":
     model = AutoModelForCausalLM.from_pretrained("mistralai/Mixtral-8x7B-v0.1", device_map="auto")
   elif model_size == "llama3.1-8b":
-    config = AutoConfig.from_pretrained("meta-llama/Llama-3.1-8B")
-    model = AutoModelForCausalLM.from_config(config)
+    model = AutoModelForCausalLM.from_pretrained("/home/zephyr/gcs-bucket/model_ckpts/Llama-3.1-8B")
+
   elif model_size == 'llama3.1-4b-width':
       model = AutoModelForCausalLM.from_pretrained("/home/zephyr/gcs-bucket/model_ckpts/minitron/llama3_4b_width_hf")
   else:
