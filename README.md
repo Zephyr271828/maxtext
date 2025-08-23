@@ -22,9 +22,9 @@ Currently Taiming Lu and I plan to pretrain Llama-3-8B together. Below are some 
 
 ### Training Recipe
 Following the original recipe of training Llama-3-8B, we adopt:
-| Learning Rate | 
-|:--:|
-| - |
+| Max LR | Min LR Ratio | Seq Len | Global BS | LR Decay | Warmup Ratio | Warmup Schedule |
+|:--:|:--:|:--:|:--:|:--:|:--:|:--:|
+| 3e-4 | 0.1 | 8192 | 512 | cosine | 0.01 | linear |
 
 ### Training Data
 We plan to use [DCLM-Baseline-1.0](https://huggingface.co/datasets/mlfoundations/dclm-baseline-1.0). The [leaderboard](https://github.com/mlfoundations/dclm?tab=readme-ov-file#leaderboard) showcased the effectiveness of using DCLM to pretrain model.  

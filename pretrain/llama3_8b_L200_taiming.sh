@@ -14,36 +14,36 @@ done
 
 
 export MODEL_NAME='llama3-8b'
-export NUM_STEPS=50000
+export NUM_STEPS=12500
 export SEQ_LEN=8192
 export BATCH_SIZE=4
 export GRAD_ACCUM=1
 export LR=3.e-4
 export MIN_LR_RATIO=0.1
-export WARMUP_RATIO=0.01
+export WARMUP_RATIO=0.05
 export ASYNC_CHECKPOINTING=false
 export BASE_OUTPUT_DIRECTORY="gs://$BUCKET_NAME/model_ckpts/maxtext"
-export DATA_FILES='/home/zephyr/gcs-bucket/datasets/dclm/llama3_256_arrayrecord/*.array_record'
+export DATA_FILES='/home/taimingluterry/gcs-bucket/datasets/dclm/llama3_256_arrayrecord/*.array_record'
 
-export RUN_NAME="${MODEL_NAME}_L200_seqlen_${SEQ_LEN}_bs_${BATCH_SIZE}_grad_accum_${GRAD_ACCUM}_lr_${LR}_min_lr_ratio_${MIN_LR_RATIO}_warmup_ratio_${WARMUP_RATIO}"
+export RUN_NAME="${MODEL_NAME}_S50_seqlen_${SEQ_LEN}_bs_${BATCH_SIZE}_grad_accum_${GRAD_ACCUM}_lr_${LR}_min_lr_ratio_${MIN_LR_RATIO}_warmup_ratio_${WARMUP_RATIO}"
 
 python -u multihost_runner.py \
     --TPU_PREFIX=$TPU_PREFIX \
     --INTERNAL_IP=true \
     --COMMAND="
-    export TPU_LOG_DIR=/home/zephyr/tpu_logs
+    export TPU_LOG_DIR=/home/taimingluterry/tpu_logs
     sudo docker run \
         --privileged \
         --network=host \
-        -v /home/zephyr:/home/zephyr \
-        -v /home/zephyr/.config/gcloud:/root/.config/gcloud \
+        -v /home/taimingluterry:/home/taimingluterry \
+        -v /home/taimingluterry/.config/gcloud:/root/.config/gcloud \
         -v /dev:/dev \
         -v /run:/run \
-        -w /home/zephyr/maxtext \
-        -e PYTHONPATH=/home/zephyr/maxtext \
+        -w /home/taimingluterry/maxtext \
+        -e PYTHONPATH=/home/taimingluterry/maxtext \
         yx3038/maxtext_base_image:latest \
         bash -c \"
-        export PYTHONPATH=/home/zephyr/maxtext:\$PYTHONPATH
+        export PYTHONPATH=/home/taimingluterry/maxtext:\$PYTHONPATH
         python3.10 -u -m MaxText.train MaxText/configs/base.yml \
             run_name=${RUN_NAME} \
             base_output_directory=${BASE_OUTPUT_DIRECTORY} \
@@ -55,8 +55,6 @@ python -u multihost_runner.py \
             tokenize_train_data=False \
             tokenize_eval_data=False \
             max_target_length=${SEQ_LEN} \
-            max_position_embeddings=${SEQ_LEN} \
-            original_max_position_embeddings=${SEQ_LEN} \
             async_checkpointing=${ASYNC_CHECKPOINTING} \
             model_name=${MODEL_NAME} \
             steps=${NUM_STEPS} \
@@ -74,8 +72,6 @@ python -u multihost_runner.py \
             jax_distributed_initialization_timeout=900
         \"
     "
-
-# metrics_file=\"/home/zephyr/gcs-bucket/maxtext/logs/${RUN_NAME}.log\" \
 
 # python3 -m MaxText.train \
 #     MaxText/configs/base.yml \

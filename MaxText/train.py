@@ -100,6 +100,10 @@ def validate_train_config(config):
 
 def get_first_step(state):
   return int(state.step)
+  # step = int(jax.device_get(state.step)) if jax.process_index() == 0 else 0
+  # # Sync to all hosts
+  # step = jax.experimental.multihost_utils.broadcast_one_to_all(step)
+  # return step
 
 
 # -----------------------------------------------------------------------------
@@ -622,7 +626,7 @@ def train_loop(config, recorder, state=None):
     compiled = p_train_step.lower(state, shaped_batch, init_rng).compile()
     compiled_stats = compiled.memory_analysis()
     max_utils.print_compiled_memory_stats(compiled_stats)
-
+    
   start_step = get_first_step(state)  # this is the start_step for training
   prof = profiler.Profiler(config, offset_step=start_step)
   data_loader = DataLoader(config, mesh, data_iterator, recorder)
@@ -635,7 +639,6 @@ def train_loop(config, recorder, state=None):
     last_step_completion = datetime.datetime.now()
     for step in np.arange(start_step, config.steps):
       prof.maybe_activate_profiler(step, state)
-
       with jax.profiler.StepTraceAnnotation("train", step_num=step):
         example_batch = data_loader.load_next_batch()
         # pylint: disable=not-callable
