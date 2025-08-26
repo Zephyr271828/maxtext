@@ -18,12 +18,12 @@ export NUM_STEPS=50000
 export SEQ_LEN=8192
 export BATCH_SIZE=4
 export GRAD_ACCUM=1
-export LR=3.e-4
+export LR=1.e-4
 export MIN_LR_RATIO=0.1
-export WARMUP_RATIO=0.01
+export WARMUP_RATIO=0.05
 export ASYNC_CHECKPOINTING=false
 export BASE_OUTPUT_DIRECTORY="gs://$BUCKET_NAME/model_ckpts/maxtext"
-export DATA_FILES='/home/zephyr/gcs-bucket/datasets/dclm/llama3_256_arrayrecord/*.array_record'
+export DATA_FILES='/home/zephyr/gcs-bucket/datasets/dclm/llama3_64_array_record/*.array_record'
 
 export RUN_NAME="${MODEL_NAME}_L200_seqlen_${SEQ_LEN}_bs_${BATCH_SIZE}_grad_accum_${GRAD_ACCUM}_lr_${LR}_min_lr_ratio_${MIN_LR_RATIO}_warmup_ratio_${WARMUP_RATIO}"
 
@@ -66,7 +66,7 @@ python -u multihost_runner.py \
             cosine_learning_rate_final_fraction=${MIN_LR_RATIO} \
             warmup_steps_fraction=${WARMUP_RATIO} \
             checkpoint_period=500 \
-            checkpoint_max_to_keep=2 \
+            checkpoint_max_to_keep=1 \
             use_wandb=False \
             wandb_project=llm_pruning \
             wandb_run_name=${RUN_NAME} \
