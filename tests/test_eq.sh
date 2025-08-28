@@ -8,8 +8,8 @@ export bucket_name=llm_pruning_us_central2_b
 
 export DATASET_PATH='/home/zephyr/gcs-bucket/datasets/'
 
-# export MODEL='llama3.1-8b'
-export MODEL='llama2-7b'
+export MODEL='llama3.1-8b'
+# export MODEL='llama2-7b'
 export BASE_OUTPUT_DIRECTORY="gs://$bucket_name/model_ckpts/maxtext"
 # export HF_MODEL_PATH='/home/zephyr/gcs-bucket/model_ckpts/Llama-3.1-8B'
 # export HF_MODEL_PATH='/home/zephyr/gcs-bucket/model_ckpts/Llama-2-7b-hf'
