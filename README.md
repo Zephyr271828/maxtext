@@ -14,7 +14,16 @@ MaxText does not natively support limiting the number of checkpoints to save (i.
 In order to use this feature, you can simply add `checkpoint_max_to_keep=` to your config. You may refer to the [base config](https://github.com/Zephyr271828/maxtext/blob/0ac88df254f6d4ae1da377a1549e29309223f878/MaxText/configs/base.yml#L49).
 
 ## ORBAX Adapter
-Coming Soon!
+Before you check, make sure you have initialized the submodules:
+```bash
+git submodule update --init --recursive
+```
+Then, see [lm-evaluationn-harness/lm_eval/models/orbax_lm.py](lm-evaluationn-harness/lm_eval/models/orbax_lm.py) for the adapter class. See [lm-evaluation-harness/scripts/test_orbax_eval.py](lm-evaluation-harness/scripts/test_orbax_eval.py) for an example of using the adapter for evaluation.  
+Results I obtained on Llama-3.1-8B
+| Format | C4 | WikiText | WikiText2 | cnn_dailymail | Winogrande | ARC-C | Hellaswag(acc) | Hellaswag(acc-norm) | 
+|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|
+| HF | 9.916 | 5.81 | 5.773 | 7.075 | 73.95 | 51.45 | 59.97 | 78.76 |
+| ORBAX | 9.918 | 5.811 | 5.775 | 7.077 | 74.19 | 51.71 | 60.67 | 79.39 | 
 
 
 ## Pretraining Llama-3.1-8B
