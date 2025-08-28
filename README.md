@@ -25,6 +25,7 @@ Results I obtained on Llama-3.1-8B
 | HF | 9.916 | 5.81 | 5.773 | 7.075 | 73.95 | 51.45 | 59.97 | 78.76 |
 | ORBAX | 9.918 | 5.811 | 5.775 | 7.077 | 74.19 | 51.71 | 60.67 | 79.39 | 
 
+**Caveat:** currently the efficiency of this implementation is not completely satisfactory, as it may take 2-4 times longer to evaluate on a v4-8 TPU compared to evaluating on 1 A100 TPU. I'm currently investigating solution to this issue.
 
 ## Pretraining Llama-3.1-8B
 Currently Taiming Lu and I plan to pretrain Llama-3-8B together. Below are some records for verification:
