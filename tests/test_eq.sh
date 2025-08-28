@@ -23,11 +23,11 @@ export DIRECT_PARAMETER_CHECKPOINT_RUN="direct_generate_param_only_checkpoint_${
 export UNSCANNED_CKPT_PATH="${BASE_OUTPUT_DIRECTORY}/${DIRECT_PARAMETER_CHECKPOINT_RUN}/checkpoints/0/items"
 
 # HF TO ORBAX
-python3 -m MaxText.llama_or_mistral_ckpt \
-    --base-model-path ${HF_MODEL_PATH} \
-    --huggingface-checkpoint True \
-    --model-size $MODEL \
-    --maxtext-model-path ${CONVERTED_CHECKPOINT_PATH}
+# python3 -m MaxText.llama_or_mistral_ckpt \
+#     --base-model-path ${HF_MODEL_PATH} \
+#     --huggingface-checkpoint True \
+#     --model-size $MODEL \
+#     --maxtext-model-path ${CONVERTED_CHECKPOINT_PATH}
 
 # python3 -m MaxText.generate_param_only_checkpoint \
 #     MaxText/configs/base.yml \
@@ -39,13 +39,13 @@ python3 -m MaxText.llama_or_mistral_ckpt \
 #     force_unroll=true
 
 # ORBAX TO HF
-# JAX_PLATFORMS=cpu python3 -m MaxText.llama_mistral_mixtral_orbax_to_hf \
-#     MaxText/configs/base.yml \
-#     base_output_directory=${BASE_OUTPUT_DIRECTORY} \
-#     load_parameters_path=${CONVERTED_CHECKPOINT} \
-#     run_name=convert_to_hf \
-#     model_name=${MODEL} \
-#     hf_model_path=/home/zephyr/gcs-bucket/model_ckpts/${MODEL}-hf
+JAX_PLATFORMS=cpu python3 -m MaxText.llama_mistral_mixtral_orbax_to_hf \
+    MaxText/configs/base.yml \
+    base_output_directory=${BASE_OUTPUT_DIRECTORY} \
+    load_parameters_path=${CONVERTED_CHECKPOINT} \
+    run_name=convert_to_hf \
+    model_name=${MODEL} \
+    hf_model_path=/home/zephyr/gcs-bucket/model_ckpts/${MODEL}-hf
 
 # LOGITS OUT TEST
 # python3 -u /home/zephyr/gcs-bucket/maxtext/tests/test_eq.py \
