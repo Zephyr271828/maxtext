@@ -210,6 +210,7 @@ def scps(slices, run_name_dir, zip_name):
   commands = []
   worker_list = []
   for cur_slice in slices:
+    cur_slice.name = cur_slice.name.replace('root', 'zephyr')
     for worker_num in range(cur_slice.num_workers):
       command = [
           "gcloud", "compute", "tpus", "tpu-vm", "scp", f"--worker={worker_num}", zip_path,
