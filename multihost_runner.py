@@ -1,16 +1,18 @@
-# Copyright 2023–2025 Google LLC
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#    https://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
+"""
+ Copyright 2023 Google LLC
+
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+
+      https://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+ """
 from tempfile import gettempdir
 
 from MaxText.globals import PKG_DIR
@@ -50,18 +52,24 @@ import re
 
 ##### Define flags #####
 def get_project():
-  completed_command = subprocess.run(["gcloud", "config", "get", "project"], check=True, capture_output=True)
-  project_outputs = completed_command.stdout.decode().strip().split('\n')
-  if len(project_outputs) < 1 or project_outputs[-1]=='':
-    sys.exit("You must specify the project in the PROJECT flag or set it with 'gcloud config set project <project>'")
-  return project_outputs[-1] # The project name lives on the last line of the output
+  try:
+    completed_command = subprocess.run(["gcloud", "config", "get", "project"], check=True, capture_output=True)
+    project_outputs = completed_command.stdout.decode().strip().split('\n')
+    if len(project_outputs) < 1 or project_outputs[-1]=='':
+      sys.exit("You must specify the project in the PROJECT flag or set it with 'gcloud config set project <project>'")
+    return project_outputs[-1] # The project name lives on the last line of the output
+  except:
+    return 'vision-mix'
 
 def get_zone():
-  completed_command = subprocess.run(["gcloud", "config", "get", "compute/zone"], check=True, capture_output=True)
-  zone_outputs = completed_command.stdout.decode().strip().split('\n')
-  if len(zone_outputs) < 1 or zone_outputs[-1]=='':
-    sys.exit("You must specify the zone in the ZONE flag or set it with 'gcloud config set compute/zone <zone>'")
-  return zone_outputs[-1] # The zone name lives on the last line of the output
+  try:
+    completed_command = subprocess.run(["gcloud", "config", "get", "compute/zone"], check=True, capture_output=True)
+    zone_outputs = completed_command.stdout.decode().strip().split('\n')
+    if len(zone_outputs) < 1 or zone_outputs[-1]=='':
+      sys.exit("You must specify the zone in the ZONE flag or set it with 'gcloud config set compute/zone <zone>'")
+    return zone_outputs[-1] # The zone name lives on the last line of the output
+  except:
+    return 'us-east1-d'
 
 def default_run_name():
   now = datetime.now()
@@ -205,7 +213,7 @@ def scps(slices, run_name_dir, zip_name):
     for worker_num in range(cur_slice.num_workers):
       command = [
           "gcloud", "compute", "tpus", "tpu-vm", "scp", f"--worker={worker_num}", zip_path,
-          f"{cur_slice.name}:~/", "--strict-host-key-checking=no", f"--project={args.PROJECT}", f"--zone={args.ZONE}"
+          f"{cur_slice.name}:/home/zephyr/", "--ssh-key-file=/home/zephyr/.ssh/id_rsa", "--strict-host-key-checking=no", f"--project={args.PROJECT}", f"--zone={args.ZONE}"
       ]
       if args.INTERNAL_IP:
         command.append("--internal-ip")
@@ -233,10 +241,10 @@ def execute_main_command(main_command, slices, local_log_dir, zip_name):
     for worker_num in range(cur_slice.num_workers):
       output_filename = os.path.join(local_log_dir, f"output_slice_{cur_slice.slice_num:04d}_worker_{worker_num:04d}.txt")
       output_logs.append(output_filename)
-      mkdir_command = f"mkdir -p {args.RUN_NAME}"
-      mv_zip_command = f"mv {zip_name} {args.RUN_NAME}"
-      cd_command = f"cd {args.RUN_NAME}"
-      unzip_command = f"tar xzf {zip_name}"
+      mkdir_command = f"cd /home/zephyr"
+      mv_zip_command = f"cd /home/zephyr" # && mv {zip_name} /home/zephyr"
+      cd_command = f"cd /home/zephyr"
+      unzip_command = f"tar xzf {zip_name} -C /home/zephyr/maxtext"
       write_kill_script_command = f"echo '{kill_existing_processes_str()}' > {kill_script_name}"
       kill_existing_command = f"bash {kill_script_name} {cur_slice.version}"
 
@@ -248,7 +256,7 @@ def execute_main_command(main_command, slices, local_log_dir, zip_name):
       remote_command_list_str = " && ".join(remote_command_list)
       gcloud_command=[
           "gcloud", "alpha", "compute", "tpus", "tpu-vm", "ssh", cur_slice.name, f"--worker={worker_num}",
-          "--command", remote_command_list_str, "--strict-host-key-checking=no",
+          "--command", remote_command_list_str, "--ssh-key-file=/home/zephyr/.ssh/id_rsa", "--strict-host-key-checking=no",
           f"--project={args.PROJECT}", f"--zone={args.ZONE}"]
       if args.INTERNAL_IP:
         gcloud_command.append("--internal-ip")
@@ -302,7 +310,7 @@ def run_commands(commands, id_to_print, jobname, worker_list, is_shell=False, ou
       slow_str = f", slice {slow_worker[0]} worker {slow_worker[1]} still working"
     else:
       slow_str = ""
-    print(f"[t={seconds_elapsed:.2f}, {jobname}] Completed {completed}/{total}{slow_str}...")
+    # print(f"[t={seconds_elapsed:.2f}, {jobname}] Completed {completed}/{total}{slow_str}...")
 
     if seconds_elapsed >= args.SCP_TIMEOUT_SECS and not 0 in returncodes and jobname == "SCP":
       print(f"SCP operation timed out after {args.SCP_TIMEOUT_SECS=} seconds - terminating all processes."\
@@ -380,7 +388,8 @@ def main() -> None:
     print(f"Failed to retrieve slices {args.TPU_PREFIX} in project {args.PROJECT} zone {args.ZONE}", flush=True)
     return 1
 
-  temp_dir = gettempdir()
+  # temp_dir = gettempdir()
+  temp_dir = '/home/zephyr/tmp'
   local_log_dir = os.path.join(temp_dir, args.RUN_NAME, "")
   zip_name = f"script_dir_zip_{args.RUN_NAME}.tar.gz"
 
