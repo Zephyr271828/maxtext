@@ -26,7 +26,7 @@ export DATA_FILES='/home/zephyr/gcs-bucket/datasets/dclm/llama3_64_array_record/
 
 export RUN_NAME="${MODEL_NAME}_S60_seqlen_${SEQ_LEN}_bs_${BATCH_SIZE}_grad_accum_${GRAD_ACCUM}_lr_${LR}_min_lr_ratio_${MIN_LR_RATIO}_warmup_ratio_${WARMUP_RATIO}"
 
-export CONVERTED_CHECKPOINT='gs://llm_pruning_us_central1/model_ckpts/maxtext/llama3.1-4b-width_S50_seqlen_8192_bs_2_grad_accum_4_lr_1.e-4_min_lr_ratio_0.1_warmup_ratio_0.05/checkpoints/12400/items'
+export CONVERTED_CHECKPOINT='gs://llm_pruning_us_central1/model_ckpts/maxtext/llama3.1-4b-width_S50_seqlen_8192_bs_2_grad_accum_4_lr_1.e-4_min_lr_ratio_0.1_warmup_ratio_0.05/checkpoints/12499/items'
 
 python -u multihost_runner.py \
     --TPU_PREFIX=$TPU_PREFIX \
