@@ -15,9 +15,9 @@ done
 export MODEL_NAME='llama3.1-4b-depth'
 export NUM_STEPS=12500
 export SEQ_LEN=8192
-export BATCH_SIZE=4
-export GRAD_ACCUM=1
-export LR=3.e-4
+export BATCH_SIZE=2
+export GRAD_ACCUM=4
+export LR=1.e-4
 export MIN_LR_RATIO=0.1
 export WARMUP_RATIO=0.05
 export ASYNC_CHECKPOINTING=false
@@ -63,7 +63,7 @@ python -u multihost_runner.py \
             cosine_learning_rate_final_fraction=${MIN_LR_RATIO} \
             warmup_steps_fraction=${WARMUP_RATIO} \
             checkpoint_period=250 \
-            checkpoint_max_to_keep=3 \
+            checkpoint_max_to_keep=1 \
             use_wandb=False \
             wandb_project=llm_pruning \
             wandb_run_name=${RUN_NAME} \
