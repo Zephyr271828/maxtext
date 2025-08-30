@@ -18,7 +18,7 @@ export SEQ_LEN=8192
 export BATCH_SIZE=2
 export GRAD_ACCUM=4
 export LR=1.e-5
-export MIN_LR_RATIO=0.1
+export MIN_LR_RATIO=0.01
 export WARMUP_RATIO=0.0
 export ASYNC_CHECKPOINTING=false
 export BASE_OUTPUT_DIRECTORY="gs://$BUCKET_NAME/model_ckpts/maxtext"
@@ -66,7 +66,7 @@ python -u multihost_runner.py \
             cosine_learning_rate_final_fraction=${MIN_LR_RATIO} \
             warmup_steps_fraction=${WARMUP_RATIO} \
             checkpoint_period=250 \
-            checkpoint_max_to_keep=3 \
+            checkpoint_max_to_keep=1 \
             use_wandb=False \
             wandb_project=llm_pruning \
             wandb_run_name=${RUN_NAME} \
