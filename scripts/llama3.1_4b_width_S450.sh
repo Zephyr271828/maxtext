@@ -13,23 +13,25 @@ for var in "${required_vars[@]}"; do
 done
 
 export MODEL_NAME='llama3.1-4b-width'
-export RUN_NAME="${MODEL_NAME}_dclm_S450"
+export NUM_STEPS=112500
+export SEQ_LEN=8192
+export BATCH_SIZE=2
+export GRAD_ACCUM=4
+export LR=1.e-4
+export MIN_LR_RATIO=0.1
+export WARMUP_RATIO=0.05
 export ASYNC_CHECKPOINTING=false
 export BASE_OUTPUT_DIRECTORY="gs://$BUCKET_NAME/model_ckpts/maxtext"
-export DATASET_PATH='/home/zephyr/gcs-bucket/datasets/'
-STEPS=112500
+export DATA_FILES='/home/zephyr/gcs-bucket/datasets/dclm/llama3_64_array_record/*.array_record'
 
-# source ~/gcs-bucket/miniconda3/etc/profile.d/conda.sh
-# conda activate ~/gcs-bucket/conda_envs/maxtext
-
-LOG_FILE="logs/${RUN_NAME}_$(date +%Y%m%d_%H%M%S).log"
-
+export RUN_NAME="${MODEL_NAME}_S450_seqlen_${SEQ_LEN}_bs_${BATCH_SIZE}_grad_accum_${GRAD_ACCUM}_lr_${LR}_min_lr_ratio_${MIN_LR_RATIO}_warmup_ratio_${WARMUP_RATIO}"
 
 python -u multihost_runner.py \
     --TPU_PREFIX=$TPU_PREFIX \
     --INTERNAL_IP=true \
     --COMMAND="
     export TPU_LOG_DIR=/home/zephyr/tpu_logs
+    export WANDB_API_KEY='7d11bbca76b3081b6bd1efbbcf1572aab26c5d56'
     sudo docker run \
         --privileged \
         --network=host \
@@ -41,41 +43,30 @@ python -u multihost_runner.py \
         -e PYTHONPATH=/home/zephyr/maxtext \
         yx3038/maxtext_base_image:latest \
         bash -c \"
-        pip show jax
-        pip show libtpu
         export PYTHONPATH=/home/zephyr/maxtext:\$PYTHONPATH
-        python3.10 -m MaxText.train MaxText/configs/base.yml \
-            run_name=$RUN_NAME \
+        python3.10 -u -m MaxText.train MaxText/configs/base.yml \
+            run_name=${RUN_NAME} \
             base_output_directory=${BASE_OUTPUT_DIRECTORY} \
             dataset_type=grain \
-            grain_train_files='/home/zephyr/gcs-bucket/datasets/dclm/llama3_256_arrayrecord/*.array_record' \
+            grain_train_files=${DATA_FILES} \
             grain_file_type='arrayrecord' \
             grain_worker_count=1 \
             tokenize_train_data=False \
             tokenize_eval_data=False \
-            max_target_length=8192 \
+            max_target_length=${SEQ_LEN} \
             async_checkpointing=${ASYNC_CHECKPOINTING} \
             model_name=${MODEL_NAME} \
-            steps=${STEPS} \
-            per_device_batch_size=4 \
-            gradient_accumulation_steps=4 \
-            learning_rate=3.e-4 \
-            cosine_learning_rate_final_fraction=0.1 \
-            warmup_steps_fraction=0.05 \
+            steps=${NUM_STEPS} \
+            per_device_batch_size=${BATCH_SIZE} \
+            gradient_accumulation_steps=${GRAD_ACCUM} \
+            learning_rate=${LR} \
+            cosine_learning_rate_final_fraction=${MIN_LR_RATIO} \
+            warmup_steps_fraction=${WARMUP_RATIO} \
             checkpoint_period=250 \
+            checkpoint_max_to_keep=3 \
+            use_wandb=False \
+            wandb_project=llm_pruning \
+            wandb_run_name=${RUN_NAME} \
             packing=false
         \"
     "
-
-# python3 -m MaxText.train \
-#     MaxText/configs/base.yml \
-#     run_name=runner_pretraining_${idx}\
-#      base_output_directory=${BASE_OUTPUT_DIRECTORY} \
-#      dataset_path=${DATASET_PATH} \
-#      async_checkpointing=${ASYNC_CHECKPOINTING} \
-#      per_device_batch_size=1 \
-#      model_name='llama2-7b' \
-#      ici_context_parallelism=4 \
-#      steps=10 \
-#      per_device_batch_size=1 \
-#      packing=false

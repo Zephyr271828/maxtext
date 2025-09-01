@@ -12,7 +12,7 @@ for var in "${required_vars[@]}"; do
   fi
 done
 
-export MODEL_NAME='llama3.1-4b-width'
+export MODEL_NAME='llama3.1-4b-depth'
 export NUM_STEPS=62500
 export SEQ_LEN=8192
 export BATCH_SIZE=2
@@ -63,7 +63,7 @@ python -u multihost_runner.py \
             cosine_learning_rate_final_fraction=${MIN_LR_RATIO} \
             warmup_steps_fraction=${WARMUP_RATIO} \
             checkpoint_period=250 \
-            checkpoint_max_to_keep=3 \
+            checkpoint_max_to_keep=1 \
             use_wandb=False \
             wandb_project=llm_pruning \
             wandb_run_name=${RUN_NAME} \
