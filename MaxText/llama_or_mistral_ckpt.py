@@ -112,6 +112,7 @@ MODEL_PARAMS_DICT = {
       "num_kv_heads": 8,
       "dims_per_head": 128,
       "vocab": 128256,
+      "base_emb_dim": 4096,
     },
      "llama3.1-4b-depth": {
       "num_layers": 16,
@@ -119,6 +120,7 @@ MODEL_PARAMS_DICT = {
       "num_kv_heads": 8,
       "dims_per_head": 128,
       "vocab": 128256,
+      "base_emb_dim": 4096,
     },
     "llama3-8b": {
         "num_layers": 32,
