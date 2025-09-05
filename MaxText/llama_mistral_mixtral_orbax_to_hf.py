@@ -75,7 +75,8 @@ def load_hf_model(model_size):
   elif model_size == "mixtral-8x7b":
     model = AutoModelForCausalLM.from_pretrained("mistralai/Mixtral-8x7B-v0.1", device_map="auto")
   elif model_size == "llama3.1-8b":
-    model = AutoModelForCausalLM.from_pretrained("/home/zephyr/gcs-bucket/model_ckpts/Llama-3.1-8B")
+    config = AutoConfig.from_pretrained("/home/zephyr/gcs-bucket/model_ckpts/Llama-3.1-8B")
+    model = AutoModelForCausalLM.from_config(config)
   elif model_size == 'llama3.1-4b-depth':
     config = AutoConfig.from_pretrained("/home/zephyr/gcs-bucket/model_ckpts/llama3_4b_depth_hf")
     model = AutoModelForCausalLM.from_config(config)
