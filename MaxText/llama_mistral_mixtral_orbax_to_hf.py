@@ -80,7 +80,8 @@ def load_hf_model(model_size):
     config = AutoConfig.from_pretrained("/home/zephyr/gcs-bucket/model_ckpts/llama3_4b_depth_hf")
     model = AutoModelForCausalLM.from_config(config)
   elif model_size == 'llama3.1-4b-width':
-    model = AutoModelForCausalLM.from_pretrained("/home/zephyr/gcs-bucket/model_ckpts/minitron/llama3_4b_width_hf")
+    config = AutoConfig.from_pretrained("/home/zephyr/gcs-bucket/model_ckpts/llama3_4b_width_hf")
+    model = AutoModelForCausalLM.from_config(config)
   else:
     raise NotImplementedError
   return model
