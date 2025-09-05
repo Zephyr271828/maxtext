@@ -37,12 +37,6 @@ export UNSCANNED_CKPT_PATH="${BASE_OUTPUT_DIRECTORY}/${DIRECT_PARAMETER_CHECKPOI
 #     force_unroll=true
 
 # ORBAX TO HF
-cd maxtext
-
-export JAX_VISIBLE_DEVICES="0,1,2,3"
-python -c "import jax; print(jax.devices())"
-
-
 JAX_PLATFORMS=cpu python3 -m MaxText.llama_mistral_mixtral_orbax_to_hf \
     MaxText/configs/base.yml \
     base_output_directory=${BASE_OUTPUT_DIRECTORY} \
