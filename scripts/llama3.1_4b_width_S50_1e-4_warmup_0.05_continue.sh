@@ -47,6 +47,7 @@ python -u multihost_runner.py \
     #     bash -c \"
     #     export PYTHONPATH=/home/zephyr/maxtext:\$PYTHONPATH
     source ~/maxtext_env/bin/activate
+    cd /home/zephyr/maxtext
     python3.10 -u -m MaxText.train MaxText/configs/base.yml \
         run_name=${RUN_NAME} \
         base_output_directory=${BASE_OUTPUT_DIRECTORY} \
