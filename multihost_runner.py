@@ -213,7 +213,7 @@ def scps(slices, run_name_dir, zip_name):
     for worker_num in range(cur_slice.num_workers):
       command = [
           "gcloud", "compute", "tpus", "tpu-vm", "scp", f"--worker={worker_num}", zip_path,
-          f"{cur_slice.name}:/home/zephyr/", "--ssh-key-file=/home/zephyr/.ssh/id_rsa", "--strict-host-key-checking=no", f"--project={args.PROJECT}", f"--zone={args.ZONE}"
+          f"{cur_slice.name}:/home/zephyr/", "--strict-host-key-checking=no", f"--project={args.PROJECT}", f"--zone={args.ZONE}"
       ]
       if args.INTERNAL_IP:
         command.append("--internal-ip")
@@ -256,7 +256,7 @@ def execute_main_command(main_command, slices, local_log_dir, zip_name):
       remote_command_list_str = " && ".join(remote_command_list)
       gcloud_command=[
           "gcloud", "alpha", "compute", "tpus", "tpu-vm", "ssh", cur_slice.name, f"--worker={worker_num}",
-          "--command", remote_command_list_str, "--strict-host-key-checking=no", "--ssh-key-file=/home/zephyr/.ssh/id_rsa",
+          "--command", remote_command_list_str, "--strict-host-key-checking=no",
           f"--project={args.PROJECT}", f"--zone={args.ZONE}"]
       if args.INTERNAL_IP:
         gcloud_command.append("--internal-ip")
