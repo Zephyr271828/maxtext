@@ -302,7 +302,7 @@ def run_commands(commands, id_to_print, jobname, worker_list, is_shell=False, ou
       slow_str = f", slice {slow_worker[0]} worker {slow_worker[1]} still working"
     else:
       slow_str = ""
-    print(f"[t={seconds_elapsed:.2f}, {jobname}] Completed {completed}/{total}{slow_str}...")
+    # print(f"[t={seconds_elapsed:.2f}, {jobname}] Completed {completed}/{total}{slow_str}...")
 
     if seconds_elapsed >= args.SCP_TIMEOUT_SECS and not 0 in returncodes and jobname == "SCP":
       print(f"SCP operation timed out after {args.SCP_TIMEOUT_SECS=} seconds - terminating all processes."\
