@@ -209,6 +209,7 @@ def scps(slices, run_name_dir, zip_name):
   # Move zip file to each tpuvm worker
   commands = []
   worker_list = []
+  print(cur_slice.name)
   for cur_slice in slices:
     for worker_num in range(cur_slice.num_workers):
       command = [
