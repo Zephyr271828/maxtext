@@ -32,6 +32,7 @@ python -u multihost_runner_orig.py \
     --INTERNAL_IP=true \
     --COMMAND="
     export TPU_LOG_DIR=/home/zephyr/tpu_logs
+    source ~/maxtext_env/bin/activate
     python3.10 -u -m MaxText.train MaxText/configs/base.yml \
         run_name=${RUN_NAME} \
         base_output_directory=${BASE_OUTPUT_DIRECTORY} \
