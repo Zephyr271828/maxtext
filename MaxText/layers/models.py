@@ -58,7 +58,8 @@ class Transformer(nn.Module):
         num_features=cfg.emb_dim,
         dtype=cfg.dtype,
         attend_dtype=jnp.float32 if cfg.logits_dot_in_fp32 else cfg.dtype,  # for logit training stability
-        embedding_init=nn.initializers.normal(stddev=1.0),
+        # embedding_init=nn.initializers.normal(stddev=1.0),
+        embedding_init=nn.initializers.truncated_normal(stddev=0.02),
         name="token_embedder",
         config=cfg,
     )

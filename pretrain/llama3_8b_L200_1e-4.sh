@@ -40,7 +40,6 @@ python -u multihost_runner_orig.py \
         grain_train_files=${DATA_FILES} \
         grain_file_type='arrayrecord' \
         grain_worker_count=1 \
-        grain_worker_count_eval=1 \
         tokenize_train_data=False \
         tokenize_eval_data=False \
         max_target_length=${SEQ_LEN} \
