@@ -12,8 +12,7 @@ for var in "${required_vars[@]}"; do
   fi
 done
 
-
-export MODEL_NAME='llama3-8b'
+export MODEL_NAME='llama3.1-8b'
 export NUM_STEPS=50000
 export SEQ_LEN=8192
 export BATCH_SIZE=4
@@ -39,14 +38,13 @@ python -u multihost_runner_orig.py \
         dataset_type=grain \
         grain_train_files=${DATA_FILES} \
         grain_file_type='arrayrecord' \
-        grain_worker_count=8 \
+        grain_worker_count=1 \
         grain_worker_count_eval=1 \
         tokenize_train_data=False \
         tokenize_eval_data=False \
         max_target_length=${SEQ_LEN} \
-        max_position_embeddings=${SEQ_LEN} \
-        original_max_position_embeddings=${SEQ_LEN} \
         async_checkpointing=${ASYNC_CHECKPOINTING} \
+        original_max_position_embeddings=${SEQ_LEN} \
         model_name=${MODEL_NAME} \
         steps=${NUM_STEPS} \
         per_device_batch_size=${BATCH_SIZE} \
@@ -56,24 +54,8 @@ python -u multihost_runner_orig.py \
         warmup_steps_fraction=${WARMUP_RATIO} \
         checkpoint_period=500 \
         checkpoint_max_to_keep=1 \
-        use_wandb=False \
+        use_wandb=True \
         wandb_project=llm_pruning \
         wandb_run_name=${RUN_NAME} \
-        packing=false \
-        jax_distributed_initialization_timeout=900
+        packing=false
     "
-
-# metrics_file=\"/home/zephyr/gcs-bucket/maxtext/logs/${RUN_NAME}.log\" \
-
-# python3 -m MaxText.train \
-#     MaxText/configs/base.yml \
-#     run_name=runner_pretraining_${idx}\
-#      base_output_directory=${BASE_OUTPUT_DIRECTORY} \
-#      dataset_path=${DATASET_PATH} \
-#      async_checkpointing=${ASYNC_CHECKPOINTING} \
-#      per_device_batch_size=1 \
-#      model_name='llama2-7b' \
-#      ici_context_parallelism=4 \
-#      steps=10 \
-#      per_device_batch_size=1 \
-#      packing=false
