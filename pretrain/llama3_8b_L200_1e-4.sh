@@ -32,6 +32,7 @@ python -u multihost_runner_orig.py \
     --COMMAND="
     export TPU_LOG_DIR=/home/zephyr/tpu_logs
     source ~/maxtext_env/bin/activate
+    export WANDB_API_KEY='7d11bbca76b3081b6bd1efbbcf1572aab26c5d56'
     python3.10 -u -m MaxText.train MaxText/configs/base.yml \
         run_name=${RUN_NAME} \
         base_output_directory=${BASE_OUTPUT_DIRECTORY} \
@@ -54,7 +55,7 @@ python -u multihost_runner_orig.py \
         warmup_steps_fraction=${WARMUP_RATIO} \
         checkpoint_period=500 \
         checkpoint_max_to_keep=1 \
-        use_wandb=True \
+        use_wandb=False \
         wandb_project=llm_pruning \
         wandb_run_name=${RUN_NAME} \
         packing=false
