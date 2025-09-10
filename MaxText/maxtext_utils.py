@@ -1035,6 +1035,40 @@ def create_learning_rate_schedule(config):
 
   return optax.join_schedules(pieces, boundaries)
 
+def create_fms_style_schedule(config):
+  
+  def make_cos_schedule(init_lr, final_lr, len_steps):
+    def schedule(step):
+      pct = (step) / len_steps
+      a = 0.5 * (jnp.cos(jnp.pi * pct) + 1)
+      lr = init_lr * a + final_lr * (1 - a)
+      return lr
+
+    return schedule
+  
+  lr = config.learning_rate
+  cos_final_lr = lr * config.cosine_learning_rate_final_fraction
+
+  warmup_steps = int(config.learning_rate_schedule_steps * config.warmup_steps_fraction)
+  cos_steps = config.learning_rate_schedule_steps
+  constant_zero_steps = config.steps - config.learning_rate_schedule_steps
+
+  warmup_schedule = optax.polynomial_schedule(init_value=0.0, end_value=lr, power=2.0, transition_steps=warmup_steps)
+  cos_schedule = make_cos_schedule(lr, cos_final_lr, cos_steps)
+  constant_schedule = optax.constant_schedule(0.0)
+
+  def min_schedule(step):
+    return jnp.minimum(warmup_schedule(step), cosine_schedule(step))
+
+  def full_schedule(step):
+    return jnp.where(
+        step < cos_steps,
+        min_schedule(step),
+        constant_schedule(step),
+    )
+  
+  return full_schedule
+
 
 def get_formatted_sharding_annotations(params, mesh=None):
   """

@@ -45,7 +45,8 @@ def create_model(config, mesh):
 def create_training_tools(config, model, mesh):
   """Creates the init_rng, optimizer, learning rate schedule, and checkpoint manager."""
   init_rng = jax.random.PRNGKey(config.init_weights_seed)
-  learning_rate_schedule = maxtext_utils.create_learning_rate_schedule(config)
+  # learning_rate_schedule = maxtext_utils.create_learning_rate_schedule(config)
+  learning_rate_schedule = maxtext_utils.create_fms_style_schedule(config)
   tx = optimizers.get_optimizer(config, learning_rate_schedule)
   logger = checkpointing.setup_checkpoint_logger(config)
   if config.enable_emergency_checkpoint:
