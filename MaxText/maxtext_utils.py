@@ -1058,7 +1058,7 @@ def create_fms_style_schedule(config):
   constant_schedule = optax.constant_schedule(0.0)
 
   def min_schedule(step):
-    return jnp.minimum(warmup_schedule(step), cosine_schedule(step))
+    return jnp.minimum(warmup_schedule(step), cos_schedule(step))
 
   def full_schedule(step):
     return jnp.where(
