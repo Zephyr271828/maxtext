@@ -91,7 +91,9 @@ class MetricLogger:
           f"Tokens/s/device: {metrics['scalar']['perf/per_device_tokens_per_sec']:.3f}, "
           f"total_weights: {metrics['scalar']['learning/total_weights']}, "
           f"loss: {loss:.3f}, "
-          f"lr: {self.learning_rate_schedule(step):.3e}"
+          f"lr: {self.learning_rate_schedule(step):.3e}, "
+          f"grad_norm: {metrics['scalar']['learning/grad_norm']}, "
+          f"raw_grad_norm: {metrics['scalar']['learning/raw_grad_norm']}"
       )
       if "learning/zeros" in metrics['scalar']:
         log_message += f", sparsity: {metrics['scalar']['learning/zeros'] / metrics['scalar']['learning/params']}"
