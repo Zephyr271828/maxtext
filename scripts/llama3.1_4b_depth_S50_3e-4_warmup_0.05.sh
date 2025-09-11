@@ -17,6 +17,7 @@ export NUM_STEPS=12500
 export SEQ_LEN=8192
 export BATCH_SIZE=2
 export GRAD_ACCUM=4
+export GRAD_CLIP=0.1
 export LR=3.e-4
 export MIN_LR_RATIO=0.1
 export WARMUP_RATIO=0.05
@@ -48,6 +49,7 @@ python -u multihost_runner_orig.py \
         steps=${NUM_STEPS} \
         per_device_batch_size=${BATCH_SIZE} \
         gradient_accumulation_steps=${GRAD_ACCUM} \
+        gradient_clipping_threshold=${GRAD_CLIP} \
         learning_rate=${LR} \
         cosine_learning_rate_final_fraction=${MIN_LR_RATIO} \
         warmup_steps_fraction=${WARMUP_RATIO} \
