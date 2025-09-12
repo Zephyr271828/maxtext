@@ -26,23 +26,12 @@ export DATA_FILES='/home/zephyr/gcs-bucket/datasets/dclm/llama3_64_array_record/
 
 export RUN_NAME="${MODEL_NAME}_S50_seqlen_${SEQ_LEN}_bs_${BATCH_SIZE}_grad_accum_${GRAD_ACCUM}_lr_${LR}_min_lr_ratio_${MIN_LR_RATIO}_warmup_ratio_${WARMUP_RATIO}"
 
-python -u multihost_runner.py \
+python -u multihost_runner_orig.py \
     --TPU_PREFIX=$TPU_PREFIX \
     --INTERNAL_IP=true \
     --COMMAND="
     export TPU_LOG_DIR=/home/zephyr/tpu_logs
     export WANDB_API_KEY='7d11bbca76b3081b6bd1efbbcf1572aab26c5d56'
-    sudo docker run \
-        --privileged \
-        --network=host \
-        -v /home/zephyr:/home/zephyr \
-        -v /home/zephyr/.config/gcloud:/root/.config/gcloud \
-        -v /dev:/dev \
-        -v /run:/run \
-        -w /home/zephyr/maxtext \
-        -e PYTHONPATH=/home/zephyr/maxtext \
-        yx3038/maxtext_base_image:latest \
-        bash -c \"
         export PYTHONPATH=/home/zephyr/maxtext:\$PYTHONPATH
         python3.10 -u -m MaxText.train MaxText/configs/base.yml \
             run_name=${RUN_NAME} \
