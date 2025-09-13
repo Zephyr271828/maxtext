@@ -46,17 +46,17 @@ python3 -m MaxText.generate_param_only_checkpoint \
 #     hf_model_path=/home/zephyr/gcs-bucket/model_ckpts/${MODEL}-hf
 
 # LOGITS OUT TEST
-# python3 -u /home/zephyr/gcs-bucket/maxtext/tests/test_eq.py \
-#     MaxText/configs/base.yml \
-#     load_parameters_path=${UNSCANNED_CKPT_PATH} \
-#     run_name=forward_pass_test \
-#     per_device_batch_size=1 \
-#     model_name=${MODEL} \
-#     max_prefill_predict_length=4 \
-#     max_target_length=4 \
-#     dataset_type=synthetic \
-#     dtype=bfloat16 \
-#     scan_layers=false \
-#     --run_hf_model=True \
-#     --hf_model_path=${HF_MODEL_PATH}
+python3 -u tests/test_eq.py \
+    MaxText/configs/base.yml \
+    load_parameters_path=${UNSCANNED_CKPT_PATH} \
+    run_name=forward_pass_test \
+    per_device_batch_size=1 \
+    model_name=${MODEL} \
+    max_prefill_predict_length=4 \
+    max_target_length=4 \
+    dataset_type=synthetic \
+    dtype=bfloat16 \
+    scan_layers=false \
+    --run_hf_model=True \
+    --hf_model_path=${HF_MODEL_PATH}
 

@@ -57,6 +57,8 @@ from MaxText.globals import PKG_DIR
 from MaxText.layers import models
 from MaxText.layers import quantizations
 
+from test_weights import patch_orbax_weights, compare_hf_orbax_model_weights
+
 def str2bool(v):
     if isinstance(v, bool):
         return v
@@ -216,53 +218,6 @@ def get_data(golden_data, golden_data_index, config):
   max_logging.log(f"ids={ids}, decoder_segment_ids = {decoder_segment_ids}, decoder_positions= {decoder_positions}")
 
   return ids, decoder_segment_ids, decoder_positions, logits, seq_len
-
-def patch_orbax_weights(hf_model, orbax_state, config):
-    hf_params = dict(hf_model.named_parameters())
-    orbax_param_tuples = jax.tree_util.tree_flatten_with_path(orbax_state.params)[0]
-
-    patched = 0
-
-    for path, _ in orbax_param_tuples:
-        orbax_key = ".".join(p.key for p in path)
-
-        if (
-            "self_attention.query.kernel" not in orbax_key
-            and "self_attention.key.kernel" not in orbax_key
-        ):
-            continue
-
-        hf_key = orbax_key
-        hf_key = hf_key.replace("params.decoder.layers_", "model.layers.")
-        hf_key = hf_key.replace(".self_attention.query.kernel", ".self_attn.q_proj.weight")
-        hf_key = hf_key.replace(".self_attention.key.kernel", ".self_attn.k_proj.weight")
-
-        if hf_key not in hf_params:
-            print(f"⚠️  HF param not found for {orbax_key} → {hf_key}")
-            continue
-
-        hf_tensor = hf_params[hf_key].detach().cpu().numpy()
-        hidden_dim = hf_tensor.shape[1]  # q_proj/k_proj weight shape: [in_dim, out_dim] → [4096, 4096]
-        transposed = hf_tensor.T  # → [4096, 4096]
-
-        if "query.kernel" in orbax_key:
-            reshaped = transposed.reshape((hidden_dim, config.base_num_query_heads, config.head_dim))
-        elif "key.kernel" in orbax_key:
-            reshaped = transposed.reshape((hidden_dim, config.base_num_kv_heads, config.head_dim))
-        else:
-            continue
-
-        # Traverse tree and update in place
-        subtree = orbax_state.params
-        for key in path[:-1]:
-            subtree = subtree[key.key]
-        last_key = path[-1].key
-        subtree[last_key] = reshaped  # In-place update
-
-        print(f"✅ Patched {orbax_key} from HF {hf_key}")
-        patched += 1
-
-    print(f"\n✅ Done. Patched {patched} Orbax weights in-place.")
 
 def main(config, test_args):  # pylint: disable=W0621
   """Test the Whole Model of model_name"""
