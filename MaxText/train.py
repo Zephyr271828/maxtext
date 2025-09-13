@@ -69,7 +69,7 @@ from MaxText.vertex_tensorboard import VertexTensorboardManager
 
 import MaxText as mt
 # pylint: disable=too-many-positional-arguments
-
+from jax.experimental import host_callback as hcb
 
 def validate_train_config(config):
   """Validates the configuration is set correctly for 'train.py'."""
@@ -304,6 +304,9 @@ def loss_fn(model, config, data, dropout_rng, params, is_train=True):
       decoder_target_tokens=data["targets"],
       decoder_target_mask=data["targets_segmentation"],
   )
+  
+  # jax.debug.print("logits={}", logits)
+  
   one_hot_targets = jax.nn.one_hot(data["targets"], config.vocab_size)
   xent, _ = max_utils.cross_entropy_with_logits(logits, one_hot_targets, 0.0)
   xent = nn.with_logical_constraint(xent, ("activation_embed_and_logits_batch", "activation_length"))
@@ -417,9 +420,7 @@ def train_step(model, config, state_mesh_shardings, state, data, dropout_rng, sp
     grads = raw_grads
     
   # from jax.experimental import debug
-
-  # jax.debug.print("Gradient: {x}", x=grads)  
-    
+      
   if config.optimizer_memory_host_offload:
     state = state.replace(
         opt_state=jax.device_put(
