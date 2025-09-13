@@ -3,7 +3,7 @@
 set +x
 set -eo pipefail
 
-export bucket_name=llm_pruning_europe_west4
+export bucket_name=llm_pruning_us_central2_b
 
 export DATASET_PATH='/home/zephyr/gcs-bucket/datasets/'
 

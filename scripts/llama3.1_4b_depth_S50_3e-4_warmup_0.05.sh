@@ -24,6 +24,7 @@ export WARMUP_RATIO=0.05
 export ASYNC_CHECKPOINTING=false
 export BASE_OUTPUT_DIRECTORY="gs://$BUCKET_NAME/model_ckpts/maxtext"
 export DATA_FILES='/home/zephyr/gcs-bucket/datasets/dclm/llama3_64_array_record/*.array_record'
+export CONVERTED_CHECKPOINT='/home/zephyr/gcs-bucket/model_ckpts/maxtext/llama3-8bfrom-fms/0/items'
 
 export RUN_NAME="${MODEL_NAME}_S50_seqlen_${SEQ_LEN}_bs_${BATCH_SIZE}_grad_accum_${GRAD_ACCUM}_lr_${LR}_min_lr_ratio_${MIN_LR_RATIO}_warmup_ratio_${WARMUP_RATIO}"
 
@@ -37,6 +38,7 @@ python -u multihost_runner_orig.py \
     python3.10 -u -m MaxText.train MaxText/configs/base.yml \
         run_name=${RUN_NAME} \
         base_output_directory=${BASE_OUTPUT_DIRECTORY} \
+        load_parameters_path=${CONVERTED_CHECKPOINT} \
         dataset_type=grain \
         grain_train_files=${DATA_FILES} \
         grain_file_type='arrayrecord' \
