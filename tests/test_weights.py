@@ -190,7 +190,7 @@ def patch_orbax_weights(hf_model, orbax_state, config, limit=1000):
             # OK!
             reshaped = hf_tensor.T.reshape((hidden_dim, config.base_num_kv_heads,    config.head_dim))
         elif "value.kernel" in orbax_key:
-            #
+            # OK!
             reshaped = hf_tensor.T.reshape((hidden_dim, config.base_num_kv_heads,    config.head_dim))
         elif "out.kernel" in orbax_key:
             # OK!
