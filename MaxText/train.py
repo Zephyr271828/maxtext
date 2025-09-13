@@ -415,6 +415,11 @@ def train_step(model, config, state_mesh_shardings, state, data, dropout_rng, sp
     grads = maxtext_utils.apply_gradient_clipping(raw_grads, state, config.gradient_clipping_threshold)
   else:
     grads = raw_grads
+    
+  # from jax.experimental import debug
+
+  # jax.debug.print("Gradient: {x}", x=grads)  
+    
   if config.optimizer_memory_host_offload:
     state = state.replace(
         opt_state=jax.device_put(

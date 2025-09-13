@@ -12,7 +12,7 @@ for var in "${required_vars[@]}"; do
   fi
 done
 
-export MODEL_NAME='llama3.1-4b-depth'
+export MODEL_NAME='llama3-8b'
 export NUM_STEPS=12500
 export SEQ_LEN=8192
 export BATCH_SIZE=1
@@ -25,7 +25,9 @@ export ASYNC_CHECKPOINTING=false
 export BASE_OUTPUT_DIRECTORY="gs://$BUCKET_NAME/model_ckpts/maxtext"
 export DATA_FILES='/home/zephyr/gcs-bucket/datasets/dclm/llama3_64_array_record/*.array_record'
 
-export RUN_NAME="${MODEL_NAME}_S50_seqlen_${SEQ_LEN}_bs_${BATCH_SIZE}_grad_accum_${GRAD_ACCUM}_lr_${LR}_min_lr_ratio_${MIN_LR_RATIO}_warmup_ratio_${WARMUP_RATIO}"
+export CONVERTED_CHECKPOINT='/home/zephyr/gcs-bucket/model_ckpts/maxtext/llama3-8bfrom-fms/0/items'
+
+export RUN_NAME="${MODEL_NAME}_S50_seqlen_${SEQ_LEN}_bs_${BATCH_SIZE}_grad_accum_${GRAD_ACCUM}_lr_${LR}_min_lr_ratio_${MIN_LR_RATIO}_warmup_ratio_${WARMUP_RATIO}_test"
 
 python -u multihost_runner_orig.py \
     --TPU_PREFIX=$TPU_PREFIX \
@@ -36,6 +38,7 @@ python -u multihost_runner_orig.py \
     source ~/maxtext_env/bin/activate
     python3.10 -u -m MaxText.train MaxText/configs/base.yml \
         run_name=${RUN_NAME} \
+        load_parameters_path=${CONVERTED_CHECKPOINT} \
         base_output_directory=${BASE_OUTPUT_DIRECTORY} \
         dataset_type=grain \
         grain_train_files=${DATA_FILES} \
@@ -59,4 +62,4 @@ python -u multihost_runner_orig.py \
         wandb_project=llm_pruning \
         wandb_run_name=${RUN_NAME} \
         packing=false
-    "
+    " > tests/training.log
