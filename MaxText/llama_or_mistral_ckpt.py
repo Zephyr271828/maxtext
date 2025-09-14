@@ -640,7 +640,7 @@ def _convert_huggingface_to_jax_weights(base_model_path: str, model_size: str, m
   is_llama4_model = model_size[:6] == "llama4"
   interleave_moe_layer = model_params.get("interleave_moe_layer_step")
   layer_cycle_interval = model_params.get("inhomogeneous_layer_cycle_interval")
-  scale_query = model_params.get("scale_query", True)
+  scale_query = model_params.get("scale_query", False)
 
   max_logging.log(f"Loading the base model from {base_model_path}")
   ckpt_paths = sorted(pathlib.Path(base_model_path).glob("[!.]*.safetensors"))
@@ -838,9 +838,10 @@ def _convert_huggingface_to_jax_weights(base_model_path: str, model_size: str, m
     )  # [q, layer, head_dim, embed]
 
     # scale the query weights
+    import pdb; pdb.set_trace()
     # NOTE: the np.sqrt here will silently cast to float64, so we add a manual cast to ensure the CAST_DTYPE is respected
-    if scale_query:
-      self_attention["query"]["kernel"] = self_attention["query"]["kernel"] / (np.sqrt(head_dim).astype(CAST_DTYPE))  # pylint: disable=E1137
+    # if scale_query:
+    #   self_attention["query"]["kernel"] = self_attention["query"]["kernel"] / (np.sqrt(head_dim).astype(CAST_DTYPE))  # pylint: disable=E1137
 
   logging.debug("Memory usage: %f GB", mem_info.memory_info().rss / (1024**3))
 
@@ -1117,7 +1118,7 @@ def _convert_pytorch_to_jax_weights(base_model_path: str, model_size: str, model
   vocab_size = model_params["vocab"]
   num_experts = model_params["num_experts"] if "num_experts" in model_params else None
   rope_type = model_params.get("rope_type", "")
-  scale_query = model_params.get("scale_query", True)
+  scale_query = model_params.get("scale_query", False)
 
   chkpt_vars = {}
   ckpt_paths = sorted(pathlib.Path(base_model_path).glob("[!.]*.pth"))
@@ -1294,11 +1295,11 @@ def _convert_pytorch_to_jax_weights(base_model_path: str, model_size: str, model
 
   # scale the query weights
   # NOTE: the np.sqrt here will silently cast to float64, so we add a manual cast to ensure bfloat16
-  self_attention["query"]["kernel"] = (
-      self_attention["query"]["kernel"] / (np.sqrt(head_dim).astype(CAST_DTYPE))
-      if scale_query
-      else self_attention["query"]["kernel"]
-  )
+  # self_attention["query"]["kernel"] = (
+  #     self_attention["query"]["kernel"] / (np.sqrt(head_dim).astype(CAST_DTYPE))
+  #     if scale_query
+  #     else self_attention["query"]["kernel"]
+  # )
 
   jax_weights["decoder"]["layers"]["self_attention"] = self_attention
   logging.debug("Memory usage: %f GB", mem_info.memory_info().rss / (1024**3))

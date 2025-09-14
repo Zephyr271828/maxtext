@@ -532,6 +532,10 @@ class AttentionOp(nnx.Module):
     length = query.shape[-3]
     target_hardware = self.mesh.devices[(0,) * self.mesh.devices.ndim].platform
 
+    head_dim = getattr(self, "head_dim", query.shape[-1])
+    inv_sqrt_d = (1.0 / jnp.sqrt(jnp.asarray(head_dim, dtype=query.dtype))).astype(query.dtype)
+    query = query * inv_sqrt_d
+
     if use_ragged_attention and model_mode == MODEL_MODE_AUTOREGRESSIVE:
       if lengths is None:
         lengths = jnp.sum(decoder_segment_ids, axis=-1)

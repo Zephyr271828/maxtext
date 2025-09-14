@@ -98,6 +98,8 @@ def main(config, test_args):
 
         print(f"HF loss: {loss_hf.item():.6f}")
         for name, param in hf_model.named_parameters():
+            if any('layers.{i}' in name for i in range(30)):
+                continue
             if param.grad is not None:
                 g = param.grad.detach().cpu().float().flatten()
                 print(
@@ -134,6 +136,8 @@ def main(config, test_args):
         flat_grads = jax.tree_util.tree_flatten_with_path(grads)[0]
         for path, g in flat_grads:
             grad_key = ".".join(p.key for p in path)
+            if any('layers_{i}' in grad_key for i in range(30)):
+                continue
             g = g.reshape(-1)
             print(
                 f"[MaxText] {grad_key:60s} grad: mean={g.mean():+.3e}, "

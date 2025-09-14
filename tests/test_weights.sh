@@ -1,14 +1,18 @@
 #!/bin/bash
 
 # export MODEL='llama3-8b'
-export MODEL='llama2-7b'
+# export MODEL='llama2-7b'
+export MODEL='llama3-4b-depth'
 export bucket_name=llm_pruning_us_central2_b
 export BASE_OUTPUT_DIRECTORY="gs://$bucket_name/model_ckpts/maxtext"
-export DIRECT_PARAMETER_CHECKPOINT_RUN="direct_generate_param_only_checkpoint_${MODEL}"
+# export DIRECT_PARAMETER_CHECKPOINT_RUN="direct_generate_param_only_checkpoint_${MODEL}"
+
 
 # export HF_MODEL_PATH='/home/zephyr/gcs-bucket/model_ckpts/Llama-3.1-8B'
-export HF_MODEL_PATH='/home/zephyr/gcs-bucket/model_ckpts/Llama-2-7b-hf'
-export UNSCANNED_CKPT_PATH="${BASE_OUTPUT_DIRECTORY}/${DIRECT_PARAMETER_CHECKPOINT_RUN}/checkpoints/0/items"
+# export HF_MODEL_PATH='/home/zephyr/gcs-bucket/model_ckpts/Llama-2-7b-hf'
+export HF_MODEL_PATH='/home/zephyr/gcs-bucket/model_ckpts/llama3-4b-depth-fms-to-hf'
+# export UNSCANNED_CKPT_PATH="${BASE_OUTPUT_DIRECTORY}/${DIRECT_PARAMETER_CHECKPOINT_RUN}/checkpoints/0/items"
+export UNSCANNED_CKPT_PATH="gs://$bucket_name/model_ckpts/maxtext/direct_generate_param_only_checkpoint_llama3-4b-depth_from_fms/checkpoints/0/items"
 
 export PYTHONPATH='/home/zephyr/gcs-bucket/maxtext':$PYTHONPATH
 python3 -u tests/test_weights.py \

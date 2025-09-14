@@ -183,9 +183,11 @@ def patch_orbax_weights(hf_model, orbax_state, config, limit=1000):
         hf_tensor = hf_params[hf_key].detach().cpu().numpy()
         hidden_dim = hf_tensor.shape[1]  # q_proj/k_proj weight shape: [in_dim, out_dim] → [4096, 4096]
 
+        # print("HF tensor shape", hf_tensor.shape)
+
         if "query.kernel" in orbax_key:
             # OK!
-            reshaped = hf_tensor.T.reshape((hidden_dim, config.base_num_query_heads, config.head_dim)) / (np.sqrt(config.head_dim).astype(np.float32))  # pylint: disable=E1137
+            reshaped = hf_tensor.T.reshape((hidden_dim, config.base_num_query_heads, config.head_dim)) #/ (np.sqrt(config.head_dim).astype(np.float32))  # pylint: disable=E1137
         elif "key.kernel" in orbax_key:
             # OK!
             reshaped = hf_tensor.T.reshape((hidden_dim, config.base_num_kv_heads,    config.head_dim))
@@ -194,7 +196,7 @@ def patch_orbax_weights(hf_model, orbax_state, config, limit=1000):
             reshaped = hf_tensor.T.reshape((hidden_dim, config.base_num_kv_heads,    config.head_dim))
         elif "out.kernel" in orbax_key:
             # OK!
-            reshaped = hf_tensor.reshape((hidden_dim, config.base_num_kv_heads,    config.head_dim)).transpose(1, 2, 0)
+            reshaped = hf_tensor.reshape((hidden_dim, config.base_num_query_heads,    config.head_dim)).transpose(1, 2, 0)
         else:
             continue
 
@@ -210,7 +212,7 @@ def patch_orbax_weights(hf_model, orbax_state, config, limit=1000):
         subtree[last_key] = reshaped  # In-place update
 
         print(f"✅ Patched {orbax_key} from HF {hf_key}")
-        
+
         print(f"before shape: {before_value.shape}, values: {before_value.flatten()[:5]}")
         print(f"after  shape: {after_value.shape}, values: {after_value.flatten()[:5]}")
         patched += 1
