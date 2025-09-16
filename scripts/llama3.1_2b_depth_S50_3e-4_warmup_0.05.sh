@@ -36,9 +36,7 @@ python -u multihost_runner_orig.py \
     source ~/maxtext_env/bin/activate
     python3.10 -u -m MaxText.train MaxText/configs/base.yml \
         run_name=${RUN_NAME} \
-        load_parameters_path=${CONVERTED_CHECKPOINT} \
         base_output_directory=${BASE_OUTPUT_DIRECTORY} \
-        load_parameters_path=${CONVERTED_CHECKPOINT} \
         dataset_type=grain \
         grain_train_files=${DATA_FILES} \
         grain_file_type='arrayrecord' \
