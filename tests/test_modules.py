@@ -57,6 +57,8 @@ from MaxText.globals import PKG_DIR
 from MaxText.layers import models
 from MaxText.layers import quantizations
 
+from MaxText.layers.llama2 import LlamaDecoderLayer
+
 from test_weights import patch_orbax_weights, compare_hf_orbax_model_weights
 
 def str2bool(v):
@@ -72,7 +74,7 @@ def str2bool(v):
 
 def to_numpy(x):
     if isinstance(x, torch.Tensor):
-        return x.detach().cpu().numpy().astype(np.float32)
+        return x.detach().cpu().float().numpy()
     elif isinstance(x, jax.Array):
         return np.array(x, dtype=np.float32)
     return np.array(x)
@@ -85,7 +87,7 @@ def log_diff(name, a, b):
     print(f"[{name:<40}] max|diff|={diff:.3e}, mean|diff|={mean_diff:.3e}")
 
 
-def compare_module_outputs(hf_model, mt_model, mt_state, tokenizer, config, prompts):
+def compare_module_outputs(hf_model, mt_model, mt_state, tokenizer, config, prompts, mesh):
     bound = mt_model.bind(mt_state.params)
 
     for prompt in prompts:
@@ -111,46 +113,64 @@ def compare_module_outputs(hf_model, mt_model, mt_state, tokenizer, config, prom
         embed_mt = bound.shared_embedding(ids)
         embed_hf = hf_out.hidden_states[0]
         log_diff("Embedding", embed_mt, embed_hf)
+        
+        batch_size, seq_len = input_ids.shape
+        position_ids = torch.arange(seq_len, device=input_ids.device).unsqueeze(0).expand(batch_size, -1)
+        position_embeddings = hf_model.model.rotary_emb(embed_hf, position_ids)
 
         # Loop over layers
         for layer_idx in range(config.num_decoder_layers):
             hf_layer = hf_model.model.layers[layer_idx]
-            mt_layer = bound.decoder.decoder_layer[layer_idx]
+            # mt_layer = bound.decoder.decoder_layer[layer_idx]
+            params = mt_state.params['params']['decoder'][f'layers_{layer_idx}']
+            
+            unbound_layer = LlamaDecoderLayer(config=config, mesh=mesh)
+            outputs, mutated_vars = unbound_layer.apply(
+                {"params": params},
+                embed_mt,
+                decoder_segment_ids=segs,
+                decoder_positions=positions,
+                deterministic=True,
+                model_mode="train",
+                mutable=["intermediates"]
+            )
+            
+            mt_norm = mutated_vars['intermediates']['lnx_rms']
 
             # Input norm
             with torch.no_grad():
                 hf_norm = hf_layer.input_layernorm(embed_hf)
-            mt_norm = mt_layer.pre_self_attention_layer_norm(embed_mt)
+            
             log_diff(f"Layer {layer_idx} pre-attn norm", mt_norm, hf_norm)
 
             # Self-attention output
             with torch.no_grad():
-                hf_attn_out = hf_layer.self_attn(hf_norm, past_key_value=None, output_attentions=False)[0]
-            mt_attn_out = mt_layer.self_attention(
-                mt_norm,
-                mt_norm,
-                positions,
-                decoder_segment_ids=segs,
-                deterministic=True,
-                model_mode="train",
-            )
+                hf_attn_out = hf_layer.self_attn(
+                    hf_norm, 
+                    position_embeddings=position_embeddings, 
+                    attention_mask=None, 
+                    past_key_value=None, 
+                    output_attentions=False
+                )[0]
+            mt_attn_out = mutated_vars['intermediates']['attention_lnx']
             log_diff(f"Layer {layer_idx} self-attn", mt_attn_out, hf_attn_out)
 
             # Post-attn norm
             with torch.no_grad():
                 hf_post_norm = hf_layer.post_attention_layernorm(hf_norm + hf_attn_out)
-            mt_post_norm = mt_layer.post_self_attention_layer_norm(mt_norm + mt_attn_out)
+            mt_post_norm = mutated_vars['intermediates']['hidden_states']
             log_diff(f"Layer {layer_idx} post-attn norm", mt_post_norm, hf_post_norm)
 
             # MLP
             with torch.no_grad():
                 hf_mlp_out = hf_layer.mlp(hf_post_norm)
-            mt_mlp_out = mt_layer.mlp(mt_post_norm, deterministic=True)
+            mt_mlp_out = mutated_vars['intermediates']['mlp_lnx']
             log_diff(f"Layer {layer_idx} mlp", mt_mlp_out, hf_mlp_out)
 
             # Residual output
             embed_hf = hf_post_norm + hf_mlp_out
             embed_mt = mt_post_norm + mt_mlp_out
+            import pdb; pdb.set_trace()
 
         # Final norm
         with torch.no_grad():
@@ -183,7 +203,7 @@ def main(config, test_args):  # pylint: disable=W0621
 
     prompts = ["I love to", "Today is a", "What is the"]
 
-    compare_module_outputs(hf_model, maxtext_model, maxtext_state, tokenizer, config, prompts)
+    compare_module_outputs(hf_model, maxtext_model, maxtext_state, tokenizer, config, prompts, mesh)
 
 if __name__ == "__main__":
   jax.config.update("jax_default_prng_impl", "unsafe_rbg")

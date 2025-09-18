@@ -80,6 +80,7 @@ class LlamaDecoderLayer(nn.Module):
         epsilon=cfg.normalization_layer_epsilon,
     )
     lnx = lnx_rms(inputs)
+    self.sow("intermediates", "lnx_rms", lnx)
 
     lnx = nn.with_logical_constraint(lnx, activation_axis_names)
 
@@ -120,6 +121,7 @@ class LlamaDecoderLayer(nn.Module):
         page_state=page_state,
         previous_chunk=previous_chunk,
     )
+    self.sow("intermediates", "attention_lnx", attention_lnx)
 
     attention_lnx = nn.with_logical_constraint(attention_lnx, activation_axis_names)
     intermediate_inputs = inputs + attention_lnx
@@ -133,6 +135,8 @@ class LlamaDecoderLayer(nn.Module):
         kernel_axes=("norm",),
         epsilon=cfg.normalization_layer_epsilon,
     )(intermediate_inputs)
+    
+    self.sow("intermediates", "hidden_states", hidden_states)
     hidden_states = nn.with_logical_constraint(hidden_states, activation_axis_names)
 
     # MLP block.
@@ -148,6 +152,7 @@ class LlamaDecoderLayer(nn.Module):
         quant=self.quant,
         model_mode=model_mode,
     )(hidden_states, deterministic=deterministic)
+    self.sow("intermediates", "mlp_lnx", mlp_lnx)
     mlp_lnx = nn.with_logical_constraint(mlp_lnx, activation_axis_names)
 
     layer_output = mlp_lnx + intermediate_inputs
