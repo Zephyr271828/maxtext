@@ -228,7 +228,7 @@ def main(config, test_args):  # pylint: disable=W0621
       input_golden_data_path = os.path.join(PKG_DIR, "test_assets", f"golden_data_{config.model_name}.jsonl")
     else:
       input_golden_data_path = test_args.golden_logits_path
-    input_golden_data_path = '/home/zephyr/gcs-bucket/maxtext/MaxText/test_assets/golden_data_deepseek_r1_distill_llama3.1_8b.jsonl'
+    input_golden_data_path = '/home/zephyr/maxtext/MaxText/test_assets/golden_data_deepseek_r1_distill_llama3.1_8b.jsonl'
     with jsonlines.open(input_golden_data_path, "r") as f:
       golden_data = list(f)
 

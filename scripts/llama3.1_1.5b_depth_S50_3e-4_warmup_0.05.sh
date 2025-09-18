@@ -48,6 +48,7 @@ python -u multihost_runner_orig.py \
         model_name=${MODEL_NAME} \
         steps=${NUM_STEPS} \
         per_device_batch_size=${BATCH_SIZE} \
+        enable_data_shuffling=False \
         gradient_accumulation_steps=${GRAD_ACCUM} \
         gradient_clipping_threshold=${GRAD_CLIP} \
         learning_rate=${LR} \

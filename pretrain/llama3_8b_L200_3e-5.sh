@@ -75,7 +75,7 @@ python -u multihost_runner.py \
         \"
     "
 
-# metrics_file=\"/home/zephyr/gcs-bucket/maxtext/logs/${RUN_NAME}.log\" \
+# metrics_file=\"/home/zephyr/maxtext/logs/${RUN_NAME}.log\" \
 
 # python3 -m MaxText.train \
 #     MaxText/configs/base.yml \

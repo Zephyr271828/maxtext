@@ -21,7 +21,7 @@ gcloud alpha compute tpus tpu-vm ssh $TPU_NAME \
   # export TPU_PROCESS_BOUNDS=1,1,1
   # export TPU_VISIBLE_DEVICES=0
 
-  cd /home/zephyr/gcs-bucket/maxtext
+  cd /home/zephyr/maxtext
   export TPU_LOG_DIR=~/tpu_logs
   python3 -m MaxText.llama_or_mistral_ckpt \
     --base-model-path ${META_CHECKPOINT_PATH} \
