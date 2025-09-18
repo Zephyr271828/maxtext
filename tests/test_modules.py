@@ -169,13 +169,14 @@ def compare_module_outputs(hf_model, mt_model, mt_state, tokenizer, config, prom
 
             # Residual output
             embed_hf = hf_post_norm + hf_mlp_out
-            embed_mt = mt_post_norm + mt_mlp_out
-            import pdb; pdb.set_trace()
+            embed_mt = mt_post_norm[0] + mt_mlp_out[0]
+            # import pdb; pdb.set_trace()
 
         # Final norm
         with torch.no_grad():
             hf_final_norm = hf_model.model.norm(embed_hf)
-        mt_final_norm = bound.decoder.norm_layer(num_features=embed_mt.shape[-1])(embed_mt)
+        mt_final_norm = norm_layer.apply({"params": mt_state.params["decoder"]["norm_layer"]}, embed_mt)
+        # mt_final_norm = bound.decoder.norm_layer(num_features=embed_mt.shape[-1])(embed_mt)
         log_diff("Final norm", mt_final_norm, hf_final_norm)
 
         # Logits
