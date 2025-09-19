@@ -62,10 +62,15 @@ from MaxText.layers.llama2 import LlamaDecoderLayer
 from test_weights import patch_orbax_weights, compare_hf_orbax_model_weights
 
 from MaxText.layers import linears
+from MaxText.layers.linears import dense_general
 from MaxText.layers.attentions import Attention
 from MaxText.layers.normalizations import rms_norm
 from MaxText.layers import quantizations
 from MaxText.layers.embeddings import attend_on_embedding, embed_as_linen, positional_embedding_as_linen
+
+from jax import config as jax_config
+jax_config.update("jax_enable_x64", True)  # Optional
+jax_config.update("jax_default_matmul_precision", "float32") 
 
 def str2bool(v):
     if isinstance(v, bool):
@@ -176,6 +181,8 @@ def compare_module_outputs(hf_model, mt_model, mt_state, tokenizer, config, prom
             # Residual output
             # embed_hf = hf_post_norm + hf_mlp_out
             # embed_mt = mt_post_norm[0] + mt_mlp_out[0]
+            
+            break
 
         # Final norm
         
@@ -190,13 +197,160 @@ def compare_module_outputs(hf_model, mt_model, mt_state, tokenizer, config, prom
             hf_logits = hf_model.lm_head(embed_hf)
         log_diff("Logits", mt_logits, hf_logits)
         
+        
+def compare_linear_outputs(hf_model, mt_model, mt_state, tokenizer, config, prompts, mesh):
+        
+    bound = mt_model.bind(mt_state.params)
 
+    for prompt in prompts:
+        print(f"\n=== Prompt: {prompt} ===")
+        inputs = tokenizer(prompt, return_tensors="pt")
+        input_ids = inputs["input_ids"]
+
+        # ----- Prepare inputs for both -----
+        ids = jnp.asarray(input_ids.numpy(), dtype=jnp.int32)
+        positions = jnp.arange(ids.shape[1], dtype=jnp.int32)[None, :].repeat(ids.shape[0], 0)
+        segs = jnp.ones_like(ids) * DECODING_ACTIVE_SEQUENCE_INDICATOR
+
+        # HF forward with hidden states
+        with torch.no_grad():
+            hf_out = hf_model(
+                input_ids,
+                output_hidden_states=True,
+                output_attentions=True,
+                return_dict=True,
+            )
+
+        # MaxText embedding
+        embed_mt = bound.shared_embedding(ids)
+        embed_hf = hf_out.hidden_states[0]
+        log_diff("Embedding", embed_mt, embed_hf)
+        
+        batch_size, seq_len = input_ids.shape
+        position_ids = torch.arange(seq_len, device=input_ids.device).unsqueeze(0).expand(batch_size, -1)
+        position_embeddings = hf_model.model.rotary_emb(embed_hf, position_ids)
+        
+        layer_idx = 0  # Change this to loop later
+        mt_layer_params = mt_state.params["params"]["decoder"][f"layers_{layer_idx}"]
+        hf_layer = hf_model.model.layers[layer_idx]
+
+        # --- Projection Comparison Helper ---
+        def compare_proj(name, out_shape, hf_proj_module, input_mt=embed_mt, input_hf=embed_hf):
+            mt_proj = dense_general(
+                inputs_shape=input_mt.shape,
+                out_features_shape=out_shape,
+                axis=-1,
+                weight_dtype=config.weight_dtype,
+                dtype=config.dtype,
+                kernel_axes=("embed", "heads", "dim"),
+                matmul_precision="highest",
+                name=name,
+            ).bind({"params": mt_layer_params["self_attention"][name]})
+            out_mt = mt_proj(input_mt)
+            out_mt = out_mt.reshape(out_mt.shape[0], out_mt.shape[1], -1)
+            out_hf = hf_proj_module(input_hf)
+            log_diff(f"[Layer {layer_idx}] {name}", out_mt, out_hf)
+            
+            return out_mt, out_hf
+
+        # --- Attention Projections ---
+        out_mt, out_hf = \
+        compare_proj("query", (config.num_query_heads, config.head_dim), hf_layer.self_attn.q_proj)
+        compare_proj("key", (config.num_kv_heads, config.head_dim), hf_layer.self_attn.k_proj)
+        compare_proj("value", (config.num_kv_heads, config.head_dim), hf_layer.self_attn.v_proj)
+        # compare_proj("out", config.emb_dim, hf_layer.self_attn.o_proj, input_mt=out_mt, input_hf=out_hf)
+
+        # --- MLP Projections ---
+        def compare_mlp(name, out_shape, hf_proj_module, input_mt=embed_mt, input_hf=embed_hf):
+            mt_proj = dense_general(
+                inputs_shape=input_mt.shape,
+                out_features_shape=out_shape,
+                axis=-1,
+                weight_dtype=config.weight_dtype,
+                dtype=config.dtype,
+                kernel_axes=("embed", "mlp", "dim"),
+                matmul_precision="highest",
+                name=name,
+            ).bind({"params": mt_layer_params["mlp"][name]})
+            out_mt = mt_proj(input_mt)
+            out_hf = hf_proj_module(input_hf)
+            log_diff(f"[Layer {layer_idx}] {name}", out_mt, out_hf)
+            return out_mt, out_hf
+
+        # import pdb; pdb.set_trace()
+        out_mt, out_hf = \
+        compare_mlp("wi_0", config.mlp_dim, hf_layer.mlp.gate_proj)
+        compare_mlp("wi_1", config.mlp_dim, hf_layer.mlp.up_proj)
+        compare_mlp("wo", config.emb_dim, hf_layer.mlp.down_proj, input_mt=out_mt, input_hf=out_hf)
+
+        # --- LM Head ---
+        # Apply final norm and dropout first
+
+        # MaxText lm_head
+        lm_dense = dense_general(
+            inputs_shape=embed_mt.shape,
+            out_features_shape=config.vocab_size,
+            axis=-1,
+            weight_dtype=config.weight_dtype,
+            dtype=jnp.float32 if config.logits_dot_in_fp32 else config.dtype,
+            kernel_axes=("embed", "vocab"),
+            name="logits_dense",
+            matmul_precision="highest",
+        ).bind({"params": mt_state.params["params"]["decoder"]["logits_dense"]})
+        lm_out_mt = lm_dense(embed_mt)
+
+        # HF lm_head
+        lm_out_hf = hf_model.lm_head(embed_hf)
+        log_diff("LM Head", lm_out_mt, lm_out_hf)
+        
+        print("\n[Accumulation Test] Repeating wi_0 → wo 16 times...")
+        input_mt, input_hf = embed_mt, embed_hf
+        for i in range(16):
+            # wi_0 (gate_proj)
+            wi_mt = dense_general(
+                inputs_shape=input_mt.shape,
+                out_features_shape=config.mlp_dim,
+                axis=-1,
+                weight_dtype=config.weight_dtype,
+                dtype=config.dtype,
+                kernel_axes=("embed", "mlp", "dim"),
+                matmul_precision="highest",
+                name=f"wi_0_{i}",
+            ).bind({"params": mt_layer_params["mlp"]["wi_0"]})
+            wi_hf = hf_layer.mlp.gate_proj
+
+            hidden_mt = wi_mt(input_mt)
+            hidden_hf = wi_hf(input_hf)
+
+            # wo (down_proj)
+            wo_mt = dense_general(
+                inputs_shape=hidden_mt.shape,
+                out_features_shape=config.emb_dim,
+                axis=-1,
+                weight_dtype=config.weight_dtype,
+                dtype=config.dtype,
+                kernel_axes=("mlp", "embed"),
+                matmul_precision="highest",
+                name=f"wo_{i}",
+            ).bind({"params": mt_layer_params["mlp"]["wo"]})
+            wo_hf = hf_layer.mlp.down_proj
+
+            out_mt = wo_mt(hidden_mt)
+            out_hf = wo_hf(hidden_hf)
+
+            log_diff(f"[Accumulated Block {i+1:02d}]", out_mt, out_hf)
+
+            # Feed output back in
+            input_mt = out_mt
+            input_hf = out_hf
+
+        
 def main(config, test_args):  # pylint: disable=W0621
     """Test the Whole Model of model_name"""
     """Comparing maxtext model with HF model on-the-fly"""
     if test_args.hf_model_path == "":
         raise ValueError
-    hf_model = AutoModelForCausalLM.from_pretrained(test_args.hf_model_path, torch_dtype=torch.bfloat16)
+    hf_model = AutoModelForCausalLM.from_pretrained(test_args.hf_model_path, torch_dtype=torch.float32)
     tokenizer = AutoTokenizer.from_pretrained(test_args.hf_model_path)
     tokenizer.pad_token = tokenizer.eos_token
 
@@ -208,9 +362,13 @@ def main(config, test_args):  # pylint: disable=W0621
     maxtext_model = models.Transformer(config, mesh, quant=quant)
     maxtext_state, _ = maxtext_utils.setup_decode_state(maxtext_model, config, rng1, mesh, None)
 
+    # patch_orbax_weights(hf_model, maxtext_state, config, limit=1000)
+
     prompts = ["I love to", "Today is a", "What is the"]
 
-    compare_module_outputs(hf_model, maxtext_model, maxtext_state, tokenizer, config, prompts, mesh)
+    # compare_module_outputs(hf_model, maxtext_model, maxtext_state, tokenizer, config, prompts, mesh)
+
+    compare_linear_outputs(hf_model, maxtext_model, maxtext_state, tokenizer, config, prompts, mesh)
 
 if __name__ == "__main__":
   jax.config.update("jax_default_prng_impl", "unsafe_rbg")

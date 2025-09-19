@@ -18,7 +18,8 @@ python3 -u tests/test_modules.py \
     max_prefill_predict_length=4 \
     max_target_length=4 \
     dataset_type=synthetic \
-    dtype=bfloat16 \
+    attention=dot_product \
+    dtype=float32 \
     scan_layers=false \
     --run_hf_model=True \
     --hf_model_path=${HF_MODEL_PATH}

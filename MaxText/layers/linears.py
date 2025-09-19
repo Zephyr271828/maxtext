@@ -224,6 +224,10 @@ class DenseGeneral(nnx.Module):
         self.quant_dot_general,
         _initializing,
     )
+    
+    # print("input dtype:", inputs.dtype)
+    # print("kernel dtype:", kernel.dtype)
+    # print("bias dtype:", bias.dtype if self.bias is not None else None)
 
     if self.bias is not None:
       bias = jnp.asarray(self.bias[...], self.dtype)
