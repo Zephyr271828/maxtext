@@ -862,7 +862,7 @@ def _convert_huggingface_to_jax_weights(base_model_path: str, model_size: str, m
     )  # [q, layer, head_dim, embed]
 
     # scale the query weights
-    import pdb; pdb.set_trace()
+    # import pdb; pdb.set_trace()
     # NOTE: the np.sqrt here will silently cast to float64, so we add a manual cast to ensure the CAST_DTYPE is respected
     # if scale_query:
     #   self_attention["query"]["kernel"] = self_attention["query"]["kernel"] / (np.sqrt(head_dim).astype(CAST_DTYPE))  # pylint: disable=E1137

@@ -4,7 +4,7 @@
 # CONVERTED_CHECKPOINT='/home/zephyr/gcs-bucket/model_ckpts/minitron/llama3_4b_width_orbax/0/items'
 CONVERTED_CHECKPOINT='/home/zephyr/gcs-bucket/model_ckpts/maxtext/llama3.1-4b-width_dclm_50B/llama3.1-4b-width_dclm_50B/checkpoints/0/items'
 
-cd /home/zephyr/gcs-bucket/maxtext
+cd /home/zephyr/maxtext
 
 sudo docker run \
     --privileged \

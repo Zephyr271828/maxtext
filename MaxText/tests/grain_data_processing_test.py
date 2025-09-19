@@ -240,5 +240,5 @@ def mount_gcsfuse():
 
 
 if __name__ == "__main__":
-  mount_gcsfuse()
+  # mount_gcsfuse()
   unittest.main()

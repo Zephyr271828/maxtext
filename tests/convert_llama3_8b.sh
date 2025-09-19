@@ -14,7 +14,7 @@ export BASE_OUTPUT_DIRECTORY="gs://$bucket_name/model_ckpts/maxtext"
 # export HF_MODEL_PATH='/home/zephyr/gcs-bucket/model_ckpts/Llama-2-7b-hf'
 # export HF_MODEL_PATH='/home/zephyr/gcs-bucket/model_ckpts/llama2_7b_unstructured_0.5_hf'
 export HF_MODEL_PATH='/home/zephyr/gcs-bucket/model_ckpts/llama3-8b-fms-to-hf'
-export PYTHONPATH='/home/zephyr/gcs-bucket/maxtext':$PYTHONPATH
+export PYTHONPATH='/home/zephyr/maxtext':$PYTHONPATH
 
 # export CONVERTED_CHECKPOINT="gs://$bucket_name/model_ckpts/maxtext/llama3-8b_L200_seqlen_8192_bs_4_grad_accum_1_lr_1.e-4_min_lr_ratio_0.1_warmup_ratio_0.05/checkpoints/49999/items"
 # export CONVERTED_CHECKPOINT_PATH="gs://$bucket_name/model_ckpts/maxtext/${MODEL}_unstructured_0.5_hf"

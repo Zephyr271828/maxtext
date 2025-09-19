@@ -180,7 +180,7 @@ def patch_orbax_weights(hf_model, orbax_state, config, limit=1000):
             print(f"⚠️  HF param not found for {orbax_key} → {hf_key}")
             continue
 
-        hf_tensor = hf_params[hf_key].detach().cpu().numpy()
+        hf_tensor = hf_params[hf_key].detach().float().cpu().numpy()
         hidden_dim = hf_tensor.shape[1]  # q_proj/k_proj weight shape: [in_dim, out_dim] → [4096, 4096]
 
         # print("HF tensor shape", hf_tensor.shape)
