@@ -521,6 +521,7 @@ class Decoder(nn.Module):
     """Applies final normalization and projects hidden states to logits."""
 
     cfg = self.config
+    inputs = y
     y = self.get_norm_layer(num_features=y.shape[-1])(
         dtype=cfg.dtype,
         weight_dtype=cfg.weight_dtype,
@@ -529,6 +530,8 @@ class Decoder(nn.Module):
         kernel_axes=("norm",),
         parameter_memory_host_offload=cfg.parameter_memory_host_offload,
     )(y)
+    self.sow("intermediates", "norm", y)
+    intermediate = y
     y = nn.Dropout(rate=cfg.dropout_rate, broadcast_dims=(-2,))(y, deterministic=deterministic)
 
     # [batch, length, emb_dim] -> [batch, length, vocab_size]
@@ -538,17 +541,17 @@ class Decoder(nn.Module):
       if isinstance(embedding_table, nn.spmd.LogicallyPartitioned):
         embedding_table = embedding_table.unbox()
       attend_dtype = jnp.float32 if cfg.logits_dot_in_fp32 else cfg.dtype
-      logits = attend_on_embedding(y, embedding_table, attend_dtype, self.config)
+      logits = attend_on_embedding(inputs, embedding_table, attend_dtype, self.config)
 
       if self.config.normalize_embedding_logits:
         # Correctly normalize pre-softmax logits for this shared case.
-        logits = logits / jnp.sqrt(y.shape[-1])
+        logits = logits / jnp.sqrt(inputs.shape[-1])
       if cfg.final_logits_soft_cap:
         logits = logits / cfg.final_logits_soft_cap
         logits = jnp.tanh(logits) * cfg.final_logits_soft_cap
     else:
       logits = linears.dense_general(
-          inputs_shape=y.shape,
+          inputs_shape=inputs.shape,
           out_features_shape=cfg.vocab_size,
           weight_dtype=cfg.weight_dtype,
           dtype=jnp.float32 if cfg.logits_dot_in_fp32 else cfg.dtype,  # for logit training stability
@@ -557,7 +560,7 @@ class Decoder(nn.Module):
           matmul_precision=self.config.matmul_precision,
           parameter_memory_host_offload=cfg.parameter_memory_host_offload,
       )(
-          y
+          inputs
       )  # We do not quantize the logits matmul.
     if model_mode in (MODEL_MODE_PREFILL, MODEL_MODE_AUTOREGRESSIVE):
       logits = nn.with_logical_constraint(logits, (None, None, "activation_vocab"))
@@ -566,10 +569,11 @@ class Decoder(nn.Module):
           logits, ("activation_embed_and_logits_batch", "activation_length", "activation_vocab")
       )
 
+    self.sow("intermediates", "logits", logits)
     if self.config.cast_logits_to_fp32:
       logits = logits.astype(jnp.float32)
 
-    return logits
+    return logits, intermediate
 
   @nn.compact
   def __call__(

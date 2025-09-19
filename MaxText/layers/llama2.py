@@ -111,8 +111,8 @@ class LlamaDecoderLayer(nn.Module):
     )
 
     attention_lnx = attention_layer(
-        lnx,
-        lnx,
+        inputs,
+        inputs,
         decoder_positions,
         decoder_segment_ids=decoder_segment_ids,
         deterministic=deterministic,
@@ -134,7 +134,7 @@ class LlamaDecoderLayer(nn.Module):
         name="post_self_attention_layer_norm",
         kernel_axes=("norm",),
         epsilon=cfg.normalization_layer_epsilon,
-    )(intermediate_inputs)
+    )(inputs)
     
     self.sow("intermediates", "hidden_states", hidden_states)
     hidden_states = nn.with_logical_constraint(hidden_states, activation_axis_names)
@@ -151,7 +151,7 @@ class LlamaDecoderLayer(nn.Module):
         config=cfg,
         quant=self.quant,
         model_mode=model_mode,
-    )(hidden_states, deterministic=deterministic)
+    )(inputs, deterministic=deterministic)
     self.sow("intermediates", "mlp_lnx", mlp_lnx)
     mlp_lnx = nn.with_logical_constraint(mlp_lnx, activation_axis_names)
 

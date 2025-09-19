@@ -61,6 +61,12 @@ from MaxText.layers.llama2 import LlamaDecoderLayer
 
 from test_weights import patch_orbax_weights, compare_hf_orbax_model_weights
 
+from MaxText.layers import linears
+from MaxText.layers.attentions import Attention
+from MaxText.layers.normalizations import rms_norm
+from MaxText.layers import quantizations
+from MaxText.layers.embeddings import attend_on_embedding, embed_as_linen, positional_embedding_as_linen
+
 def str2bool(v):
     if isinstance(v, bool):
         return v
@@ -146,7 +152,7 @@ def compare_module_outputs(hf_model, mt_model, mt_state, tokenizer, config, prom
             # Self-attention output
             with torch.no_grad():
                 hf_attn_out = hf_layer.self_attn(
-                    hf_norm, 
+                    embed_hf, 
                     position_embeddings=position_embeddings, 
                     attention_mask=None, 
                     past_key_value=None, 
@@ -157,33 +163,33 @@ def compare_module_outputs(hf_model, mt_model, mt_state, tokenizer, config, prom
 
             # Post-attn norm
             with torch.no_grad():
-                hf_post_norm = hf_layer.post_attention_layernorm(hf_norm + hf_attn_out)
+                hf_post_norm = hf_layer.post_attention_layernorm(embed_hf)
             mt_post_norm = mutated_vars['intermediates']['hidden_states']
             log_diff(f"Layer {layer_idx} post-attn norm", mt_post_norm, hf_post_norm)
 
             # MLP
             with torch.no_grad():
-                hf_mlp_out = hf_layer.mlp(hf_post_norm)
+                hf_mlp_out = hf_layer.mlp(embed_hf)
             mt_mlp_out = mutated_vars['intermediates']['mlp_lnx']
             log_diff(f"Layer {layer_idx} mlp", mt_mlp_out, hf_mlp_out)
 
             # Residual output
-            embed_hf = hf_post_norm + hf_mlp_out
-            embed_mt = mt_post_norm[0] + mt_mlp_out[0]
-            # import pdb; pdb.set_trace()
+            # embed_hf = hf_post_norm + hf_mlp_out
+            # embed_mt = mt_post_norm[0] + mt_mlp_out[0]
 
         # Final norm
+        
+        mt_logits, mt_final_norm = bound.decoder._apply_output_head(embed_mt, deterministic=True, model_mode="train")
+        
         with torch.no_grad():
             hf_final_norm = hf_model.model.norm(embed_hf)
-        mt_final_norm = norm_layer.apply({"params": mt_state.params["decoder"]["norm_layer"]}, embed_mt)
-        # mt_final_norm = bound.decoder.norm_layer(num_features=embed_mt.shape[-1])(embed_mt)
         log_diff("Final norm", mt_final_norm, hf_final_norm)
 
         # Logits
         with torch.no_grad():
-            hf_logits = hf_model.lm_head(hf_final_norm)
-        mt_logits = bound.decoder._apply_output_head(mt_final_norm, deterministic=True, model_mode="train")
+            hf_logits = hf_model.lm_head(embed_hf)
         log_diff("Logits", mt_logits, hf_logits)
+        
 
 def main(config, test_args):  # pylint: disable=W0621
     """Test the Whole Model of model_name"""
