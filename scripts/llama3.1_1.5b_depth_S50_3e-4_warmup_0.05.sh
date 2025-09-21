@@ -56,7 +56,7 @@ python -u multihost_runner_orig.py \
         warmup_steps_fraction=${WARMUP_RATIO} \
         checkpoint_period=250 \
         checkpoint_max_to_keep=1 \
-        use_wandb=False \
+        use_wandb=True \
         wandb_project=llm_pruning \
         wandb_run_name=${RUN_NAME} \
         packing=false
