@@ -41,6 +41,7 @@ python -u multihost_runner_orig.py \
         grain_train_files=${DATA_FILES} \
         grain_file_type='arrayrecord' \
         grain_worker_count=1 \
+        enable_data_shuffling=False \
         tokenize_train_data=False \
         tokenize_eval_data=False \
         max_target_length=${SEQ_LEN} \
@@ -56,6 +57,6 @@ python -u multihost_runner_orig.py \
         checkpoint_max_to_keep=1 \
         use_wandb=True \
         wandb_project=llm_pruning \
-        wandb_run_name=${RUN_NAME} \
+        wandb_run_name=${TPU_PREFIX}_${RUN_NAME} \
         packing=false
     "

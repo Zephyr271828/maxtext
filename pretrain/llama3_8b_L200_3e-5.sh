@@ -51,6 +51,7 @@ python -u multihost_runner.py \
             grain_train_files=${DATA_FILES} \
             grain_file_type='arrayrecord' \
             grain_worker_count=8 \
+            enable_data_shuffling=False \
             grain_worker_count_eval=1 \
             tokenize_train_data=False \
             tokenize_eval_data=False \
@@ -69,7 +70,7 @@ python -u multihost_runner.py \
             checkpoint_max_to_keep=1 \
             use_wandb=True \
             wandb_project=llm_pruning \
-            wandb_run_name=${RUN_NAME} \
+            wandb_run_name=${TPU_PREFIX}_${RUN_NAME} \
             packing=false \
             jax_distributed_initialization_timeout=900
         \"

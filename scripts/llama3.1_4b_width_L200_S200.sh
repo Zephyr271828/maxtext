@@ -49,6 +49,7 @@ python -u multihost_runner.py \
             grain_train_files='/home/zephyr/gcs-bucket/datasets/dclm/llama3_256_arrayrecord/*.array_record' \
             grain_file_type='arrayrecord' \
             grain_worker_count=1 \
+            enable_data_shuffling=False \
             tokenize_train_data=False \
             tokenize_eval_data=False \
             max_target_length=8192 \

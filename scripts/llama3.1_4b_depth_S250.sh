@@ -17,7 +17,7 @@ export NUM_STEPS=62500
 export SEQ_LEN=8192
 export BATCH_SIZE=2
 export GRAD_ACCUM=4
-export LR=1.e-4
+export LR=3.e-4
 export MIN_LR_RATIO=0.1
 export WARMUP_RATIO=0.05
 export ASYNC_CHECKPOINTING=false
@@ -40,6 +40,7 @@ python -u multihost_runner_orig.py \
         grain_train_files=${DATA_FILES} \
         grain_file_type='arrayrecord' \
         grain_worker_count=1 \
+        enable_data_shuffling=False \
         tokenize_train_data=False \
         tokenize_eval_data=False \
         max_target_length=${SEQ_LEN} \
@@ -55,6 +56,6 @@ python -u multihost_runner_orig.py \
         checkpoint_max_to_keep=1 \
         use_wandb=True \
         wandb_project=llm_pruning \
-        wandb_run_name=${RUN_NAME} \
+        wandb_run_name=${TPU_PREFIX}_${RUN_NAME} \
         packing=false
     "
