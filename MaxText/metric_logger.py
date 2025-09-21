@@ -64,7 +64,9 @@ class MetricLogger:
     self.use_wandb = socket.gethostname().endswith("-0") and getattr(config, "use_wandb", False) 
     #and jax.process_index() == 0
     if self.use_wandb:
-      run_id_path = os.path.join(config.tensorboard_dir, "wandb_run_id.txt")
+      local_run_id_dir = os.path.join("/tmp/wandb_run_ids", config.run_name)
+      os.makedirs(local_run_id_dir, exist_ok=True)
+      run_id_path = os.path.join(local_run_id_dir, "wandb_run_id.txt")
       if os.path.exists(run_id_path):
         with open(run_id_path, "r") as f:
           run_id = f.read().strip()
