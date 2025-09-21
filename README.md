@@ -5,13 +5,16 @@ For the native README of MaxText see [README_ORIGINAL.md](README_ORIGINAL.md).
 
 ## Implementation Roadmap
 - [x] add mak-number-of-checkpoints support
-- [ ] add wandb logging to MaxText
+- [x] add wandb logging to MaxText
 - [x] add orbax lm-eval-harness adapter
 - [deprecated] add a checker and doc to verify the consistency between Huggingface and ORBAX format.
 
 ## Max Number of Checkpoints Support
 MaxText does not natively support limiting the number of checkpoints to save (i.e., deleting the older ones and only keep the last `k` checkpoints). This branch supports this features by adding [this line](https://github.com/Zephyr271828/maxtext/blob/0ac88df254f6d4ae1da377a1549e29309223f878/MaxText/checkpointing.py#L86).  
 In order to use this feature, you can simply add `checkpoint_max_to_keep=` to your config. You may refer to the [base config](https://github.com/Zephyr271828/maxtext/blob/0ac88df254f6d4ae1da377a1549e29309223f878/MaxText/configs/base.yml#L49).
+
+## Wandb Support
+Simply set `use_wandb`, `wandb_project`, and `wandb_run_name` in config and you'll be able to log with wandb. See implementation at [MaxText/metric_logger.py](MaxText/metric_logger.py). Enjoy!
 
 ## ORBAX Adapter
 Before you check, make sure you have initialized the submodules:

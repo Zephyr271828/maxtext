@@ -21,6 +21,7 @@ limitations under the License.
 import json
 import os
 import queue
+import wandb
 
 import numpy as np
 
@@ -59,9 +60,10 @@ class MetricLogger:
     self.cumulative_eval_metrics = {"scalar": defaultdict(float)}
     self.buffered_train_metrics = None
     
-    self.use_wandb = getattr(config, "use_wandb", False) and jax.process_index() == 0
+    self.use_wandb = getattr(config, "use_wandb", False) 
+    #and jax.process_index() == 0
     if self.use_wandb:
-      wandb.init(project=config.wandb_project, name=config.wandb_run_name, config=config.to_dict())
+      wandb.init(project=config.wandb_project, name=config.wandb_run_name)
 
   def write_metrics(self, metrics, step, is_training=True):
     """Entry point for all metrics writing in Train's Main."""
