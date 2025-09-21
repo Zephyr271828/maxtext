@@ -64,7 +64,20 @@ class MetricLogger:
     self.use_wandb = socket.gethostname().endswith("-0") and getattr(config, "use_wandb", False) 
     #and jax.process_index() == 0
     if self.use_wandb:
-      wandb.init(project=config.wandb_project, name=config.wandb_run_name)
+      run_id_path = os.path.join(config.tensorboard_dir, "wandb_run_id.txt")
+      if os.path.exists(run_id_path):
+        with open(run_id_path, "r") as f:
+          run_id = f.read().strip()
+      else:
+          run_id = wandb.util.generate_id()
+          with open(run_id_path, "w") as f:
+            f.write(run_id)
+      wandb.init(
+        project=config.wandb_project,
+        name=config.wandb_run_name,
+        id=run_id,
+        resume="allow",
+      )
 
   def write_metrics(self, metrics, step, is_training=True):
     """Entry point for all metrics writing in Train's Main."""
