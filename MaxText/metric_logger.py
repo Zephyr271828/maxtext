@@ -22,6 +22,7 @@ import json
 import os
 import queue
 import wandb
+import socket
 
 import numpy as np
 
@@ -60,7 +61,7 @@ class MetricLogger:
     self.cumulative_eval_metrics = {"scalar": defaultdict(float)}
     self.buffered_train_metrics = None
     
-    self.use_wandb = getattr(config, "use_wandb", False) 
+    self.use_wandb = socket.gethostname().endswith("-0") and getattr(config, "use_wandb", False) 
     #and jax.process_index() == 0
     if self.use_wandb:
       wandb.init(project=config.wandb_project, name=config.wandb_run_name)
