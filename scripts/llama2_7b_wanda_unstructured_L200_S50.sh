@@ -29,7 +29,6 @@ LOG_FILE="logs/${RUN_NAME}_$(date +%Y%m%d_%H%M%S).log"
 
 python -u multihost_runner.py \
     --TPU_PREFIX=$TPU_PREFIX \
-    --INTERNAL_IP=true \
     --COMMAND="
     export TPU_LOG_DIR=/home/zephyr/tpu_logs
     sudo docker run \

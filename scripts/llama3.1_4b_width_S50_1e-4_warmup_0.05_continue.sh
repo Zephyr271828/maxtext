@@ -30,7 +30,6 @@ export CONVERTED_CHECKPOINT='gs://llm_pruning_us_central1/model_ckpts/maxtext/ll
 
 python -u multihost_runner_orig.py \
     --TPU_PREFIX=$TPU_PREFIX \
-    --INTERNAL_IP=true \
     --COMMAND="
     export TPU_LOG_DIR=/home/zephyr/tpu_logs
     export WANDB_API_KEY='7d11bbca76b3081b6bd1efbbcf1572aab26c5d56'

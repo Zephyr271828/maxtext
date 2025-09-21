@@ -29,7 +29,6 @@ export RUN_NAME="${MODEL_NAME}_S50_seqlen_${SEQ_LEN}_bs_${BATCH_SIZE}_grad_accum
 
 python -u multihost_runner.py \
     --TPU_PREFIX=$TPU_PREFIX \
-    --INTERNAL_IP=true \
     --COMMAND="
     export TPU_LOG_DIR=/home/taimingluterry/tpu_logs
     sudo docker run \

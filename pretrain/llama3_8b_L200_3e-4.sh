@@ -29,7 +29,6 @@ export RUN_NAME="${MODEL_NAME}_L200_seqlen_${SEQ_LEN}_bs_${BATCH_SIZE}_grad_accu
 
 python -u multihost_runner_orig.py \
     --TPU_PREFIX=$TPU_PREFIX \
-    --INTERNAL_IP=true \
     --COMMAND="
     export TPU_LOG_DIR=/home/zephyr/tpu_logs
     source ~/maxtext_env/bin/activate

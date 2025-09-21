@@ -28,7 +28,6 @@ export RUN_NAME="${MODEL_NAME}_S320_seqlen_${SEQ_LEN}_bs_${BATCH_SIZE}_grad_accu
 
 python -u multihost_runner.py \
     --TPU_PREFIX=$TPU_PREFIX \
-    --INTERNAL_IP=true \
     --COMMAND="
     export TPU_LOG_DIR=/home/zephyr/tpu_logs
     export WANDB_API_KEY='7d11bbca76b3081b6bd1efbbcf1572aab26c5d56'

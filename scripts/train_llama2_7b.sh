@@ -11,15 +11,12 @@ conda activate ~/conda_envs/maxtext
 
 LOG_FILE="logs/training_$(date +%Y%m%d_%H%M%S).log"
 
-python multihost_runner.py \
+python multihost_runner_orig.py \
     --TPU_PREFIX=$TPU_PREFIX \
-    --INTERNAL_IP=true \
     --COMMAND="
     source ~/miniconda3/etc/profile.d/conda.sh
     conda activate ~/conda_envs/maxtext
     export TPU_LOG_DIR=/home/zephyr/tpu_logs
-
-    
 
     # export XLA_FLAGS='--xla_force_host_platform_device_count=4'
     # export CUDA_VISIBLE_DEVICES=''
