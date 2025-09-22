@@ -10,13 +10,16 @@ export DATASET_PATH='/home/zephyr/gcs-bucket/datasets/'
 # export MODEL='llama3.1-8b'
 # export HF_MODEL_PATH='/home/zephyr/gcs-bucket/model_ckpts/Llama-3.1-8B'
 
-export MODEL='llama2-7b'
-export HF_MODEL_PATH='/home/zephyr/gcs-bucket/model_ckpts/Llama-2-7b-hf'
+# export MODEL='llama2-7b'
+export MODEL="llama3.1-4b-width"
+# export HF_MODEL_PATH='/home/zephyr/gcs-bucket/model_ckpts/Llama-2-7b-hf'
+export HF_MODEL_PATH="/home/zephyr/gcs-bucket/model_ckpts/maxtext/llama3.1_minitron_width_HF"
 
 export BASE_OUTPUT_DIRECTORY="gs://$bucket_name/model_ckpts/maxtext"
 export PYTHONPATH='/home/zephyr/maxtext':$PYTHONPATH
 
-export CONVERTED_CHECKPOINT_PATH="gs://$bucket_name/model_ckpts/maxtext/${MODEL}"
+# export CONVERTED_CHECKPOINT_PATH="gs://$bucket_name/model_ckpts/maxtext/${MODEL}"
+export CONVERTED_CHECKPOINT_PATH="/home/zephyr/gcs-bucket/model_ckpts/maxtext/llama3.1-4b-width-orbax"
 export CONVERTED_CHECKPOINT="${CONVERTED_CHECKPOINT_PATH}/0/items"
 export DIRECT_PARAMETER_CHECKPOINT_RUN="direct_generate_param_only_checkpoint_${MODEL}"
 export UNSCANNED_CKPT_PATH="${BASE_OUTPUT_DIRECTORY}/${DIRECT_PARAMETER_CHECKPOINT_RUN}/checkpoints/0/items"
@@ -29,14 +32,14 @@ export UNSCANNED_CKPT_PATH="${BASE_OUTPUT_DIRECTORY}/${DIRECT_PARAMETER_CHECKPOI
 #     --model-size $MODEL \
 #     --maxtext-model-path ${CONVERTED_CHECKPOINT_PATH}
 
-# python3 -m MaxText.generate_param_only_checkpoint \
-#     MaxText/configs/base.yml \
-#     checkpoint_dir=${BASE_OUTPUT_DIRECTORY} \
-#     base_output_directory=${BASE_OUTPUT_DIRECTORY} \
-#     load_parameters_path=${CONVERTED_CHECKPOINT} \
-#     run_name=${DIRECT_PARAMETER_CHECKPOINT_RUN} \
-#     model_name=$MODEL \
-#     force_unroll=true
+python3 -m MaxText.generate_param_only_checkpoint \
+    MaxText/configs/base.yml \
+    checkpoint_dir=${BASE_OUTPUT_DIRECTORY} \
+    base_output_directory=${BASE_OUTPUT_DIRECTORY} \
+    load_parameters_path=${CONVERTED_CHECKPOINT} \
+    run_name=${DIRECT_PARAMETER_CHECKPOINT_RUN} \
+    model_name=$MODEL \
+    force_unroll=true
 
 # ORBAX TO HF
 # JAX_PLATFORMS=cpu python3 -m MaxText.llama_mistral_mixtral_orbax_to_hf \
