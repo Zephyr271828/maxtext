@@ -15,8 +15,8 @@ done
 export MODEL_NAME='llama3.1-4b-width'
 export NUM_STEPS=12500
 export SEQ_LEN=8192
-export BATCH_SIZE=4
-export GRAD_ACCUM=2
+export BATCH_SIZE=2
+export GRAD_ACCUM=4
 export GRAD_CLIP=1.0
 export LR=1.e-4
 export MIN_LR_RATIO=0.1
@@ -25,7 +25,7 @@ export ASYNC_CHECKPOINTING=false
 export BASE_OUTPUT_DIRECTORY="gs://$BUCKET_NAME/model_ckpts/maxtext"
 export DATA_FILES='/home/zephyr/gcs-bucket/datasets/dclm/llama3_64_array_record/*.array_record'
 
-export CONVERTED_CHECKPOINT="gs://$BUCKET_NAME/model_ckpts/maxtext/llama3.1-4b-depth-orbax/0/items"
+export CONVERTED_CHECKPOINT="gs://$BUCKET_NAME/model_ckpts/maxtext/llama3.1-4b-width-orbax/0/items"
 export RUN_NAME="${MODEL_NAME}_HF_S50_seqlen_${SEQ_LEN}_bs_${BATCH_SIZE}_grad_accum_${GRAD_ACCUM}_lr_${LR}_min_lr_ratio_${MIN_LR_RATIO}_warmup_ratio_${WARMUP_RATIO}_test2"
 
 python -u multihost_runner_orig.py \
