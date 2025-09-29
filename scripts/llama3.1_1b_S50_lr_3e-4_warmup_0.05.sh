@@ -15,7 +15,7 @@ done
 export MODEL_NAME='llama3.1-1b'
 export NUM_STEPS=12500
 export SEQ_LEN=8192
-export BATCH_SIZE=4
+export BATCH_SIZE=2
 export GRAD_ACCUM=8
 export GRAD_CLIP=1.0
 export LR=3.e-4
