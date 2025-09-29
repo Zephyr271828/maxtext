@@ -15,11 +15,11 @@
 # model config for llama3.1-1b
 
 base_emb_dim: 2048
-base_num_query_heads: 32
-base_num_kv_heads: 8
+base_num_query_heads: 16
+base_num_kv_heads: 4
 base_num_decoder_layers: 16
 base_mlp_dim: 8192
-head_dim: 64
+head_dim: 128
 mlp_activations: ["silu","linear"]
 vocab_size: 128256
 enable_dropout: False
