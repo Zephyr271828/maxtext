@@ -58,6 +58,5 @@ python -u multihost_runner_orig.py \
         use_wandb=True \
         wandb_project=llm_pruning \
         wandb_run_name=${TPU_PREFIX}_${RUN_NAME} \
-        packing=false \
-        attention=dot_product
+        packing=false 
     "
