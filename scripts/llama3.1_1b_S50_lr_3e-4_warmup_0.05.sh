@@ -54,7 +54,7 @@ python -u multihost_runner_orig.py \
         cosine_learning_rate_final_fraction=${MIN_LR_RATIO} \
         warmup_steps_fraction=${WARMUP_RATIO} \
         checkpoint_period=250 \
-        checkpoint_max_to_keep=5 \
+        checkpoint_max_to_keep=1000 \
         use_wandb=True \
         wandb_project=llm_pruning \
         wandb_run_name=${TPU_PREFIX}_${RUN_NAME} \
