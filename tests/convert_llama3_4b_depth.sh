@@ -3,11 +3,11 @@
 set +x
 set -eo pipefail
 
-export bucket_name=llm_pruning_us_central2_b
+export bucket_name=llm_pruning_europe_west4
 
 export DATASET_PATH='/home/zephyr/gcs-bucket/datasets/'
 
-export MODEL='llama3-4b-depth'
+export MODEL='llama3.1-4b-depth'
 # export MODEL='llama2-7b'
 export BASE_OUTPUT_DIRECTORY="gs://$bucket_name/model_ckpts/maxtext"
 export HF_MODEL_PATH='/home/zephyr/gcs-bucket/model_ckpts/llama3-4b-depth-fms-to-hf'
