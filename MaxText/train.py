@@ -66,6 +66,7 @@ from MaxText.utils.goodput_utils import (
 )
 from MaxText.generate_param_only_checkpoint import generate_decode_checkpoint
 from MaxText.vertex_tensorboard import VertexTensorboardManager
+from copy import deepcopy
 # Placeholder: internal
 
 import MaxText as mt
