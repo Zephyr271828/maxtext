@@ -261,7 +261,7 @@ def convert_orbax_hf(hf_model_path, config):
 
 
 def main(argv: Sequence[str]):
-  config = pyconfig.initialize(argv[:-1], init_dist=False)
+  config = pyconfig.initialize(argv[:-1])
   hf_model_path = argv[-1].split("=")[1]
   print(f"Will save converted HuggingFace checkpoint to path = {hf_model_path}")
 
