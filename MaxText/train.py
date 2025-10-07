@@ -661,7 +661,6 @@ def train_loop(config, recorder, state=None):
       state_to_save = state if not config.use_dpo else _split_dpo_state(state)[0]
       checkpointing.maybe_save_checkpoint(checkpoint_manager, state_to_save, config, data_iterator, step)
 
-      pseudo_config = pyconfig.HyperParameters(**vars(config))
       if config and config.enable_checkpointing:
         if (
           (step % config.checkpoint_period == 0)
