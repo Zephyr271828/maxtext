@@ -499,7 +499,7 @@ class _HyperParameters:
       return base_config
     return raw_data_from_yaml
 
-  def __init__(self, argv: list[str], **kwargs):
+  def __init__(self, argv: list[str], init_dist: bool=True, **kwargs):
     config_name: str = argv[1]
     raw_data_from_yaml = self._load_config(config_name)
 
@@ -519,7 +519,8 @@ class _HyperParameters:
     # We initialize the jax distributed system here because it must be done before device backend is initialized.
     if raw_keys["jax_debug_log_modules"]:
       jax.config.update("jax_debug_log_modules", raw_keys["jax_debug_log_modules"])
-    max_utils.maybe_initialize_jax_distributed_system(raw_keys)
+    if init_dist:
+      max_utils.maybe_initialize_jax_distributed_system(raw_keys)
 
     if raw_keys["jax_cache_dir"]:
       compilation_cache.set_cache_dir(os.path.expanduser(raw_keys["jax_cache_dir"]))
@@ -1130,8 +1131,8 @@ class HyperParameters:
     return self._config.keys
 
 
-def initialize(argv, **kwargs):
-  _config = _HyperParameters(argv, **kwargs)
+def initialize(argv, init_dist=True, **kwargs):
+  _config = _HyperParameters(argv, init_dist=init_dist, **kwargs)
   config = HyperParameters(_config)
   return config
 
