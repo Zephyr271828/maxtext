@@ -662,12 +662,18 @@ def train_loop(config, recorder, state=None):
       checkpointing.maybe_save_checkpoint(checkpoint_manager, state_to_save, config, data_iterator, step)
 
       # pseudo_config = pyconfig.HyperParameters(**vars(config))
-      inner = deepcopy(config._config)
-      
-      inner.load_paramaters_path = f"{config.base_output_directory}/{config.run_name}/checkpoints/{step}/items"
-      inner.run_name = f"direct_{config.run_name}"
-      pseudo_config = pyconfig.HyperParameters(inner)
-      generate_decode_checkpoint(pseudo_config, step=step)
+      if config and config.enable_checkpointing:
+        if (
+          (step % config.checkpoint_period == 0)
+          or (config.enable_emergency_checkpoint and step % config.local_checkpoint_period == 0)
+        ):
+          inner = deepcopy(config._config)
+          
+          inner.load_paramaters_path = f"{config.base_output_directory}/{config.run_name}/checkpoints/{step}/items"
+          inner.run_name = f"direct_{config.run_name}"
+          inner.force_unroll = True
+          pseudo_config = pyconfig.HyperParameters(inner)
+          generate_decode_checkpoint(pseudo_config, step=step)
 
       if config.dump_hlo and step == (config.dump_step if config.dump_step >= 0 else start_step):
         jax.block_until_ready(state)  # Ensure compilation has finished.

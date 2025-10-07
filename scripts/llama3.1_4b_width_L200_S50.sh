@@ -63,7 +63,7 @@ python -u multihost_runner.py \
             learning_rate=3.e-4 \
             cosine_learning_rate_final_fraction=0.1 \
             warmup_steps_fraction=0.05 \
-            checkpoint_period=250 \
+            checkpoint_period=10 \
             max_to_keep=1 \
             packing=false
         \"
