@@ -33,7 +33,7 @@ from MaxText import max_logging
 from MaxText import tokenizer
 
 
-def find_data_files(data_file_pattern):
+def find_data_files(data_file_pattern, start_from: int = 0):
   data_files = glob.glob(str(Path(data_file_pattern).expanduser().resolve()))
   assert len(data_files) > 0, f"No file found with pattern {data_file_pattern}."
   max_logging.log(f"Found {len(data_files)} files for train/eval with grain")
@@ -49,6 +49,7 @@ def get_datasets(
     dataloading_host_index,
     dataloading_host_count,
     grain_worker_count,
+    start_from: int = 0,
 ):
   """Load dataset from array_record files for using with grain"""
   if data_file_type == "arrayrecord":
@@ -58,11 +59,11 @@ def get_datasets(
       weights = [float(weight) for weight in weights]
       weights = [round(weight / sum(weights), 4) for weight in weights]
       dataset_list = [
-          grain.MapDataset.source(grain.ArrayRecordDataSource(find_data_files(pattern))) for pattern in data_file_patterns
+          grain.MapDataset.source(grain.ArrayRecordDataSource(find_data_files(pattern, start_from=start_from))) for pattern in data_file_patterns
       ]
       dataset = grain.MapDataset.mix(dataset_list, weights)
     else:
-      data_files = find_data_files(data_file_pattern)
+      data_files = find_data_files(data_file_pattern, start_from=start_from)
       dataset = grain.MapDataset.source(grain.ArrayRecordDataSource(data_files))
     if shuffle:
       dataset = dataset.shuffle(seed=shuffle_seed)
@@ -199,6 +200,7 @@ def make_grain_train_iterator(
         dataloading_host_index=process_indices.index(jax.process_index()),
         dataloading_host_count=len(process_indices),
         grain_worker_count=config.grain_worker_count,
+        start_from=config.start_from_file_index,
     )
     if config.use_dpo:
       train_dataloader = dpo_preprocessing_pipeline(
@@ -226,6 +228,7 @@ def make_grain_train_iterator(
         shuffle_seed=config.data_shuffle_seed,
         num_epoch=config.num_epoch,
         grain_worker_count=config.grain_worker_count,
+        start_from=config.start_from_file_index,
     )
     if config.use_dpo:
       preprocessing_fn = functools.partial(
@@ -266,6 +269,7 @@ def make_grain_eval_iterator(
         dataloading_host_index=process_indices.index(jax.process_index()),
         dataloading_host_count=len(process_indices),
         grain_worker_count=config.grain_worker_count_eval,
+        start_from=config.start_from_file_index_eval,
     )
     if config.use_dpo:
       eval_dataloader = dpo_preprocessing_pipeline(
@@ -293,6 +297,7 @@ def make_grain_eval_iterator(
         shuffle_seed=config.data_shuffle_seed,
         num_epoch=1,
         grain_worker_count=config.grain_worker_count_eval,
+        start_from=config.start_from_file_index_eval,
     )
     if config.use_dpo:
       preprocessing_fn = functools.partial(

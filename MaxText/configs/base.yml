@@ -474,6 +474,8 @@ grain_eval_files: ''
 grain_file_type: 'arrayrecord' # arrayrecord or parquet
 grain_worker_count: 1
 grain_worker_count_eval: 1
+start_from_file_index: 0
+start_from_file_index_eval: 0
 # for using pathways
 colocated_python_data_input: False  # experimental feature, under testing
 
