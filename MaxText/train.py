@@ -660,7 +660,10 @@ def train_loop(config, recorder, state=None):
       state_to_save = state if not config.use_dpo else _split_dpo_state(state)[0]
       checkpointing.maybe_save_checkpoint(checkpoint_manager, state_to_save, config, data_iterator, step)
 
-      pseudo_config = pyconfig.HyperParameters(**vars(config))
+      # pseudo_config = pyconfig.HyperParameters(**vars(config))
+      config_dict = {k: v for k, v in vars(config).items() if not k.startswith("_")}
+      pseudo_config = pyconfig.HyperParameters(**config_dict)
+      
       pseudo_config.load_paramaters_path = f"{config.base_output_directory}/{config.run_name}/checkpoints/{step}/items"
       pseudo_config.run_name = f"direct_{config.run_name}"
       generate_decode_checkpoint(pseudo_config, step=step)
