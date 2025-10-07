@@ -661,11 +661,11 @@ def train_loop(config, recorder, state=None):
       checkpointing.maybe_save_checkpoint(checkpoint_manager, state_to_save, config, data_iterator, step)
 
       # pseudo_config = pyconfig.HyperParameters(**vars(config))
-      config_dict = {k: v for k, v in vars(config).items() if not k.startswith("_")}
-      pseudo_config = pyconfig.HyperParameters(**config_dict)
+      inner = deepcopy(config._config)
       
-      pseudo_config.load_paramaters_path = f"{config.base_output_directory}/{config.run_name}/checkpoints/{step}/items"
-      pseudo_config.run_name = f"direct_{config.run_name}"
+      inner.load_paramaters_path = f"{config.base_output_directory}/{config.run_name}/checkpoints/{step}/items"
+      inner.run_name = f"direct_{config.run_name}"
+      pseudo_config = pyconfig.HyperParameters(inner)
       generate_decode_checkpoint(pseudo_config, step=step)
 
       if config.dump_hlo and step == (config.dump_step if config.dump_step >= 0 else start_step):
