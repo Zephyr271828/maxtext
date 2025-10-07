@@ -205,7 +205,7 @@ def generate_decode_checkpoint(config, step=0):
 
 def main(argv: Sequence[str]) -> None:
   print(argv)
-  config = pyconfig.initialize(argv)
+  config = pyconfig.initialize(argv, init_dist=False)
   generate_decode_checkpoint(config)
 
 

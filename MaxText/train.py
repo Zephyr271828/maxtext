@@ -669,8 +669,14 @@ def train_loop(config, recorder, state=None):
         ):
           inner = deepcopy(config._config)
           
+          print('before', inner.load_paramaters_path)
           inner.load_paramaters_path = f"{config.base_output_directory}/{config.run_name}/checkpoints/{step}/items"
+          print('after', inner.load_paramaters_path)
+          
+          print('before', inner.run_name)
           inner.run_name = f"direct_{config.run_name}"
+          print('after', inner.run_name)
+          
           inner.force_unroll = True
           pseudo_config = pyconfig.HyperParameters(inner)
           generate_decode_checkpoint(pseudo_config, step=step)
