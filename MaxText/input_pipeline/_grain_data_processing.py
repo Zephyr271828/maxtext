@@ -35,6 +35,7 @@ from MaxText import tokenizer
 
 def find_data_files(data_file_pattern, start_from: int = 0):
   data_files = glob.glob(str(Path(data_file_pattern).expanduser().resolve()))
+  data_files = data_files[start_from:]
   assert len(data_files) > 0, f"No file found with pattern {data_file_pattern}."
   max_logging.log(f"Found {len(data_files)} files for train/eval with grain")
   return data_files

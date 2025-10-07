@@ -26,7 +26,7 @@ export BASE_OUTPUT_DIRECTORY="gs://$BUCKET_NAME/model_ckpts/maxtext"
 export DATA_FILES='/home/zephyr/gcs-bucket/datasets/dclm/llama3_64_array_record/*.array_record'
 
 export CONVERTED_CHECKPOINT="gs://$BUCKET_NAME/model_ckpts/maxtext/llama3.1-4b-depth-orbax/0/items"
-export RUN_NAME="${MODEL_NAME}_HF_S50_seqlen_${SEQ_LEN}_bs_${BATCH_SIZE}_grad_accum_${GRAD_ACCUM}_lr_${LR}_min_lr_ratio_${MIN_LR_RATIO}_warmup_ratio_${WARMUP_RATIO}_test2"
+export RUN_NAME="${MODEL_NAME}_L200_S50_seqlen_${SEQ_LEN}_bs_${BATCH_SIZE}_grad_accum_${GRAD_ACCUM}_lr_${LR}_min_lr_ratio_${MIN_LR_RATIO}_warmup_ratio_${WARMUP_RATIO}_test2"
 
 python -u multihost_runner_orig.py \
     --TPU_PREFIX=$TPU_PREFIX \

@@ -156,7 +156,7 @@ def _save_decode_checkpoint(config, state, checkpoint_manager):
   checkpoint_manager.wait_until_finished()
 
 
-def generate_decode_checkpoint(config):
+def generate_decode_checkpoint(config, step=0):
   """
   Generate an decode checkpoint from a given training checkpoint.
   - Training checkpoint is loaded from config.load_full_state_path.
@@ -195,7 +195,7 @@ def generate_decode_checkpoint(config):
   # Save decode state to config's checkpoint directory at step 0
   max_logging.log(f"Save decode checkpoint at: {base_checkpoint_dir}")
   _save_decode_checkpoint(config, training_state, checkpoint_manager)
-  max_logging.log(f"Successfully generated decode checkpoint at: {base_checkpoint_dir}0/items")
+  max_logging.log(f"Successfully generated decode checkpoint at: {base_checkpoint_dir}{step}/items")
 
   if config.lora_input_adapters_path:
     _generate_lora_decode_checkpoints(config, mesh)

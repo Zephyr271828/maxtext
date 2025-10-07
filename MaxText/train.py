@@ -64,6 +64,7 @@ from MaxText.utils.goodput_utils import (
     maybe_monitor_goodput,
     maybe_record_goodput,
 )
+from MaxText.generate_param_only_checkpoint import generate_decode_checkpoint
 from MaxText.vertex_tensorboard import VertexTensorboardManager
 # Placeholder: internal
 
@@ -658,6 +659,11 @@ def train_loop(config, recorder, state=None):
 
       state_to_save = state if not config.use_dpo else _split_dpo_state(state)[0]
       checkpointing.maybe_save_checkpoint(checkpoint_manager, state_to_save, config, data_iterator, step)
+
+      pseudo_config = pyconfig.HyperParameters(**vars(config))
+      pseudo_config.load_paramaters_path = f"{config.base_output_directory}/{config.run_name}/checkpoints/{step}/items"
+      pseudo_config.run_name = f"direct_{config.run_name}"
+      generate_decode_checkpoint(pseudo_config, step=step)
 
       if config.dump_hlo and step == (config.dump_step if config.dump_step >= 0 else start_step):
         jax.block_until_ready(state)  # Ensure compilation has finished.
