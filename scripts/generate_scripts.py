@@ -156,3 +156,22 @@ if __name__ == "__main__":
                 # load_parameters_path=args.load_parameters_path,
                 # output_path=args.output_path,
             )
+            
+    for load_path, model_name in zip(
+        ["model_ckpts/maxtext/llama3.1_minitron_depth_hf/0/items", "model_ckpts/maxtext/llama3.1_minitron_width_hf/0/items"],
+        ["llama3.1-4b-depth", "llama3.1-4b-width"]
+    ):
+        for num_steps in [12500]:
+            generate_script(
+                model_name=model_name,
+                lr=3e-4,
+                num_steps=num_steps,
+                batch_size=2,
+                grad_accum=4,
+                load_parameters_path=load_path,
+                # load_parameters_path="model_ckpts/llama3.1-4b-depth-orbax/0/items",
+                # load_parameters_path=args.load_parameters_path,
+                # output_path=args.output_path,
+            )
+            
+        
