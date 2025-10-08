@@ -18,24 +18,28 @@ shift
 for arg in "$@"; do
   case $arg in
     --model=*) MODEL="${arg#*=}" ;;
-    --orbax_ckpt_path=*) CONVERTED_CHECKPOINT="${arg#*=}" ;;
-    --hf_model_path=*) HF_MODEL_PATH="${arg#*=}" ;;
-    --direct_run_name=*) DIRECT_PARAMETER_CHECKPOINT_RUN="${arg#*=}" ;;
+    --orbax_ckpt_path=*) ORBAX_CKPT_NAME="${arg#*=}" ;;
+    --step=*) STEP="${arg#*=}" ;;
+    --hf_model_path=*) HF_MODEL_NAME="${arg#*=}" ;;
+    --direct_run_name=*) DIRECT_RUN_NAME="${arg#*=}" ;;
     *) echo "[WARN] Unknown arg $arg" ;;
   esac
 done
 
 ### ====== CONFIG ======
-export BASE_OUTPUT_DIRECTORY="gs://${BUCKET_NAME}/model_ckpts/maxtext"
+# place to save the maxtext ckpts
+export ORBAX_CKPT_DIR="gs://${BUCKET_NAME}/model_ckpts/maxtext"
+export STEP="${STEP:-0}"
+export DIRECT_CKPT_DIR="gs://${BUCKET_NAME}/model_ckpts/direct"
+export HF_CKPT_DIR="gs://${BUCKET_NAME}/model_ckpts/hf"
 export PYTHONPATH="/home/zephyr/maxtext":${PYTHONPATH:-''}
-
 
 case "$MODE" in
   hf_to_orbax)
     echo "[INFO] 🚀 Converting Hugging Face → Orbax..."
-    CONVERTED_CHECKPOINT_PATH="${BASE_OUTPUT_DIRECTORY}/model_ckpts/maxtext/${CONVERTED_CHECKPOINT}"
+    export CONVERTED_CHECKPOINT_PATH="${ORBAX_CKPT_DIR}/${ORBAX_CKPT_NAME}"
     JAX_PLATFORMS=cpu python3 -m MaxText.llama_or_mistral_ckpt \
-      --base-model-path ${HF_MODEL_PATH} \
+      --base-model-path ${HF_MODEL_NAME} \
       --huggingface-checkpoint True \
       --model-size $MODEL \
       --maxtext-model-path ${CONVERTED_CHECKPOINT_PATH}
@@ -43,23 +47,26 @@ case "$MODE" in
 
   gen_param_ckpt)
     echo "[INFO] 🧩 Generating parameter-only checkpoint..."
+    export CONVERTED_CHECKPOINT="${ORBAX_CKPT_DIR}/${ORBAX_CKPT_NAME}/${STEP}/items"
     JAX_PLATFORMS=cpu python3 -m MaxText.generate_param_only_checkpoint \
       MaxText/configs/base.yml \
       skip_jax_distributed_system=True \
-      checkpoint_dir=${BASE_OUTPUT_DIRECTORY} \
-      base_output_directory=${BASE_OUTPUT_DIRECTORY} \
+      checkpoint_dir=${ORBAX_CKPT_DIR} \
+      base_output_directory=${DIRECT_CKPT_DIR} \
       load_parameters_path=${CONVERTED_CHECKPOINT} \
-      run_name=${DIRECT_PARAMETER_CHECKPOINT_RUN} \
+      run_name=${DIRECT_RUN_NAME} \
       model_name=$MODEL \
       force_unroll=true
     ;;
 
   orbax_to_hf)
     echo "[INFO] 🔁 Converting Orbax → Hugging Face..."
+    export HF_MODEL_PATH="${HF_CKPT_DIR}/${HF_MODEL_NAME}"
+    export CONVERTED_CHECKPOINT="${ORBAX_CKPT_DIR}/${ORBAX_CKPT_NAME}/${STEP}/items"
     JAX_PLATFORMS=cpu python3 -m MaxText.llama_mistral_mixtral_orbax_to_hf \
       MaxText/configs/base.yml \
       skip_jax_distributed_system=True \
-      base_output_directory=${BASE_OUTPUT_DIRECTORY} \
+      base_output_directory=${HF_CKPT_DIR} \
       load_parameters_path=${CONVERTED_CHECKPOINT} \
       run_name=convert_to_hf \
       model_name=${MODEL} \
@@ -68,7 +75,8 @@ case "$MODE" in
 
   logits_test)
     echo "[INFO] 🧪 Running forward pass equivalence test..."
-    export UNSCANNED_CKPT_PATH="${BASE_OUTPUT_DIRECTORY}/${DIRECT_PARAMETER_CHECKPOINT_RUN}/checkpoints/0/items"
+    export HF_MODEL_PATH="${HF_CKPT_DIR}/${HF_MODEL_NAME}"
+    export UNSCANNED_CKPT_PATH="${DIRECT_CKPT_DIR}/${DIRECT_RUN_NAME}/checkpoints/0/items"
     python3 -u tests/test_eq.py \
       MaxText/configs/base.yml \
       skip_jax_distributed_system=True \
@@ -87,7 +95,8 @@ case "$MODE" in
 
   eval)
   echo "[INFO] 🧪 Running evaluation..."
-  export UNSCANNED_CKPT_PATH="${BASE_OUTPUT_DIRECTORY}/${DIRECT_PARAMETER_CHECKPOINT_RUN}/checkpoints/0/items"
+  export HF_MODEL_PATH="${HF_CKPT_DIR}/${HF_MODEL_NAME}"
+  export UNSCANNED_CKPT_PATH="${DIRECT_CKPT_DIR}/${DIRECT_RUN_NAME}/checkpoints/0/items"
   cd lm-evaluation-harness
   python3 -u scripts/test_orbax_eval.py \
     ../MaxText/configs/base.yml \
