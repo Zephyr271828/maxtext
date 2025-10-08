@@ -28,11 +28,12 @@ done
 ### ====== CONFIG ======
 export BASE_OUTPUT_DIRECTORY="gs://${BUCKET_NAME}/model_ckpts/maxtext"
 export PYTHONPATH="/home/zephyr/maxtext":${PYTHONPATH:-''}
-export UNSCANNED_CKPT_PATH="${BASE_OUTPUT_DIRECTORY}/${DIRECT_PARAMETER_CHECKPOINT_RUN}/checkpoints/0/items"
+
 
 case "$MODE" in
   hf_to_orbax)
     echo "[INFO] 🚀 Converting Hugging Face → Orbax..."
+    CONVERTED_CHECKPOINT_PATH="${BASE_OUTPUT_DIRECTORY}/model_ckpts/maxtext/${CONVERTED_CHECKPOINT}"
     JAX_PLATFORMS=cpu python3 -m MaxText.llama_or_mistral_ckpt \
       --base-model-path ${HF_MODEL_PATH} \
       --huggingface-checkpoint True \
@@ -67,6 +68,7 @@ case "$MODE" in
 
   logits_test)
     echo "[INFO] 🧪 Running forward pass equivalence test..."
+    export UNSCANNED_CKPT_PATH="${BASE_OUTPUT_DIRECTORY}/${DIRECT_PARAMETER_CHECKPOINT_RUN}/checkpoints/0/items"
     python3 -u tests/test_eq.py \
       MaxText/configs/base.yml \
       skip_jax_distributed_system=True \
@@ -85,6 +87,7 @@ case "$MODE" in
 
   eval)
   echo "[INFO] 🧪 Running evaluation..."
+  export UNSCANNED_CKPT_PATH="${BASE_OUTPUT_DIRECTORY}/${DIRECT_PARAMETER_CHECKPOINT_RUN}/checkpoints/0/items"
   cd lm-evaluation-harness
   python3 -u scripts/test_orbax_eval.py \
     ../MaxText/configs/base.yml \
