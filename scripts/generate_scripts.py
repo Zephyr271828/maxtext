@@ -164,7 +164,7 @@ if __name__ == "__main__":
         for num_steps in [12500]:
             generate_script(
                 model_name=model_name,
-                lr=3e-4,
+                lr=1e-4,
                 num_steps=num_steps,
                 batch_size=2,
                 grad_accum=4,
