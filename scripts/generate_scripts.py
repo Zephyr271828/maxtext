@@ -19,18 +19,26 @@ def generate_script(
 ):
     """Generate a TPU MaxText training shell script from template."""
 
-    run_name = (
-        f"{model_name}_L200_S50_seqlen_{seq_len}_bs_{batch_size}_"
-        f"grad_accum_{grad_accum}_lr_{lr}_min_lr_ratio_{min_lr_ratio}_"
-        f"warmup_ratio_{warmup_ratio}"
-    )
-
     # Dynamically include load_parameters_path only if provided
     load_path_line = f"load_parameters_path=gs://${{BUCKET_NAME}}/{load_parameters_path} \\\n            " if load_parameters_path else ""
 
     load_part = load_parameters_path.replace("/", "_") if load_parameters_path else "none"
     
-    job_name = f"{model_name}_steps_{num_steps}_lr_{lr}_load_{load_part}"
+    # handle experiment type
+    exp_type = "unknown"
+    if not load_parameters_path:
+        # if we are using a small model
+        if any(x in model_name.lower() for x in ["4b", "3b", "2b", "1.5b", "1b"]):
+            exp_type = f"S{num_steps // 250}"
+        elif any(x in model_name.lower() for x in ["8b", "7b"]):
+            exp_type = f"L{num_steps // 250}"
+    else:
+        if "minitron" in load_parameters_path:
+            exp_type = f"L200_S{num_steps // 250}"
+        else:
+            exp_type = f"HF_S{num_steps // 250}"
+
+    job_name = f"{model_name}_{exp_type}_seqlen_{seq_len}_bs_{batch_size}_grad_accum_{grad_accum}_lr_{lr}_minlr_{min_lr_ratio}_warmup_{warmup_ratio}"
 
     script = dedent(f"""\
     #!/bin/bash
@@ -53,7 +61,7 @@ def generate_script(
     export ASYNC_CHECKPOINTING={str(async_checkpointing).lower()}
     export BASE_OUTPUT_DIRECTORY="gs://${{BUCKET_NAME}}/model_ckpts/maxtext"
     export DATA_FILES="{data_files}"
-    export RUN_NAME="{run_name}"
+    export RUN_NAME="${{MODEL_NAME}}_{exp_type}_seqlen_${{SEQ_LEN}}_bs_${{BATCH_SIZE}}_grad_accum_${{GRAD_ACCUM}}_lr_${{LR}}_min_lr_ratio_${{MIN_LR_RATIO}}_warmup_ratio_${{WARMUP_RATIO}}"
     export JAX_PLATFORMS=tpu
 
     python -u multihost_runner_orig.py \\
@@ -174,4 +182,19 @@ if __name__ == "__main__":
                 # output_path=args.output_path,
             )
             
-        
+    for load_path, model_name in zip(
+        ["model_ckpts/llama3.1-4b-depth-orbax/0/items", "model_ckpts/llama3.1-4b-width-orbax/0/items"],
+        ["llama3.1-4b-depth", "llama3.1-4b-width"]
+    ):
+        for num_steps in [12500]:
+            generate_script(
+                model_name=model_name,
+                lr=1e-4,
+                num_steps=num_steps,
+                batch_size=2,
+                grad_accum=4,
+                load_parameters_path=load_path,
+                # load_parameters_path="model_ckpts/llama3.1-4b-depth-orbax/0/items",
+                # load_parameters_path=args.load_parameters_path,
+                # output_path=args.output_path,
+            )
