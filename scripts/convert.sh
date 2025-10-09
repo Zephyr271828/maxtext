@@ -112,6 +112,7 @@ case "$MODE" in
     max_prefill_predict_length=4 \
     max_target_length=8192 \
     dataset_type=synthetic \
+    attention="dot_product" \
     dtype=bfloat16 \
     scan_layers=false \
     --hf_model_path=${HF_MODEL_PATH} 
