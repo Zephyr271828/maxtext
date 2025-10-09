@@ -9,7 +9,7 @@ export BUCKET_NAME="$(get_bucket_name)"
 export TPU_PREFIX="$(get_tpu_name)"
 
 if [[ $# -lt 1 ]]; then
-  echo "Usage: $0 <mode> [--model=MODEL] [--bucket_name=BUCKET] [--lr=LR] [--hf_model_path=PATH]"
+  echo "Usage: $0 <mode> [--model=MODEL] [--orbax_ckpt_path=ORBAX_CKPT_NAME] [--step=STEP] [--hf_model_path=HF_MODEL_NAME] [--direct_run_name=DIRECT_RUN_NAME]"
   echo "Modes: hf_to_orbax | gen_param_ckpt | orbax_to_hf | logits_test | eval"
   exit 1
 fi
@@ -31,7 +31,7 @@ done
 export ORBAX_CKPT_DIR="gs://${BUCKET_NAME}/model_ckpts/maxtext"
 export STEP="${STEP:-0}"
 export DIRECT_CKPT_DIR="gs://${BUCKET_NAME}/model_ckpts/direct"
-export HF_CKPT_DIR="gs://${BUCKET_NAME}/model_ckpts/hf"
+export HF_CKPT_DIR="/home/zephyr/gcs-bucket/model_ckpts/hf"
 export PYTHONPATH="/home/zephyr/maxtext":${PYTHONPATH:-''}
 
 case "$MODE" in
@@ -98,8 +98,13 @@ case "$MODE" in
   export HF_MODEL_PATH="${HF_CKPT_DIR}/${HF_MODEL_NAME}"
   export UNSCANNED_CKPT_PATH="${DIRECT_CKPT_DIR}/${DIRECT_RUN_NAME}/checkpoints/0/items"
   cd lm-evaluation-harness
+  TPU_CHIPS_PER_HOST_BOUNDS=1,1,1 \
+  TPU_HOST_BOUNDS=1,1,1 \
+  TPU_VISIBLE_DEVICES=0,1,2,3 \
+  XLA_USE_BF16=1 \
   python3 -u scripts/test_orbax_eval.py \
     ../MaxText/configs/base.yml \
+    skip_jax_distributed_system=True \
     load_parameters_path=${UNSCANNED_CKPT_PATH} \
     run_name=forward_pass_test \
     per_device_batch_size=1 \
