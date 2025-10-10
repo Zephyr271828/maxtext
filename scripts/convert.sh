@@ -22,6 +22,7 @@ for arg in "$@"; do
     --step=*) STEP="${arg#*=}" ;;
     --hf_model_path=*) HF_MODEL_NAME="${arg#*=}" ;;
     --direct_run_name=*) DIRECT_RUN_NAME="${arg#*=}" ;;
+    --tasks=*) TASKS="${arg#*=}" ;;
     *) echo "[WARN] Unknown arg $arg" ;;
   esac
 done
@@ -115,7 +116,9 @@ case "$MODE" in
     attention="dot_product" \
     dtype=bfloat16 \
     scan_layers=false \
-    --hf_model_path=${HF_MODEL_PATH} 
+    --hf_model_path=${HF_MODEL_PATH} \
+    --tasks=${TASKS:-""}
+
   cd ..
 ;;
 
