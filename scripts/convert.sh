@@ -11,6 +11,7 @@ export TPU_PREFIX="$(get_tpu_name)"
 if [[ $# -lt 1 ]]; then
   echo "Usage: $0 <mode> [--model=MODEL] [--orbax_ckpt_path=ORBAX_CKPT_NAME] [--step=STEP] [--hf_model_path=HF_MODEL_NAME] [--direct_run_name=DIRECT_RUN_NAME]"
   echo "Modes: hf_to_orbax | gen_param_ckpt | orbax_to_hf | logits_test | eval"
+  echo "Run $0 help for more details."
   exit 1
 fi
 MODE=$1
@@ -20,12 +21,21 @@ for arg in "$@"; do
     --model=*) MODEL="${arg#*=}" ;;
     --orbax_ckpt_path=*) ORBAX_CKPT_NAME="${arg#*=}" ;;
     --step=*) STEP="${arg#*=}" ;;
-    --hf_model_path=*) HF_MODEL_NAME="${arg#*=}" ;;
+    --hf_model_name=*) HF_MODEL_NAME="${arg#*=}" ;;
     --direct_run_name=*) DIRECT_RUN_NAME="${arg#*=}" ;;
     --tasks=*) TASKS="${arg#*=}" ;;
     *) echo "[WARN] Unknown arg $arg" ;;
   esac
 done
+
+if [[ $MODE == "help" ]]; then
+  echo "$0 hf_to_orbax     --model=MODEL --orbax_ckpt_path=ORBAX_CKPT_NAME --hf_model_name=HF_MODEL_NAME"
+  echo "$0 gen_param_ckpt  --model=MODEL --orbax_ckpt_path=ORBAX_CKPT_NAME --step=STEP                    --direct_run_name=DIRECT_RUN_NAME"
+  echo "$0 orbax_to_hf     --model=MODEL --orbax_ckpt_path=ORBAX_CKPT_NAME --step=STEP                    --hf_model_name=HF_MODEL_NAME"
+  echo "$0 logits_test     --model=MODEL --direct_run_name=DIRECT_RUN_NAME --hf_model_name=HF_MODEL_NAME"
+  echo "$0 eval            --model=MODEL --direct_run_name=DIRECT_RUN_NAME --hf_model_name=HF_MODEL_NAME [--tasks=TASKS]"
+  exit 0
+fi
 
 ### ====== CONFIG ======
 # place to save the maxtext ckpts
@@ -38,7 +48,7 @@ export PYTHONPATH="/home/zephyr/maxtext":${PYTHONPATH:-''}
 case "$MODE" in
   hf_to_orbax)
     echo "[INFO] 🚀 Converting Hugging Face → Orbax..."
-    export CONVERTED_CHECKPOINT_PATH="${ORBAX_CKPT_DIR}/${ORBAX_CKPT_NAME}"
+    export CONVERTED_CHECKPOINT_PATH="${ORBAX_CKPT_DIR}/${ORBAX_CKPT_NAME}/checkpoints"
     JAX_PLATFORMS=cpu python3 -m MaxText.llama_or_mistral_ckpt \
       --base-model-path ${HF_MODEL_NAME} \
       --huggingface-checkpoint True \
@@ -48,7 +58,7 @@ case "$MODE" in
 
   gen_param_ckpt)
     echo "[INFO] 🧩 Generating parameter-only checkpoint..."
-    export CONVERTED_CHECKPOINT="${ORBAX_CKPT_DIR}/${ORBAX_CKPT_NAME}/${STEP}/items"
+    export CONVERTED_CHECKPOINT="${ORBAX_CKPT_DIR}/${ORBAX_CKPT_NAME}/checkpoints/${STEP}/items"
     JAX_PLATFORMS=cpu python3 -m MaxText.generate_param_only_checkpoint \
       MaxText/configs/base.yml \
       skip_jax_distributed_system=True \
@@ -63,7 +73,7 @@ case "$MODE" in
   orbax_to_hf)
     echo "[INFO] 🔁 Converting Orbax → Hugging Face..."
     export HF_MODEL_PATH="${HF_CKPT_DIR}/${HF_MODEL_NAME}"
-    export CONVERTED_CHECKPOINT="${ORBAX_CKPT_DIR}/${ORBAX_CKPT_NAME}/${STEP}/items"
+    export CONVERTED_CHECKPOINT="${ORBAX_CKPT_DIR}/${ORBAX_CKPT_NAME}/checkpoints/${STEP}/items"
     JAX_PLATFORMS=cpu python3 -m MaxText.llama_mistral_mixtral_orbax_to_hf \
       MaxText/configs/base.yml \
       skip_jax_distributed_system=True \

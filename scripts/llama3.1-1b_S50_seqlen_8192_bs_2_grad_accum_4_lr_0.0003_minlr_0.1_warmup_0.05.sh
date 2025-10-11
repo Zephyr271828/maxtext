@@ -17,7 +17,8 @@ export MIN_LR_RATIO=0.1
 export WARMUP_RATIO=0.05
 export ASYNC_CHECKPOINTING=false
 export BASE_OUTPUT_DIRECTORY="gs://${BUCKET_NAME}/model_ckpts/maxtext"
-export DATA_FILES="/home/zephyr/gcs-bucket/datasets/dclm/llama3_64_array_record/*.array_record"
+# export DATA_FILES="/home/zephyr/gcs-bucket/datasets/dclm/llama3_64_array_record/*.array_record"
+export DATA_FILES="/home/zephyr/gcs-bucket/datasets/dclm/llama3_array_record_with_special_tokens_64/*.array_record"
 export RUN_NAME="${MODEL_NAME}_S50_seqlen_${SEQ_LEN}_bs_${BATCH_SIZE}_grad_accum_${GRAD_ACCUM}_lr_${LR}_min_lr_ratio_${MIN_LR_RATIO}_warmup_ratio_${WARMUP_RATIO}"
 export JAX_PLATFORMS=tpu
 
