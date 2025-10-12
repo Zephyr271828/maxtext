@@ -103,12 +103,12 @@ def generate_script(
         --model=${{MODEL_NAME}} \\
         --orbax_ckpt_name=${{RUN_NAME}} \\
         --step={num_steps-1} \\
-        --hf_model_path=/home/zephyr/gcs-bucket/model_ckpts/Llama-3.1-8B \\
+        --hf_model_name=Llama-3.1-8B \\
         --direct_run_name=${{RUN_NAME}}
         
     bash scripts/convert.sh eval \\
         --model=${{MODEL_NAME}} \\
-        --hf_model_path=/home/zephyr/gcs-bucket/model_ckpts/Llama-3.1-8B \\
+        --hf_model_name=Llama-3.1-8B \\
         --direct_run_name=${{RUN_NAME}}
     """)
 
