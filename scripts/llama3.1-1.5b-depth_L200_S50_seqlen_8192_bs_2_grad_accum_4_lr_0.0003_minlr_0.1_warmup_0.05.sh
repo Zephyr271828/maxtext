@@ -29,7 +29,7 @@ python -u multihost_runner_orig.py \
     source ~/maxtext_env/bin/activate
     python3.10 -u -m MaxText.train MaxText/configs/base.yml \
         run_name=${RUN_NAME} \
-        load_parameters_path=gs://${BUCKET_NAME}/model_ckpts/llama3.1-1.5b-depth-minitron/0/items \
+        load_parameters_path=gs://${BUCKET_NAME}/model_ckpts/maxtext/llama3.1-1.5b-depth-minitron/checkpoints/0/items \
         base_output_directory=${BASE_OUTPUT_DIRECTORY} \
         dataset_type=grain \
         grain_train_files=${DATA_FILES} \
@@ -59,7 +59,7 @@ python -u multihost_runner_orig.py \
 
 bash scripts/convert.sh gen_param_ckpt \
     --model=${MODEL_NAME} \
-    --orbax_ckpt_path=${RUN_NAME} \
+    --orbax_ckpt_name=${RUN_NAME} \
     --step=12499 \
     --hf_model_path=/home/zephyr/gcs-bucket/model_ckpts/Llama-3.1-8B \
     --direct_run_name=${RUN_NAME}
