@@ -101,7 +101,7 @@ def generate_script(
     
     bash scripts/convert.sh gen_param_ckpt \\
         --model=${{MODEL_NAME}} \\
-        --orbax_ckpt_path=${{RUN_NAME}} \\
+        --orbax_ckpt_name=${{RUN_NAME}} \\
         --step={num_steps-1} \\
         --hf_model_path=/home/zephyr/gcs-bucket/model_ckpts/Llama-3.1-8B \\
         --direct_run_name=${{RUN_NAME}}
@@ -182,14 +182,13 @@ if __name__ == "__main__":
                 # load_parameters_path=args.load_parameters_path,
                 # output_path=args.output_path,
             )
-            
-    for load_path, model_name in zip(
-        ["model_ckpts/llama3.1-4b-depth-orbax/0/items", "model_ckpts/llama3.1-4b-width-orbax/0/items"],
-        ["llama3.1-4b-depth", "llama3.1-4b-width"]
-    ):
-        for num_steps in [12500]:
-            generate_script(
-                model_name=model_name,
+            for load_path, model_name in zip(
+                ["model_ckpts/maxtext/llama3.1-4b-depth-orbax/checkpoints/0/items", "model_ckpts/maxtext/llama3.1-4b-width-orbax/checkpoints/0/items"],
+                ["llama3.1-4b-depth", "llama3.1-4b-width"]
+            ):
+                for num_steps in [12500]:
+                    generate_script(
+                        model_name=model_name,
                 lr=1e-4,
                 num_steps=num_steps,
                 batch_size=2,
@@ -199,14 +198,13 @@ if __name__ == "__main__":
                 # load_parameters_path=args.load_parameters_path,
                 # output_path=args.output_path,
             )
-            
-    for load_path, model_name in zip(
-        ["model_ckpts/llama3.1-1.5b-depth-minitron/0/items", "model_ckpts/llama3.1-2b-depth-minitron/0/items", "model_ckpts/llama3.1-3b-depth-minitron/0/items"],
-        ["llama3.1-1.5b-depth", "llama3.1-2b-depth", "llama3.1-3b-depth"]
-    ):
-        for num_steps in [12500]:
-            generate_script(
-                model_name=model_name,
+            for load_path, model_name in zip(
+                ["model_ckpts/maxtext/llama3.1-1.5b-depth-minitron/checkpoints/0/items", "model_ckpts/maxtext/llama3.1-2b-depth-minitron/checkpoints/0/items", "model_ckpts/maxtext/llama3.1-3b-depth-minitron/checkpoints/0/items"],
+                ["llama3.1-1.5b-depth", "llama3.1-2b-depth", "llama3.1-3b-depth"]
+            ):
+                for num_steps in [12500]:
+                    generate_script(
+                        model_name=model_name,
                 lr=3e-4,
                 num_steps=num_steps,
                 batch_size=2,
