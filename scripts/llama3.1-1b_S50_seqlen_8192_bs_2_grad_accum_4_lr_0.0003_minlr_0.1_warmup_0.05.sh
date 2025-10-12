@@ -17,8 +17,7 @@ export MIN_LR_RATIO=0.1
 export WARMUP_RATIO=0.05
 export ASYNC_CHECKPOINTING=false
 export BASE_OUTPUT_DIRECTORY="gs://${BUCKET_NAME}/model_ckpts/maxtext"
-# export DATA_FILES="/home/zephyr/gcs-bucket/datasets/dclm/llama3_64_array_record/*.array_record"
-export DATA_FILES="/home/zephyr/gcs-bucket/datasets/dclm/llama3_array_record_with_special_tokens_64/*.array_record"
+export DATA_FILES="/home/zephyr/gcs-bucket/datasets/dclm/llama3_64_array_record/*.array_record"
 export RUN_NAME="${MODEL_NAME}_S50_seqlen_${SEQ_LEN}_bs_${BATCH_SIZE}_grad_accum_${GRAD_ACCUM}_lr_${LR}_min_lr_ratio_${MIN_LR_RATIO}_warmup_ratio_${WARMUP_RATIO}"
 export JAX_PLATFORMS=tpu
 
@@ -59,11 +58,12 @@ python -u multihost_runner_orig.py \
 
 bash scripts/convert.sh gen_param_ckpt \
     --model=${MODEL_NAME} \
-    --orbax_ckpt_path=${BASE_OUTPUT_DIRECTORY}/${RUN_NAME}/checkpoints/12499/items \
+    --orbax_ckpt_path=${RUN_NAME} \
+    --step=12499 \
     --hf_model_path=/home/zephyr/gcs-bucket/model_ckpts/Llama-3.1-8B \
-    --direct_run_name=direct_llama3.1-1b_S50_seqlen_8192_bs_2_grad_accum_4_lr_0.0003_minlr_0.1_warmup_0.05
+    --direct_run_name=${RUN_NAME}
 
 bash scripts/convert.sh eval \
     --model=${MODEL_NAME} \
     --hf_model_path=/home/zephyr/gcs-bucket/model_ckpts/Llama-3.1-8B \
-    --direct_run_name=direct_llama3.1-1b_S50_seqlen_8192_bs_2_grad_accum_4_lr_0.0003_minlr_0.1_warmup_0.05 
+    --direct_run_name=${RUN_NAME}

@@ -58,11 +58,12 @@ python -u multihost_runner_orig.py \
 
 bash scripts/convert.sh gen_param_ckpt \
     --model=${MODEL_NAME} \
-    --orbax_ckpt_path=${BASE_OUTPUT_DIRECTORY}/${RUN_NAME}/checkpoints/62499/items \
+    --orbax_ckpt_path=${RUN_NAME} \
+    --step=62499 \
     --hf_model_path=/home/zephyr/gcs-bucket/model_ckpts/Llama-3.1-8B \
-    --direct_run_name=direct_llama3.1-4b-depth_S250_seqlen_8192_bs_2_grad_accum_4_lr_0.0003_minlr_0.1_warmup_0.05
+    --direct_run_name=${RUN_NAME}
 
 bash scripts/convert.sh eval \
     --model=${MODEL_NAME} \
     --hf_model_path=/home/zephyr/gcs-bucket/model_ckpts/Llama-3.1-8B \
-    --direct_run_name=direct_llama3.1-4b-depth_S250_seqlen_8192_bs_2_grad_accum_4_lr_0.0003_minlr_0.1_warmup_0.05 
+    --direct_run_name=${RUN_NAME}
