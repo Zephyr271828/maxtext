@@ -114,6 +114,14 @@ MODEL_PARAMS_DICT = {
       "vocab": 128256,
       "base_emb_dim": 4096,
     },
+    "llama3.1-1.5b-depth": {
+      "num_layers": 2,
+      "num_heads": 32,
+      "num_kv_heads": 8,
+      "dims_per_head": 128,
+      "vocab": 128256,
+      "base_emb_dim": 4096,
+    },
     "llama3-2b-depth": {
       "num_layers": 4,
       "num_heads": 32,
@@ -122,7 +130,23 @@ MODEL_PARAMS_DICT = {
       "vocab": 128256,
       "base_emb_dim": 4096,
     },
+    "llama3.1-2b-depth": {
+      "num_layers": 4,
+      "num_heads": 32,
+      "num_kv_heads": 8,
+      "dims_per_head": 128,
+      "vocab": 128256,
+      "base_emb_dim": 4096,
+    },
     "llama3-3b-depth": {
+      "num_layers": 8,
+      "num_heads": 32,
+      "num_kv_heads": 8,
+      "dims_per_head": 128,
+      "vocab": 128256,
+      "base_emb_dim": 4096,
+    },
+    "llama3.1-3b-depth": {
       "num_layers": 8,
       "num_heads": 32,
       "num_kv_heads": 8,

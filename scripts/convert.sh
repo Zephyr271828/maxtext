@@ -19,7 +19,7 @@ shift
 for arg in "$@"; do
   case $arg in
     --model=*) MODEL="${arg#*=}" ;;
-    --orbax_ckpt_path=*) ORBAX_CKPT_NAME="${arg#*=}" ;;
+    --orbax_ckpt_name=*) ORBAX_CKPT_NAME="${arg#*=}" ;;
     --step=*) STEP="${arg#*=}" ;;
     --hf_model_name=*) HF_MODEL_NAME="${arg#*=}" ;;
     --direct_run_name=*) DIRECT_RUN_NAME="${arg#*=}" ;;
@@ -29,9 +29,9 @@ for arg in "$@"; do
 done
 
 if [[ $MODE == "help" ]]; then
-  echo "$0 hf_to_orbax     --model=MODEL --orbax_ckpt_path=ORBAX_CKPT_NAME --hf_model_name=HF_MODEL_NAME"
-  echo "$0 gen_param_ckpt  --model=MODEL --orbax_ckpt_path=ORBAX_CKPT_NAME --step=STEP                    --direct_run_name=DIRECT_RUN_NAME"
-  echo "$0 orbax_to_hf     --model=MODEL --orbax_ckpt_path=ORBAX_CKPT_NAME --step=STEP                    --hf_model_name=HF_MODEL_NAME"
+  echo "$0 hf_to_orbax     --model=MODEL --orbax_ckpt_name=ORBAX_CKPT_NAME --hf_model_name=HF_MODEL_NAME"
+  echo "$0 gen_param_ckpt  --model=MODEL --orbax_ckpt_name=ORBAX_CKPT_NAME --step=STEP                    --direct_run_name=DIRECT_RUN_NAME"
+  echo "$0 orbax_to_hf     --model=MODEL --orbax_ckpt_name=ORBAX_CKPT_NAME --step=STEP                    --hf_model_name=HF_MODEL_NAME"
   echo "$0 logits_test     --model=MODEL --direct_run_name=DIRECT_RUN_NAME --hf_model_name=HF_MODEL_NAME"
   echo "$0 eval            --model=MODEL --direct_run_name=DIRECT_RUN_NAME --hf_model_name=HF_MODEL_NAME [--tasks=TASKS]"
   exit 0
@@ -48,12 +48,14 @@ export PYTHONPATH="/home/zephyr/maxtext":${PYTHONPATH:-''}
 case "$MODE" in
   hf_to_orbax)
     echo "[INFO] 🚀 Converting Hugging Face → Orbax..."
+    export HF_MODEL_PATH="${HF_CKPT_DIR}/${HF_MODEL_NAME}"
     export CONVERTED_CHECKPOINT_PATH="${ORBAX_CKPT_DIR}/${ORBAX_CKPT_NAME}/checkpoints"
     JAX_PLATFORMS=cpu python3 -m MaxText.llama_or_mistral_ckpt \
-      --base-model-path ${HF_MODEL_NAME} \
+      --base-model-path ${HF_MODEL_PATH} \
       --huggingface-checkpoint True \
       --model-size $MODEL \
-      --maxtext-model-path ${CONVERTED_CHECKPOINT_PATH}
+      --maxtext-model-path ${CONVERTED_CHECKPOINT_PATH} \
+      --huggingface-checkpoint=True
     ;;
 
   gen_param_ckpt)
