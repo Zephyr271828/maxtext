@@ -37,6 +37,11 @@ def generate_script(
     else:
         if "minitron" in load_parameters_path:
             exp_type = f"L200_S{num_steps // 250}"
+        elif "unstructured" in load_parameters_path:
+            if "reinit" in load_parameters_path:
+                exp_type = f"unstructured_S{num_steps // 250}"
+            else:
+                exp_type = f"unstructured_L200_S{num_steps // 250}"
         else:
             exp_type = f"HF_S{num_steps // 250}"
         start_from_file_index = 50
