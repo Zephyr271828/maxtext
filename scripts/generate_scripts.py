@@ -15,7 +15,7 @@ def generate_script(
     data_files: str = "/home/zephyr/gcs-bucket/datasets/dclm/llama3_64_array_record/*.array_record",
     load_parameters_path: str = "",
     output_path: str = None,
-    start_from_file_index: int = 0,
+    # start_from_file_index: int = 0,
 ):
     """Generate a TPU MaxText training shell script from template."""
 
@@ -32,11 +32,13 @@ def generate_script(
             exp_type = f"S{num_steps // 250}"
         elif any(x in model_name.lower() for x in ["8b", "7b"]):
             exp_type = f"L{num_steps // 250}"
+        start_from_file_index = 0
     else:
         if "minitron" in load_parameters_path:
             exp_type = f"L200_S{num_steps // 250}"
         else:
             exp_type = f"HF_S{num_steps // 250}"
+        start_from_file_index = 50
 
     job_name = f"{model_name}_{exp_type}_seqlen_{seq_len}_bs_{batch_size}_grad_accum_{grad_accum}_lr_{lr}_minlr_{min_lr_ratio}_warmup_{warmup_ratio}"
 
