@@ -6,7 +6,7 @@ source scripts/get_tpu_bucket_name.sh
 export TPU_PREFIX="$(get_tpu_name)"
 export BUCKET_NAME="$(get_bucket_name)"
 
-export MODEL_NAME="llama3.1-3b-depth"
+export MODEL_NAME="llama3.1-8b"
 export NUM_STEPS=12500
 export SEQ_LEN=8192
 export BATCH_SIZE=2
@@ -18,9 +18,9 @@ export WARMUP_RATIO=0.05
 export ASYNC_CHECKPOINTING=false
 export BASE_OUTPUT_DIRECTORY="gs://${BUCKET_NAME}/model_ckpts/maxtext"
 export DATA_FILES="/home/zephyr/gcs-bucket/datasets/dclm/llama3_64_array_record/*.array_record"
-export RUN_NAME="${MODEL_NAME}_L200_S50_seqlen_${SEQ_LEN}_bs_${BATCH_SIZE}_grad_accum_${GRAD_ACCUM}_lr_${LR}_min_lr_ratio_${MIN_LR_RATIO}_warmup_ratio_${WARMUP_RATIO}"
+export RUN_NAME="${MODEL_NAME}_HF_S50_seqlen_${SEQ_LEN}_bs_${BATCH_SIZE}_grad_accum_${GRAD_ACCUM}_lr_${LR}_min_lr_ratio_${MIN_LR_RATIO}_warmup_ratio_${WARMUP_RATIO}"
 export JAX_PLATFORMS=tpu
-export SPARSE_MODEL_TRAINING=False
+export SPARSE_MODEL_TRAINING=True
 
 python -u multihost_runner_orig.py \
     --TPU_PREFIX=${TPU_PREFIX} \
@@ -30,7 +30,7 @@ python -u multihost_runner_orig.py \
     source ~/maxtext_env/bin/activate
     python3.10 -u -m MaxText.train MaxText/configs/base.yml \
         run_name=${RUN_NAME} \
-        load_parameters_path=gs://${BUCKET_NAME}/model_ckpts/maxtext/llama3.1-3b-depth-minitron/checkpoints/0/items \
+        load_parameters_path=gs://${BUCKET_NAME}/model_ckpts/maxtext/llama3.1_8b_L200_unstructured_reinit/checkpoints/0/items \
         base_output_directory=${BASE_OUTPUT_DIRECTORY} \
         dataset_type=grain \
         grain_train_files=${DATA_FILES} \

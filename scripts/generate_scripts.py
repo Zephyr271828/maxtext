@@ -15,6 +15,7 @@ def generate_script(
     data_files: str = "/home/zephyr/gcs-bucket/datasets/dclm/llama3_64_array_record/*.array_record",
     load_parameters_path: str = "",
     output_path: str = None,
+    sparse_model_training: bool = False,
     # start_from_file_index: int = 0,
 ):
     """Generate a TPU MaxText training shell script from template."""
@@ -65,6 +66,7 @@ def generate_script(
     export DATA_FILES="{data_files}"
     export RUN_NAME="${{MODEL_NAME}}_{exp_type}_seqlen_${{SEQ_LEN}}_bs_${{BATCH_SIZE}}_grad_accum_${{GRAD_ACCUM}}_lr_${{LR}}_min_lr_ratio_${{MIN_LR_RATIO}}_warmup_ratio_${{WARMUP_RATIO}}"
     export JAX_PLATFORMS=tpu
+    export SPARSE_MODEL_TRAINING={sparse_model_training}
 
     python -u multihost_runner_orig.py \\
         --TPU_PREFIX=${{TPU_PREFIX}} \\
@@ -98,7 +100,8 @@ def generate_script(
             use_wandb=True \\
             wandb_project=llm_pruning \\
             wandb_run_name=${{TPU_PREFIX}}_${{RUN_NAME}} \\
-            packing=false
+            packing=false \\
+            sparse_model_training=${{SPARSE_MODEL_TRAINING}} \\
         "
     
     bash scripts/convert.sh gen_param_ckpt \\
@@ -184,13 +187,14 @@ if __name__ == "__main__":
                 # load_parameters_path=args.load_parameters_path,
                 # output_path=args.output_path,
             )
-            for load_path, model_name in zip(
-                ["model_ckpts/maxtext/llama3.1-4b-depth-orbax/checkpoints/0/items", "model_ckpts/maxtext/llama3.1-4b-width-orbax/checkpoints/0/items"],
-                ["llama3.1-4b-depth", "llama3.1-4b-width"]
-            ):
-                for num_steps in [12500]:
-                    generate_script(
-                        model_name=model_name,
+            
+    for load_path, model_name in zip(
+        ["model_ckpts/maxtext/llama3.1-4b-depth-orbax/checkpoints/0/items", "model_ckpts/maxtext/llama3.1-4b-width-orbax/checkpoints/0/items"],
+        ["llama3.1-4b-depth", "llama3.1-4b-width"]
+    ):
+        for num_steps in [12500]:
+            generate_script(
+                model_name=model_name,
                 lr=1e-4,
                 num_steps=num_steps,
                 batch_size=2,
@@ -200,13 +204,15 @@ if __name__ == "__main__":
                 # load_parameters_path=args.load_parameters_path,
                 # output_path=args.output_path,
             )
-            for load_path, model_name in zip(
-                ["model_ckpts/maxtext/llama3.1-1.5b-depth-minitron/checkpoints/0/items", "model_ckpts/maxtext/llama3.1-2b-depth-minitron/checkpoints/0/items", "model_ckpts/maxtext/llama3.1-3b-depth-minitron/checkpoints/0/items"],
-                ["llama3.1-1.5b-depth", "llama3.1-2b-depth", "llama3.1-3b-depth"]
-            ):
-                for num_steps in [12500]:
-                    generate_script(
-                        model_name=model_name,
+                    
+                    
+    for load_path, model_name in zip(
+        ["model_ckpts/maxtext/llama3.1-1.5b-depth-minitron/checkpoints/0/items", "model_ckpts/maxtext/llama3.1-2b-depth-minitron/checkpoints/0/items", "model_ckpts/maxtext/llama3.1-3b-depth-minitron/checkpoints/0/items"],
+        ["llama3.1-1.5b-depth", "llama3.1-2b-depth", "llama3.1-3b-depth"]
+    ):
+        for num_steps in [12500]:
+            generate_script(
+                model_name=model_name,
                 lr=3e-4,
                 num_steps=num_steps,
                 batch_size=2,
@@ -216,3 +222,20 @@ if __name__ == "__main__":
                 # load_parameters_path=args.load_parameters_path,
                 # output_path=args.output_path,
             )
+            
+    for load_path in ["model_ckpts/maxtext/llama3.1_8b_L200_unstructured/checkpoints/0/items", "model_ckpts/maxtext/llama3.1_8b_L200_unstructured_reinit/checkpoints/0/items"]:
+        for lr in [1e-5, 3e-5, 1e-4, 3e-4]:
+            generate_script(
+                model_name="llama3.1-8b",
+                lr=lr,
+                num_steps=12500,
+                batch_size=2,
+                grad_accum=4,
+                load_parameters_path=load_path,
+                sparse_model_training=True,
+                # load_parameters_path="model_ckpts/llama3.1-4b-depth-orbax/0/items",
+                # load_parameters_path=args.load_parameters_path,
+                # output_path=args.output_path,
+            )
+                    
+    
