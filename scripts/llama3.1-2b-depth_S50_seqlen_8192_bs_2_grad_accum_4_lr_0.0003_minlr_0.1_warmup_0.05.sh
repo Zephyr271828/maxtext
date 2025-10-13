@@ -60,10 +60,10 @@ bash scripts/convert.sh gen_param_ckpt \
     --model=${MODEL_NAME} \
     --orbax_ckpt_name=${RUN_NAME} \
     --step=12499 \
-    --hf_model_path=/home/zephyr/gcs-bucket/model_ckpts/Llama-3.1-8B \
+    --hf_model_name=Llama-3.1-8B \
     --direct_run_name=${RUN_NAME}
 
 bash scripts/convert.sh eval \
     --model=${MODEL_NAME} \
-    --hf_model_path=/home/zephyr/gcs-bucket/model_ckpts/Llama-3.1-8B \
+    --hf_model_name=Llama-3.1-8B \
     --direct_run_name=${RUN_NAME}
