@@ -228,7 +228,7 @@ if __name__ == "__main__":
                 # output_path=args.output_path,
             )
             
-    for load_path in ["model_ckpts/maxtext/llama3.1_8b_L200_unstructured/checkpoints/0/items", "model_ckpts/maxtext/llama3.1_8b_L200_unstructured_reinit/checkpoints/0/items"]:
+    for load_path in ["model_ckpts/maxtext/llama3.1_8b_L200_unstructured_0.5/checkpoints/0/items", "model_ckpts/maxtext/llama3.1_8b_L200_unstructured_0.5_reinit/checkpoints/0/items"]:
         for lr in [1e-5, 3e-5, 1e-4, 3e-4]:
             generate_script(
                 model_name="llama3.1-8b",
