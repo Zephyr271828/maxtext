@@ -132,7 +132,7 @@ def get_slices():
   slice_versions = [instance.split(',')[1] for instance in instance_list]
   # Get number of workers in any slice (assume same worker count for all slices.)
   command = [
-      "gcloud", "compute", "tpus", "describe", slice_names[0],
+      "gcloud", "compute", "tpus", "tpu-vm", "describe", slice_names[0],
       "--flatten=networkEndpoints[]", "--format=csv[no-heading](networkEndpoints.ipAddress)",
       f"--project={args.PROJECT}", f"--zone={args.ZONE}"
   ]
