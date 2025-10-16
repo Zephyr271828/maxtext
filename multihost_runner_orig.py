@@ -190,10 +190,10 @@ def scps(slices, run_name_dir, zip_name):
   original_working_directory = os.getcwd()
   os.chdir(args.SCRIPT_DIR) # To tar script_dir, it is most convenient to cd there.
   
-  for entry in os.listdir('.'):
-    if entry.startswith("2025") and os.path.isdir(entry):
-      print(f"🧹 Deleting directory before SCP: {entry}")
-      subprocess.run(["rm", "-rf", entry], check=True)
+  # for entry in os.listdir('.'):
+  #   if entry.startswith("2025") and os.path.isdir(entry):
+  #     print(f"🧹 Deleting directory before SCP: {entry}")
+  #     subprocess.run(["rm", "-rf", entry], check=True)
 
   # Zip script directory
   # Save the zip both to the logging directory, and the script directory.
