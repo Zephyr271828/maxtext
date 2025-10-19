@@ -37,11 +37,14 @@ def generate_script(
     else:
         if "minitron" in load_parameters_path:
             exp_type = f"L200_S{num_steps // 250}"
-        elif "unstructured" in load_parameters_path:
-            if "reinit" in load_parameters_path:
-                exp_type = f"unstructured_S{num_steps // 250}"
-            else:
-                exp_type = f"unstructured_L200_S{num_steps // 250}"
+        elif any(x in load_parameters_path for x in ["unstructured", "4:8", "2:4"]):
+            for sparsity in ["unstructured", "4:8", "2:4"]:
+                if sparsity in load_parameters_path:
+                    if "reinit" in load_parameters_path:
+                        exp_type = f"{sparsity}_S{num_steps // 250}"
+                    else:
+                        exp_type = f"{sparsity}_L200_S{num_steps // 250}"
+                    break
         else:
             exp_type = f"HF_S{num_steps // 250}"
         start_from_file_index = 50
@@ -243,4 +246,23 @@ if __name__ == "__main__":
                 # output_path=args.output_path,
             )
                     
+    for load_path in [
+        "model_ckpts/maxtext/llama3.1_8b_L200_4:8_0.5/checkpoints/0/items", 
+        "model_ckpts/maxtext/llama3.1_8b_L200_2:4_0.5/checkpoints/0/items",
+        "model_ckpts/maxtext/llama3.1_8b_L200_4:8_0.5_reinit/checkpoints/0/items",
+        "model_ckpts/maxtext/llama3.1_8b_L200_2:4_0.5_reinit/checkpoints/0/items"
+    ]:
+        for lr in [1e-6, 3e-6, 1e-5, 3e-5, 1e-4, 3e-4, 1e-3]:
+            generate_script(
+                model_name="llama3.1-8b",
+                lr=lr,
+                num_steps=12500,
+                batch_size=2,
+                grad_accum=4,
+                load_parameters_path=load_path,
+                sparse_model_training=True,
+                # load_parameters_path="model_ckpts/llama3.1-4b-depth-orbax/0/items",
+                # load_parameters_path=args.load_parameters_path,
+                # output_path=args.output_path,
+            )
     

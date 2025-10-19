@@ -33,6 +33,8 @@ from MaxText.layers.quantizations import AqtQuantization as Quant
 from MaxText.layers.multi_token_prediction import MultiTokenPredictionBlock
 from MaxText.maxtext_utils import all_gather_over_fsdp
 
+from typing import Union
+
 # ------------------------------------------------------------------------------
 # The network: Transformer Definitions
 # ------------------------------------------------------------------------------
