@@ -66,6 +66,50 @@ from MaxText.inference_utils import str2bool
 from MaxText.utils import gcs_utils
 
 MODEL_PARAMS_DICT = {
+    "llama-7b": {
+        "base_emb_dim": 4096,
+        "num_layers": 32,
+        "num_heads": 32,
+        "num_kv_heads": 32,
+        "dims_per_head": 128,
+        "vocab": 32000,
+    },
+    "llama-7b-block-0.25": {
+      "base_emb_dim": 4096,
+      "num_layers": 32,
+      "num_heads": [
+        32, 32, 32, 32, 
+        24, 24, 24, 24, 
+        24, 24, 24, 24, 
+        24, 24, 24, 24, 
+        24, 24, 24, 24,
+        24, 24, 24, 24,
+        24, 24, 24, 24,
+        24, 24, 32, 32,
+      ],
+      "num_kv_heads": [
+        32, 32, 32, 32, 
+        24, 24, 24, 24, 
+        24, 24, 24, 24, 
+        24, 24, 24, 24, 
+        24, 24, 24, 24,
+        24, 24, 24, 24,
+        24, 24, 24, 24,
+        24, 24, 32, 32,
+      ],
+      "dims_per_head": 128,
+      "base_mlp_dim": [
+        11008, 11008, 11008, 11008, 
+        8256,  8256,  8256,  8256,
+        8256,  8256,  8256,  8256,
+        8256,  8256,  8256,  8256,
+        8256,  8256,  8256,  8256,
+        8256,  8256,  8256,  8256,
+        8256,  8256,  8256,  8256,
+        8256,  8256, 11008, 11008,
+      ],
+      "vocab": 32000,
+    },
     "llama2-70b": {
         "num_layers": 80,
         "num_heads": 64,
@@ -691,24 +735,43 @@ def _convert_huggingface_to_jax_weights(base_model_path: str, model_size: str, m
   scale_query = model_params.get("scale_query", False)
 
   max_logging.log(f"Loading the base model from {base_model_path}")
-  ckpt_paths = sorted(pathlib.Path(base_model_path).glob("[!.]*.safetensors"))
   chkpt_vars = {}
-  for i, ckpt_path in enumerate(ckpt_paths):
-    max_logging.log(f"Loading checkpoint {i+1} of {len(ckpt_paths)} ...")
+  ckpt_paths = sorted(pathlib.Path(base_model_path).glob("[!.]*.safetensors"))
+  if ckpt_paths:
+    for i, ckpt_path in enumerate(ckpt_paths):
+      max_logging.log(f"Loading checkpoint {i+1} of {len(ckpt_paths)} ...")
 
-    with safe_open(ckpt_path, framework="pt", device="cpu") as f:
-      for key in f.keys():
-        parts = key.split(".")
-        if is_llama4_model:
-          layer = int(parts[3]) if "layers" in key else 0
-          # TODO: update when mutli-modality support is added
-          if "vision" in key or "multi_modal_projector" in key:
-            print("WARNING: skipping vision or multi-modal key: ", key)
-            continue
-        else:
-          layer = int(parts[2]) if "layers" in key else 0
-        mapped_key = _hf_to_maxtext_mapping(layer)[key]
-        chkpt_vars[mapped_key] = f.get_tensor(key)
+      with safe_open(ckpt_path, framework="pt", device="cpu") as f:
+        for key in f.keys():
+          parts = key.split(".")
+          if is_llama4_model:
+            layer = int(parts[3]) if "layers" in key else 0
+            # TODO: update when mutli-modality support is added
+            if "vision" in key or "multi_modal_projector" in key:
+              print("WARNING: skipping vision or multi-modal key: ", key)
+              continue
+          else:
+            layer = int(parts[2]) if "layers" in key else 0
+          mapped_key = _hf_to_maxtext_mapping(layer)[key]
+          chkpt_vars[mapped_key] = f.get_tensor(key)
+  else:
+    import pdb; pdb.set_trace()
+    ckpt_paths = sorted(pathlib.Path(base_model_path).glob("[!.]*.bin"))
+    ckpt_paths = sorted(pathlib.Path(base_model_path).glob("[!.]*.bin"))
+    model = sd["model"]
+    state_dict = model.state_dict() if hasattr(model, "state_dict") else model
+    for key in f.keys():
+      parts = key.split(".")
+      if is_llama4_model:
+        layer = int(parts[3]) if "layers" in key else 0
+        # TODO: update when mutli-modality support is added
+        if "vision" in key or "multi_modal_projector" in key:
+          print("WARNING: skipping vision or multi-modal key: ", key)
+          continue
+      else:
+        layer = int(parts[2]) if "layers" in key else 0
+      mapped_key = _hf_to_maxtext_mapping(layer)[key]
+      chkpt_vars[mapped_key] = f.get_tensor(key)
 
   logging.debug("Memory usage: %f GB", mem_info.memory_info().rss / (1024**3))
 

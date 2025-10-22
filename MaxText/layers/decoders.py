@@ -53,10 +53,18 @@ from MaxText.layers import (
     simple_layer,
 )
 
+import copy
 # ------------------------------------------------------------------------------
 # The network: Decoder Definitions
 # ------------------------------------------------------------------------------
 
+def get_layer_cfg(cfg, index: int):
+    layer_cfg = copy.deepcopy(cfg)
+    # Allow per-layer values if lists
+    for attr in ["base_emb_dim", "base_num_query_heads", "base_num_kv_heads", "base_mlp_dim", "head_dim"]:
+        val = getattr(cfg, attr)
+        setattr(layer_cfg, attr, val[index] if isinstance(val, (list, tuple)) else val)
+    return layer_cfg
 
 class DecoderLayer(nn.Module):
   """
@@ -715,7 +723,8 @@ class Decoder(nn.Module):
           # Iterate over the two layer groups (dense and MoE) and apply layer transformation
           for layer, num_layers, layer_prefix in zip(layers, num_layers_list, layer_prefixes):
             for index in range(num_layers):
-              y = layer(config=cfg, mesh=mesh, name=f"{layer_prefix}_{index}", quant=self.quant)(
+              layer_cfg = get_layer_cfg(cfg, index)
+              y = layer(config=layer_cfg, mesh=mesh, name=f"{layer_prefix}_{index}", quant=self.quant)(
                   y,
                   decoder_segment_ids,
                   decoder_positions,
@@ -739,6 +748,7 @@ class Decoder(nn.Module):
                   "is_nope_layer": llama4.determine_is_nope_layer(lyr, self.config.nope_layer_interval),
                   "is_moe_layer": llama4.determine_is_moe_layer(lyr, self.config.interleave_moe_layer_step),
               }
+            layer_cfg = get_layer_cfg(cfg, lyr)
             layer = RemattedBlockLayer(config=cfg, mesh=mesh, name=f"layers_{lyr}", quant=self.quant, **layer_kwargs)
             y = layer(
                 y,
