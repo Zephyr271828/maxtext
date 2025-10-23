@@ -6,6 +6,18 @@ source scripts/get_tpu_bucket_name.sh
 export TPU_PREFIX="$(get_tpu_name)"
 export BUCKET_NAME="$(get_bucket_name)"
 
+for arg in "$@"; do
+    case $arg in
+        --lr=*) LR="${arg#*=}" ;;
+        --batch_size=*) BATCH_SIZE="${arg#*=}" ;;
+        --grad_accum=*) GRAD_ACCUM="${arg#*=}" ;;
+        --grad_clip=*) GRAD_CLIP="${arg#*=}" ;;
+        --min_lr_ratio=*) MIN_LR_RATIO="${arg#*=}" ;;
+        --warmup_ratio=*) WARMUP_RATIO="${arg#*=}" ;;
+        *) echo "[WARN] Unknown arg $arg" ;;
+    esac
+done
+
 export MODEL_NAME="llama3.1-1.5b-depth"
 export NUM_STEPS=12500
 export SEQ_LEN=8192

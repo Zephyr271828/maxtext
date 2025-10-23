@@ -53,6 +53,18 @@ def generate_script(
 
     export TPU_PREFIX="$(get_tpu_name)"
     export BUCKET_NAME="$(get_bucket_name)"
+    
+    for arg in "$@"; do
+        case $arg in
+            --lr=*) LR="${{arg#*=}}" ;;
+            --batch_size=*) BATCH_SIZE="${{arg#*=}}" ;;
+            --grad_accum=*) GRAD_ACCUM="${{arg#*=}}" ;;
+            --grad_clip=*) GRAD_CLIP="${{arg#*=}}" ;;
+            --min_lr_ratio=*) MIN_LR_RATIO="${{arg#*=}}" ;;
+            --warmup_ratio=*) WARMUP_RATIO="${{arg#*=}}" ;;
+            *) echo "[WARN] Unknown arg $arg" ;;
+        esac
+    done
 
     export MODEL_NAME="{model_name}"
     export NUM_STEPS={num_steps}
