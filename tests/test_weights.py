@@ -139,12 +139,12 @@ def compare_hf_orbax_model_weights(hf_model, orbax_state, config, atol=1e-3, rto
         max_diff = abs_diff.max()
         mean_diff = abs_diff.mean()
 
-        if max_diff > atol + rtol * np.abs(hf_value).max():
-            print(f"⚠️  Mismatch in {orbax_key} → {hf_key}: max diff = {max_diff:.4e}, mean diff = {mean_diff:.4e}")
-            mismatched += 1
-        else:
-            print(f"✅ Match: {orbax_key} → {hf_key}")
-            matched += 1
+        # if max_diff > atol + rtol * np.abs(hf_value).max():
+        print(f"⚠️  Mismatch in {orbax_key} → {hf_key}: max diff = {max_diff:.4e}, mean diff = {mean_diff:.4e}")
+        mismatched += 1
+        # else:
+        #     print(f"✅ Match: {orbax_key} → {hf_key}")
+        #     matched += 1
 
         if i + 1 >= max_print:
             break
