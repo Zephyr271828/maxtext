@@ -111,32 +111,53 @@ case "$MODE" in
     ;;
 
   eval)
-  echo "[INFO] 🧪 Running evaluation..."
-  export HF_MODEL_PATH="${HF_CKPT_DIR}/${HF_MODEL_NAME}"
-  export UNSCANNED_CKPT_PATH="${DIRECT_CKPT_DIR}/${DIRECT_RUN_NAME}/checkpoints/0/items"
-  cd lm-evaluation-harness
-  TPU_CHIPS_PER_HOST_BOUNDS=1,1,1 \
-  TPU_HOST_BOUNDS=1,1,1 \
-  TPU_VISIBLE_DEVICES=0,1,2,3 \
-  XLA_USE_BF16=1 \
-  python3 -u scripts/test_orbax_eval.py \
-    ../MaxText/configs/base.yml \
-    skip_jax_distributed_system=True \
-    load_parameters_path=${UNSCANNED_CKPT_PATH} \
-    run_name=forward_pass_test \
-    per_device_batch_size=1 \
-    model_name=${MODEL} \
-    max_prefill_predict_length=4 \
-    max_target_length=8192 \
-    dataset_type=synthetic \
-    attention="dot_product" \
-    dtype=bfloat16 \
-    scan_layers=false \
-    --hf_model_path=${HF_MODEL_PATH} \
-    --tasks=${TASKS:-""}
+    echo "[INFO] 🧪 Running evaluation..."
+    export HF_MODEL_PATH="${HF_CKPT_DIR}/${HF_MODEL_NAME}"
+    export UNSCANNED_CKPT_PATH="${DIRECT_CKPT_DIR}/${DIRECT_RUN_NAME}/checkpoints/0/items"
+    cd lm-evaluation-harness
+    TPU_CHIPS_PER_HOST_BOUNDS=1,1,1 \
+    TPU_HOST_BOUNDS=1,1,1 \
+    TPU_VISIBLE_DEVICES=0,1,2,3 \
+    XLA_USE_BF16=1 \
+    python3 -u scripts/test_orbax_eval.py \
+      ../MaxText/configs/base.yml \
+      skip_jax_distributed_system=True \
+      load_parameters_path=${UNSCANNED_CKPT_PATH} \
+      run_name=forward_pass_test \
+      per_device_batch_size=1 \
+      model_name=${MODEL} \
+      max_prefill_predict_length=4 \
+      max_target_length=8192 \
+      dataset_type=synthetic \
+      attention="dot_product" \
+      dtype=bfloat16 \
+      scan_layers=false \
+      --hf_model_path=${HF_MODEL_PATH} \
+      --tasks=${TASKS:-""}
 
-  cd ..
-;;
+    cd ..
+    ;;
+
+  weights_test)
+    echo "[INFO] 🧪 Running weights test..."
+    export HF_MODEL_PATH="${HF_CKPT_DIR}/${HF_MODEL_NAME}"
+    export UNSCANNED_CKPT_PATH="${DIRECT_CKPT_DIR}/${DIRECT_RUN_NAME}/checkpoints/0/items"
+    TPU_CHIPS_PER_HOST_BOUNDS=1,1,1 \
+    TPU_HOST_BOUNDS=1,1,1 \
+    TPU_VISIBLE_DEVICES=0,1,2,3 \
+    XLA_USE_BF16=1 \
+    python3 -u tests/test_weights.py \
+      MaxText/configs/base.yml \
+      load_parameters_path=${UNSCANNED_CKPT_PATH} \
+      run_name=forward_pass_test per_device_batch_size=1 \
+      model_name=${MODEL} \
+      max_prefill_predict_length=4 \
+      max_target_length=4 \
+      dataset_type=synthetic \
+      dtype=bfloat16 \
+      scan_layers=false \
+      --hf_model_path=${HF_MODEL_PATH}
+    ;;
 
   *)
     echo "[ERROR] Unknown mode: $MODE"

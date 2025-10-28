@@ -1,7 +1,9 @@
 #!/bin/bash
 
+set -euo pipefail
 
 host_id=$(python -c "import socket; print(socket.gethostname())" | awk -F'-' '{print $NF}')
+host_id=0
 
 model=llama3.1-1b
 step=$((host_id * 500 + 500))
