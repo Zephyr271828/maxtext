@@ -148,6 +148,7 @@ case "$MODE" in
     XLA_USE_BF16=1 \
     python3 -u tests/test_weights.py \
       MaxText/configs/base.yml \
+      skip_jax_distributed_system=True \
       load_parameters_path=${UNSCANNED_CKPT_PATH} \
       run_name=forward_pass_test per_device_batch_size=1 \
       model_name=${MODEL} \
