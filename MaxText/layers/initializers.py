@@ -17,6 +17,7 @@
 from typing import Callable, Tuple, Union
 
 import jax
+import jax.numpy as jnp
 
 from flax import linen as nn
 from flax import nnx
