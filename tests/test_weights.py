@@ -77,9 +77,12 @@ def compare_hf_orbax_model_weights(hf_model, orbax_state, config, atol=1e-3, rto
     
     def reshape_orbax_weight(key, value):
         # Self-attention projections
-        if "self_attention.query.kernel" in key or "self_attention.key.kernel" in key or "self_attention.value.kernel" in key:
+        if "self_attention.query.kernel" in key:
             # From (hidden_dim, num_heads, head_dim) -> (hidden_dim, hidden_dim)
             return value.reshape((value.shape[0], -1))
+        
+        elif "self_attention.key.kernel" in key or "self_attention.value.kernel" in key:
+            return value.reshape((value.shape[0], -1)).transpose(1, 0)
         
         elif "self_attention.out.kernel" in key:
             # From (num_heads, head_dim, hidden_dim) -> (hidden_dim, hidden_dim)
