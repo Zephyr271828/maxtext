@@ -62,6 +62,7 @@ def generate_script(
             --grad_clip=*) GRAD_CLIP="${{arg#*=}}" ;;
             --min_lr_ratio=*) MIN_LR_RATIO="${{arg#*=}}" ;;
             --warmup_ratio=*) WARMUP_RATIO="${{arg#*=}}" ;;
+            --max_to_keep=*) MAX_TO_KEEP="${{arg#*=}}" ;;
             *) echo "[WARN] Unknown arg $arg" ;;
         esac
     done
@@ -77,6 +78,7 @@ def generate_script(
     export WARMUP_RATIO=${{WARMUP_RATIO:-0.05}}
     export ASYNC_CHECKPOINTING={str(async_checkpointing).lower()}
     export BASE_OUTPUT_DIRECTORY="gs://${{BUCKET_NAME}}/model_ckpts/maxtext"
+    export MAX_TO_KEEP=${{MAX_TO_KEEP:-1}}
     export DATA_FILES="{data_files}"
     export RUN_NAME="${{MODEL_NAME}}_{exp_type}_seqlen_${{SEQ_LEN}}_bs_${{BATCH_SIZE}}_grad_accum_${{GRAD_ACCUM}}_lr_${{LR}}_min_lr_ratio_${{MIN_LR_RATIO}}_warmup_ratio_${{WARMUP_RATIO}}"
     export JAX_PLATFORMS=tpu
@@ -109,8 +111,8 @@ def generate_script(
             learning_rate=${{LR}} \\
             cosine_learning_rate_final_fraction=${{MIN_LR_RATIO}} \\
             warmup_steps_fraction=${{WARMUP_RATIO}} \\
-            checkpoint_period=250 \\
-            checkpoint_max_to_keep=1 \\
+            checkpoint_period=500 \\
+            checkpoint_max_to_keep=${{MAX_TO_KEEP}} \\
             use_wandb=True \\
             wandb_project=llm_pruning \\
             wandb_run_name=${{TPU_PREFIX}}_${{RUN_NAME}} \\
