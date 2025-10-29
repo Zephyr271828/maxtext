@@ -860,9 +860,9 @@ def _convert_huggingface_to_jax_weights(base_model_path: str, model_size: str, m
     wk = np.reshape(wk, [base_emb_dim, base_num_kv_heads, head_dim])
     wv = np.reshape(wv, [base_emb_dim, base_num_kv_heads, head_dim])
 
-    if model_size[:8] == "llama3.1":
-      wq = max_utils.permute_to_match_maxtext_rope(wq)
-      wk = max_utils.permute_to_match_maxtext_rope(wk)
+    # if model_size[:8] == "llama3.1":
+    #   wq = max_utils.permute_to_match_maxtext_rope(wq)
+    #   wk = max_utils.permute_to_match_maxtext_rope(wk)
 
     w_post = chkpt_vars[f"layers.{layer_idx}.attention.wo.weight"].to(torch.float32).numpy().astype(CAST_DTYPE)
 
@@ -1323,13 +1323,13 @@ def _convert_pytorch_to_jax_weights(base_model_path: str, model_size: str, model
     wk = np.reshape(wk, [base_num_query_heads * head_dim, base_num_kv_heads, head_dim])
     wv = np.reshape(wv, [base_num_query_heads * head_dim, base_num_kv_heads, head_dim])
 
-    if model_size[:8] not in llama3_variants and not rope_type.startswith("llama3.1"):
-      wq = permute_to_match_maxtext_rope(wq)
-      wk = permute_to_match_maxtext_rope(wk)
-    else:
-      if not has_printed_warning:
-        max_logging.log("Skipping permute_to_match_maxtext_rope because model is a Llama3 variant or has RoPE Type Llama3.1")
-        has_printed_warning = True
+    # if model_size[:8] not in llama3_variants and not rope_type.startswith("llama3.1"):
+    #   wq = permute_to_match_maxtext_rope(wq)
+    #   wk = permute_to_match_maxtext_rope(wk)
+    # else:
+    #   if not has_printed_warning:
+    #     max_logging.log("Skipping permute_to_match_maxtext_rope because model is a Llama3 variant or has RoPE Type Llama3.1")
+    #     has_printed_warning = True
 
     w_post = np.concatenate(
         [
