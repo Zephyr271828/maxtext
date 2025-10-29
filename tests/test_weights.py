@@ -247,7 +247,7 @@ def main(config, test_args):
     
     # compare_hf_model_weights(hf_model_1, hf_model_2)
     
-    patch_orbax_weights(hf_model_1, orbax_state, config, limit=4)
+    # patch_orbax_weights(hf_model_1, orbax_state, config, limit=4)
     
     compare_hf_orbax_model_weights(hf_model_1, orbax_state, config)
 

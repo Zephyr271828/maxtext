@@ -302,7 +302,7 @@ SIMULATED_CPU_DEVICES_COUNT = 16
 # a torch tensor of type bfloat16 to a numpy array of type bfloat16
 # so we have to cast to float32 first
 # CAST_DTYPE = ml_dtypes.bfloat16
-CAST_DTYPE = np.float16
+CAST_DTYPE = np.float32
 
 print(f"USING DTYPE {CAST_DTYPE}")
 
