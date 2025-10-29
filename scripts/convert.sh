@@ -142,11 +142,7 @@ case "$MODE" in
     echo "[INFO] 🧪 Running weights test..."
     export HF_MODEL_PATH="${HF_CKPT_DIR}/${HF_MODEL_NAME}"
     export UNSCANNED_CKPT_PATH="${DIRECT_CKPT_DIR}/${DIRECT_RUN_NAME}/checkpoints/0/items"
-    TPU_CHIPS_PER_HOST_BOUNDS=1,1,1 \
-    TPU_HOST_BOUNDS=1,1,1 \
-    TPU_VISIBLE_DEVICES=0,1,2,3 \
-    XLA_USE_BF16=1 \
-    python3 -u tests/test_weights.py \
+    JAX_PLATFORMS=cpu python3 -u tests/test_weights.py \
       MaxText/configs/base.yml \
       skip_jax_distributed_system=True \
       load_parameters_path=${UNSCANNED_CKPT_PATH} \
