@@ -88,6 +88,24 @@ MODEL_PARAMS_DICT = {
         "dims_per_head": 128,
         "vocab": 32000,
     },
+    "llama3-1b": {
+      "num_layers": 16,
+      "num_heads": 16,
+      "num_kv_heads": 4,
+      "dims_per_head": 128,
+      "vocab": 128256,
+      "base_emb_dim": 2048,
+      "base_mlp_dim": 8192,
+    },
+    "llama3.1-1b": {
+      "num_layers": 16,
+      "num_heads": 16,
+      "num_kv_heads": 4,
+      "dims_per_head": 128,
+      "vocab": 128256,
+      "base_emb_dim": 2048,
+      "base_mlp_dim": 8192,
+    },
     "llama3-4b-width": {
       "num_layers": 32,
       "num_heads": 32,
@@ -283,8 +301,9 @@ SIMULATED_CPU_DEVICES_COUNT = 16
 # NOTE: it's incredibly silly but you can't directly cast from
 # a torch tensor of type bfloat16 to a numpy array of type bfloat16
 # so we have to cast to float32 first
-# CAST_DTYPE = ml_dtypes.bfloat16
-CAST_DTYPE = np.float16
+# CAST_DTYPE = ml_dtypes.float32
+# CAST_DTYPE = np.float16
+CAST_DTYPE = np.float32
 
 print(f"USING DTYPE {CAST_DTYPE}")
 
@@ -793,7 +812,7 @@ def _convert_huggingface_to_jax_weights(base_model_path: str, model_size: str, m
 
   # decoder norm scale ###########################################
   max_logging.log("Processing decoder norm scale")
-  decoder_norm_scale = chkpt_vars["norm.weight"].to(torch.float32).numpy().astype(CAST_DTYPE)
+  decoder_norm_scale = chkpt_vars["norm.weight"].numpy()
   jax_weights["decoder"]["decoder_norm"]["scale"] = decoder_norm_scale
 
   logging.debug("Memory usage: %f GB", mem_info.memory_info().rss / (1024**3))
@@ -802,7 +821,7 @@ def _convert_huggingface_to_jax_weights(base_model_path: str, model_size: str, m
   max_logging.log("Processing logits dense")
 
   jax_weights["decoder"]["logits_dense"]["kernel"] = (
-      chkpt_vars["output.weight"].to(torch.float32).numpy().astype(CAST_DTYPE).transpose()[:, :vocab_size]
+      chkpt_vars["output.weight"].numpy().transpose()[:, :vocab_size]
   )
 
   logging.debug("Memory usage: %f GB", mem_info.memory_info().rss / (1024**3))
@@ -812,11 +831,11 @@ def _convert_huggingface_to_jax_weights(base_model_path: str, model_size: str, m
 
   if model_size[:6] in ["llama3", "llama4"]:
     jax_weights["token_embedder"]["embedding"] = (
-        chkpt_vars["tok_embeddings.weight"].to(torch.float32).numpy().astype(CAST_DTYPE)
+        chkpt_vars["tok_embeddings.weight"].numpy()
     )
   else:
     jax_weights["token_embedder"]["embedding"] = (
-        chkpt_vars["tok_embeddings.weight"].to(torch.float32).numpy().astype(CAST_DTYPE)[:vocab_size, :]
+        chkpt_vars["tok_embeddings.weight"].numpy()[:vocab_size, :]
     )
 
   logging.debug("Memory usage: %f GB", mem_info.memory_info().rss / (1024**3))
@@ -834,27 +853,27 @@ def _convert_huggingface_to_jax_weights(base_model_path: str, model_size: str, m
       stack_shape = (base_num_decoder_layers,)
       self_attention = jax_weights["decoder"]["layers"]["self_attention"]
 
-    wq = chkpt_vars[f"layers.{layer_idx}.attention.wq.weight"].to(torch.float32).numpy().astype(CAST_DTYPE).transpose()
-    wk = chkpt_vars[f"layers.{layer_idx}.attention.wk.weight"].to(torch.float32).numpy().astype(CAST_DTYPE).transpose()
-    wv = chkpt_vars[f"layers.{layer_idx}.attention.wv.weight"].to(torch.float32).numpy().astype(CAST_DTYPE).transpose()
+    wq = chkpt_vars[f"layers.{layer_idx}.attention.wq.weight"].numpy().transpose()
+    wk = chkpt_vars[f"layers.{layer_idx}.attention.wk.weight"].numpy().transpose()
+    wv = chkpt_vars[f"layers.{layer_idx}.attention.wv.weight"].numpy().transpose()
 
     wq = np.reshape(wq, [base_emb_dim, base_num_query_heads, head_dim])
     wk = np.reshape(wk, [base_emb_dim, base_num_kv_heads, head_dim])
     wv = np.reshape(wv, [base_emb_dim, base_num_kv_heads, head_dim])
 
-    if model_size[:8] == "llama3.1":
-      wq = max_utils.permute_to_match_maxtext_rope(wq)
-      wk = max_utils.permute_to_match_maxtext_rope(wk)
+    # if model_size[:8] == "llama3.1":
+    #   wq = max_utils.permute_to_match_maxtext_rope(wq)
+    #   wk = max_utils.permute_to_match_maxtext_rope(wk)
 
-    w_post = chkpt_vars[f"layers.{layer_idx}.attention.wo.weight"].to(torch.float32).numpy().astype(CAST_DTYPE)
+    w_post = chkpt_vars[f"layers.{layer_idx}.attention.wo.weight"].numpy()
 
     w_post = np.reshape(w_post, [base_emb_dim, base_num_query_heads, head_dim])
 
     if self_attention["query"]["kernel"] is None:
-      self_attention["query"]["kernel"] = np.zeros(stack_shape + wq.shape, dtype=CAST_DTYPE)
-      self_attention["key"]["kernel"] = np.zeros(stack_shape + wk.shape, dtype=CAST_DTYPE)
-      self_attention["value"]["kernel"] = np.zeros(stack_shape + wv.shape, dtype=CAST_DTYPE)
-      self_attention["out"]["kernel"] = np.zeros(stack_shape + w_post.shape, dtype=CAST_DTYPE)
+      self_attention["query"]["kernel"] = np.zeros(stack_shape + wq.shape)
+      self_attention["key"]["kernel"] = np.zeros(stack_shape + wk.shape)
+      self_attention["value"]["kernel"] = np.zeros(stack_shape + wv.shape)
+      self_attention["out"]["kernel"] = np.zeros(stack_shape + w_post.shape)
 
     self_attention["query"]["kernel"][block_layer_idx, ...] = wq  # pylint: disable=E1137
     self_attention["key"]["kernel"][block_layer_idx, ...] = wk  # pylint: disable=E1137
@@ -909,17 +928,17 @@ def _convert_huggingface_to_jax_weights(base_model_path: str, model_size: str, m
       layer_weight = jax_weights["decoder"]["layers"]
 
     pre_self_attention_layernorm = (
-        chkpt_vars[f"layers.{layer_idx}.attention_norm.weight"].type(torch.float32).numpy().astype(CAST_DTYPE)
+        chkpt_vars[f"layers.{layer_idx}.attention_norm.weight"].numpy()
     )
     post_self_attention_layernorm = (
-        chkpt_vars[f"layers.{layer_idx}.ffn_norm.weight"].type(torch.float32).numpy().astype(CAST_DTYPE)
+        chkpt_vars[f"layers.{layer_idx}.ffn_norm.weight"].numpy()
     )
     if layer_weight["pre_self_attention_layer_norm"]["scale"] is None:
       layer_weight["pre_self_attention_layer_norm"]["scale"] = np.zeros(
-          stack_shape + pre_self_attention_layernorm.shape, dtype=CAST_DTYPE
+          stack_shape + pre_self_attention_layernorm.shape
       )
       layer_weight["post_self_attention_layer_norm"]["scale"] = np.zeros(
-          stack_shape + post_self_attention_layernorm.shape, dtype=CAST_DTYPE
+          stack_shape + post_self_attention_layernorm.shape
       )
     layer_weight["pre_self_attention_layer_norm"]["scale"][block_layer_idx, ...] = pre_self_attention_layernorm  # pylint: disable=E1137
     layer_weight["post_self_attention_layer_norm"]["scale"][block_layer_idx, ...] = post_self_attention_layernorm  # pylint: disable=E1137
@@ -958,18 +977,18 @@ def _convert_huggingface_to_jax_weights(base_model_path: str, model_size: str, m
 
     if is_dense_layer:
       wi_0 = (
-          chkpt_vars[f"layers.{layer_idx}.feed_forward.w1.weight"].type(torch.float32).numpy().astype(CAST_DTYPE).transpose()
+          chkpt_vars[f"layers.{layer_idx}.feed_forward.w1.weight"].numpy().transpose()
       )
       wi_1 = (
-          chkpt_vars[f"layers.{layer_idx}.feed_forward.w2.weight"].type(torch.float32).numpy().astype(CAST_DTYPE).transpose()
+          chkpt_vars[f"layers.{layer_idx}.feed_forward.w2.weight"].numpy().transpose()
       )
       wo = (
-          chkpt_vars[f"layers.{layer_idx}.feed_forward.w3.weight"].type(torch.float32).numpy().astype(CAST_DTYPE).transpose()
+          chkpt_vars[f"layers.{layer_idx}.feed_forward.w3.weight"].numpy().transpose()
       )
       if layer_weight["mlp"]["wi_0"]["kernel"] is None:
-        layer_weight["mlp"]["wi_0"]["kernel"] = np.zeros(stack_shape + wi_0.shape, dtype=CAST_DTYPE)
-        layer_weight["mlp"]["wi_1"]["kernel"] = np.zeros(stack_shape + wi_1.shape, dtype=CAST_DTYPE)
-        layer_weight["mlp"]["wo"]["kernel"] = np.zeros(stack_shape + wo.shape, dtype=CAST_DTYPE)
+        layer_weight["mlp"]["wi_0"]["kernel"] = np.zeros(stack_shape + wi_0.shape)
+        layer_weight["mlp"]["wi_1"]["kernel"] = np.zeros(stack_shape + wi_1.shape)
+        layer_weight["mlp"]["wo"]["kernel"] = np.zeros(stack_shape + wo.shape)
       layer_weight["mlp"]["wi_0"]["kernel"][block_layer_idx, ...] = wi_0  # pytype: disable=unsupported-operands
       layer_weight["mlp"]["wi_1"]["kernel"][block_layer_idx, ...] = wi_1  # pytype: disable=unsupported-operands
       layer_weight["mlp"]["wo"]["kernel"][block_layer_idx, ...] = wo  # pytype: disable=unsupported-operands
@@ -978,31 +997,29 @@ def _convert_huggingface_to_jax_weights(base_model_path: str, model_size: str, m
       # 1 gate: Llama4MoEBlock_0.MoeBlock_0.gate.kernel
       gate = (
           chkpt_vars[f"layers.{layer_idx}.feed_forward.gate.weight"]
-          .type(torch.float32)
           .numpy()
-          .astype(CAST_DTYPE)
           .transpose()
       )
       if layer_weight["Llama4MoEBlock_0"]["MoeBlock_0"]["gate"]["kernel"] is None:
         layer_weight["Llama4MoEBlock_0"]["MoeBlock_0"]["gate"]["kernel"] = np.zeros(
-            stack_shape + gate.shape, dtype=CAST_DTYPE
+            stack_shape + gate.shape
         )
       layer_weight["Llama4MoEBlock_0"]["MoeBlock_0"]["gate"]["kernel"][block_layer_idx, ...] = gate
 
       # 2 routed experts: Llama4MoEBlock_0.MoeBlock_0.wi_0, Llama4MoEBlock_0.MoeBlock_0.wi_1, Llama4MoEBlock_0.MoeBlock_0.wo
       wi_0_1 = (
-          chkpt_vars[f"layers.{layer_idx}.feed_forward.experts.gate_up_proj"].type(torch.float32).numpy().astype(CAST_DTYPE)
+          chkpt_vars[f"layers.{layer_idx}.feed_forward.experts.gate_up_proj"].numpy()
       )
       # pylint: disable=unbalanced-tuple-unpacking
       wi_0, wi_1 = np.split(wi_0_1, 2, axis=-1)
       del wi_0_1
 
-      wo = chkpt_vars[f"layers.{layer_idx}.feed_forward.experts.down_proj"].type(torch.float32).numpy().astype(CAST_DTYPE)
+      wo = chkpt_vars[f"layers.{layer_idx}.feed_forward.experts.down_proj"].numpy()
 
       if layer_weight["Llama4MoEBlock_0"]["MoeBlock_0"]["wi_0"] is None:
-        layer_weight["Llama4MoEBlock_0"]["MoeBlock_0"]["wi_0"] = np.zeros(stack_shape + wi_0.shape, dtype=CAST_DTYPE)
-        layer_weight["Llama4MoEBlock_0"]["MoeBlock_0"]["wi_1"] = np.zeros(stack_shape + wi_1.shape, dtype=CAST_DTYPE)
-        layer_weight["Llama4MoEBlock_0"]["MoeBlock_0"]["wo"] = np.zeros(stack_shape + wo.shape, dtype=CAST_DTYPE)
+        layer_weight["Llama4MoEBlock_0"]["MoeBlock_0"]["wi_0"] = np.zeros(stack_shape + wi_0.shape)
+        layer_weight["Llama4MoEBlock_0"]["MoeBlock_0"]["wi_1"] = np.zeros(stack_shape + wi_1.shape)
+        layer_weight["Llama4MoEBlock_0"]["MoeBlock_0"]["wo"] = np.zeros(stack_shape + wo.shape)
 
       layer_weight["Llama4MoEBlock_0"]["MoeBlock_0"]["wi_0"][block_layer_idx, ...] = wi_0
       layer_weight["Llama4MoEBlock_0"]["MoeBlock_0"]["wi_1"][block_layer_idx, ...] = wi_1
@@ -1012,37 +1029,31 @@ def _convert_huggingface_to_jax_weights(base_model_path: str, model_size: str, m
       # Llama4MoEBlock_0.shared_experts.wi_1.kernel, Llama4MoEBlock_0.shared_experts.wo.kernel
       wi_0 = (
           chkpt_vars[f"layers.{layer_idx}.feed_forward.shared_experts.gate_proj.weight"]
-          .type(torch.float32)
           .numpy()
-          .astype(CAST_DTYPE)
           .transpose()
       )
 
       wi_1 = (
           chkpt_vars[f"layers.{layer_idx}.feed_forward.shared_experts.up_proj.weight"]
-          .type(torch.float32)
           .numpy()
-          .astype(CAST_DTYPE)
           .transpose()
       )
 
       wo = (
           chkpt_vars[f"layers.{layer_idx}.feed_forward.shared_experts.down_proj.weight"]
-          .type(torch.float32)
           .numpy()
-          .astype(CAST_DTYPE)
           .transpose()
       )
 
       if layer_weight["Llama4MoEBlock_0"]["shared_experts"]["wi_0"]["kernel"] is None:
         layer_weight["Llama4MoEBlock_0"]["shared_experts"]["wi_0"]["kernel"] = np.zeros(
-            stack_shape + wi_0.shape, dtype=CAST_DTYPE
+            stack_shape + wi_0.shape
         )
         layer_weight["Llama4MoEBlock_0"]["shared_experts"]["wi_1"]["kernel"] = np.zeros(
-            stack_shape + wi_1.shape, dtype=CAST_DTYPE
+            stack_shape + wi_1.shape
         )
         layer_weight["Llama4MoEBlock_0"]["shared_experts"]["wo"]["kernel"] = np.zeros(
-            stack_shape + wo.shape, dtype=CAST_DTYPE
+            stack_shape + wo.shape
         )
       layer_weight["Llama4MoEBlock_0"]["shared_experts"]["wi_0"]["kernel"][block_layer_idx, ...] = wi_0
       layer_weight["Llama4MoEBlock_0"]["shared_experts"]["wi_1"]["kernel"][block_layer_idx, ...] = wi_1
@@ -1051,44 +1062,38 @@ def _convert_huggingface_to_jax_weights(base_model_path: str, model_size: str, m
       # 1 MoeBlock_0.gate.kernel
       gate = np.concatenate(
           [
-              var[f"layers.{layer_idx}.feed_forward.gate.weight"].type(torch.float32).numpy().astype(CAST_DTYPE)
+              var[f"layers.{layer_idx}.feed_forward.gate.weight"].numpy()
               for var in chkpt_vars
           ],
           axis=0,
       ).transpose()
       if layer_weight["MoeBlock_0"]["gate"]["kernel"] is None:
-        layer_weight["MoeBlock_0"]["gate"]["kernel"] = np.zeros(stack_shape + gate.shape, dtype=CAST_DTYPE)
+        layer_weight["MoeBlock_0"]["gate"]["kernel"] = np.zeros(stack_shape + gate.shape)
       layer_weight["MoeBlock_0"]["gate"]["kernel"][layer_idx, ...] = gate
 
       # 2 MoeBlock_0.wi_0, MoeBlock_0.wi_1, MoeBlock_0.wo
       for k in tqdm(range(num_experts), desc="experts", leave=False):
         wi_0 = (
             chkpt_vars[f"layers.{layer_idx}.feed_forward.experts.{k}.w1.weight"]
-            .type(torch.float32)
             .numpy()
-            .astype(CAST_DTYPE)
             .transpose()
         )
         wi_1 = (
             chkpt_vars[f"layers.{layer_idx}.feed_forward.experts.{k}.w3.weight"]
-            .type(torch.float32)
             .numpy()
-            .astype(CAST_DTYPE)
             .transpose()
         )
         wo = (
             chkpt_vars[f"layers.{layer_idx}.feed_forward.experts.{k}.w2.weight"]
-            .type(torch.float32)
             .numpy()
-            .astype(CAST_DTYPE)
             .transpose()
         )
 
         if layer_weight["MoeBlock_0"]["wi_0"] is None:
           stack_shape_expert = (num_experts, base_num_decoder_layers)
-          layer_weight["MoeBlock_0"]["wi_0"] = np.zeros(stack_shape_expert + wi_0.shape, dtype=CAST_DTYPE)
-          layer_weight["MoeBlock_0"]["wi_1"] = np.zeros(stack_shape_expert + wi_1.shape, dtype=CAST_DTYPE)
-          layer_weight["MoeBlock_0"]["wo"] = np.zeros(stack_shape_expert + wo.shape, dtype=CAST_DTYPE)
+          layer_weight["MoeBlock_0"]["wi_0"] = np.zeros(stack_shape_expert + wi_0.shape)
+          layer_weight["MoeBlock_0"]["wi_1"] = np.zeros(stack_shape_expert + wi_1.shape)
+          layer_weight["MoeBlock_0"]["wo"] = np.zeros(stack_shape_expert + wo.shape)
         ei, li = k, layer_idx
         layer_weight["MoeBlock_0"]["wi_0"][ei, li, ...] = wi_0
         layer_weight["MoeBlock_0"]["wi_1"][ei, li, ...] = wi_1
@@ -1207,7 +1212,7 @@ def _convert_pytorch_to_jax_weights(base_model_path: str, model_size: str, model
 
   # decoder norm scale ###########################################
   max_logging.log("Processing decoder norm scale")
-  decoder_norm_scale = chkpt_vars[0]["norm.weight"].type(torch.float32).numpy().astype(CAST_DTYPE)
+  decoder_norm_scale = chkpt_vars[0]["norm.weight"].numpy()
   jax_weights["decoder"]["decoder_norm"]["scale"] = decoder_norm_scale
 
   logging.debug("Memory usage: %f GB", mem_info.memory_info().rss / (1024**3))
@@ -1215,7 +1220,7 @@ def _convert_pytorch_to_jax_weights(base_model_path: str, model_size: str, model
   # logits dense #################################################
   max_logging.log("Processing logits dense")
   logits_dense = np.concatenate(
-      [var["output.weight"].type(torch.float32).numpy().astype(CAST_DTYPE) for var in chkpt_vars], axis=0
+      [var["output.weight"].numpy() for var in chkpt_vars], axis=0
   ).transpose()[:, :vocab_size]
   jax_weights["decoder"]["logits_dense"]["kernel"] = logits_dense
 
@@ -1225,11 +1230,11 @@ def _convert_pytorch_to_jax_weights(base_model_path: str, model_size: str, model
   max_logging.log("Processing token embeddings")
   if model_size[:6] in ["llama3", "llama4"]:
     token_embedder = np.concatenate(
-        [var["tok_embeddings.weight"].type(torch.float32).numpy().astype(CAST_DTYPE) for var in chkpt_vars], axis=0
+        [var["tok_embeddings.weight"].numpy() for var in chkpt_vars], axis=0
     )
   else:
     token_embedder = np.concatenate(
-        [var["tok_embeddings.weight"].type(torch.float32).numpy().astype(CAST_DTYPE) for var in chkpt_vars], axis=1
+        [var["tok_embeddings.weight"].numpy() for var in chkpt_vars], axis=1
     )[:vocab_size, :]
   jax_weights["token_embedder"]["embedding"] = token_embedder
   logging.debug("Memory usage: %f GB", mem_info.memory_info().rss / (1024**3))
@@ -1254,9 +1259,9 @@ def _convert_pytorch_to_jax_weights(base_model_path: str, model_size: str, model
       ratio = base_num_query_heads // base_num_kv_heads
       kv_hidden_size = hidden_size // ratio
       wq, wk, wv = (
-          np.zeros((hidden_size, hidden_size), dtype=ml_dtypes.bfloat16),
-          np.zeros((kv_hidden_size, hidden_size), dtype=ml_dtypes.bfloat16),
-          np.zeros((kv_hidden_size, hidden_size), dtype=ml_dtypes.bfloat16),
+          np.zeros((hidden_size, hidden_size), dtype=ml_dtypes.float32),
+          np.zeros((kv_hidden_size, hidden_size), dtype=ml_dtypes.float32),
+          np.zeros((kv_hidden_size, hidden_size), dtype=ml_dtypes.float32),
       )
       num_chkpt_parts = len(chkpt_vars)
       # NOTE: it's VERY important that the qkv splitting happens first and then the concatenation.
@@ -1277,21 +1282,21 @@ def _convert_pytorch_to_jax_weights(base_model_path: str, model_size: str, model
     else:
       wq = np.concatenate(
           [
-              var[f"layers.{layer_idx}.attention.wq.weight"].type(torch.float32).numpy().astype(CAST_DTYPE)
+              var[f"layers.{layer_idx}.attention.wq.weight"].numpy()
               for var in chkpt_vars
           ],
           axis=0,
       )
       wk = np.concatenate(
           [
-              var[f"layers.{layer_idx}.attention.wk.weight"].type(torch.float32).numpy().astype(CAST_DTYPE)
+              var[f"layers.{layer_idx}.attention.wk.weight"].numpy()
               for var in chkpt_vars[::wkv_step]
           ],
           axis=0,
       )
       wv = np.concatenate(
           [
-              var[f"layers.{layer_idx}.attention.wv.weight"].type(torch.float32).numpy().astype(CAST_DTYPE)
+              var[f"layers.{layer_idx}.attention.wv.weight"].numpy()
               for var in chkpt_vars[::wkv_step]
           ],
           axis=0,
@@ -1305,17 +1310,17 @@ def _convert_pytorch_to_jax_weights(base_model_path: str, model_size: str, model
     wk = np.reshape(wk, [base_num_query_heads * head_dim, base_num_kv_heads, head_dim])
     wv = np.reshape(wv, [base_num_query_heads * head_dim, base_num_kv_heads, head_dim])
 
-    if model_size[:8] not in llama3_variants and not rope_type.startswith("llama3.1"):
-      wq = permute_to_match_maxtext_rope(wq)
-      wk = permute_to_match_maxtext_rope(wk)
-    else:
-      if not has_printed_warning:
-        max_logging.log("Skipping permute_to_match_maxtext_rope because model is a Llama3 variant or has RoPE Type Llama3.1")
-        has_printed_warning = True
+    # if model_size[:8] not in llama3_variants and not rope_type.startswith("llama3.1"):
+    #   wq = permute_to_match_maxtext_rope(wq)
+    #   wk = permute_to_match_maxtext_rope(wk)
+    # else:
+    #   if not has_printed_warning:
+    #     max_logging.log("Skipping permute_to_match_maxtext_rope because model is a Llama3 variant or has RoPE Type Llama3.1")
+    #     has_printed_warning = True
 
     w_post = np.concatenate(
         [
-            var[f"layers.{layer_idx}.attention.wo.weight"].type(torch.float32).numpy().astype(CAST_DTYPE)
+            var[f"layers.{layer_idx}.attention.wo.weight"].numpy()
             for var in chkpt_vars
         ],
         axis=1,
@@ -1325,10 +1330,10 @@ def _convert_pytorch_to_jax_weights(base_model_path: str, model_size: str, model
 
     if self_attention["query"]["kernel"] is None:
       stack_shape = (base_num_decoder_layers,)
-      self_attention["query"]["kernel"] = np.zeros(stack_shape + wq.shape, dtype=CAST_DTYPE)
-      self_attention["key"]["kernel"] = np.zeros(stack_shape + wk.shape, dtype=CAST_DTYPE)
-      self_attention["value"]["kernel"] = np.zeros(stack_shape + wv.shape, dtype=CAST_DTYPE)
-      self_attention["out"]["kernel"] = np.zeros(stack_shape + w_post.shape, dtype=CAST_DTYPE)
+      self_attention["query"]["kernel"] = np.zeros(stack_shape + wq.shape)
+      self_attention["key"]["kernel"] = np.zeros(stack_shape + wk.shape)
+      self_attention["value"]["kernel"] = np.zeros(stack_shape + wv.shape)
+      self_attention["out"]["kernel"] = np.zeros(stack_shape + w_post.shape)
 
     self_attention["query"]["kernel"][layer_idx, ...] = wq  # pylint: disable=E1137
     self_attention["key"]["kernel"][layer_idx, ...] = wk  # pylint: disable=E1137

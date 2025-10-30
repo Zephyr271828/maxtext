@@ -25,7 +25,7 @@ def compare_hf_model_weights(hf_model_1, hf_model_2):
         print("In model2 not model1:", keys2 - keys1)
 
     # Compare parameters
-    tolerance = 1e-4  # you can tighten/loosen this
+    tolerance = 1e-9  # you can tighten/loosen this
     all_close = True
     for k in sd1.keys():
         if sd1[k].shape != sd2[k].shape:
@@ -232,10 +232,10 @@ def main(config, test_args):
         test_args.hf_model_path,
         torch_dtype=torch.float16,
     )
-    # hf_model_2 = AutoModelForCausalLM.from_pretrained(
-    #     '/home/zephyr/gcs-bucket/model_ckpts/llama3.1-8b-hf',
-    #     torch_dtype=torch.float16,
-    # )
+    hf_model_2 = AutoModelForCausalLM.from_pretrained(
+        '/home/zephyr/gcs-bucket/model_ckpts/hf/llama3.1_1b_scratch_back',
+        torch_dtype=torch.float16,
+    )
     
     init_rng = jax.random.PRNGKey(config.init_weights_seed)
     init_rng, rng1 = jax.random.split(init_rng)
@@ -245,9 +245,9 @@ def main(config, test_args):
     orbax_model = models.Transformer(config, mesh, quant=quant)
     orbax_state, _ = maxtext_utils.setup_decode_state(orbax_model, config, rng1, mesh, None)
     
-    # compare_hf_model_weights(hf_model_1, hf_model_2)
+    compare_hf_model_weights(hf_model_1, hf_model_2)
     
-    patch_orbax_weights(hf_model_1, orbax_state, config, limit=4)
+    # patch_orbax_weights(hf_model_1, orbax_state, config, limit=4)
     
     compare_hf_orbax_model_weights(hf_model_1, orbax_state, config)
 
