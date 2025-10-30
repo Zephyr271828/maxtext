@@ -6,8 +6,8 @@ host_id=$(python -c "import socket; print(socket.gethostname())" | awk -F'-' '{p
 
 for arg in "$@"; do
   case $arg in
-    --model=*) MODEL="${arg#*=}" ;;
-    --orbax_ckpt_name=*) ORBAX_CKPT_NAME="${arg#*=}" ;;
+    --model=*) model="${arg#*=}" ;;
+    --orbax_ckpt_name=*) orbax_ckpt_name="${arg#*=}" ;;
     *) echo "[WARN] Unknown arg $arg" ;;
   esac
 done
