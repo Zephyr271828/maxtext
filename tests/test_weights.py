@@ -76,23 +76,46 @@ def compare_hf_orbax_model_weights(hf_model, orbax_state, config, atol=1e-3, rto
         return key        
     
     def reshape_orbax_weight(key, value):
-        # Self-attention projections
-        if "self_attention.query.kernel" in key:
-            # From (hidden_dim, num_heads, head_dim) -> (hidden_dim, hidden_dim)
-            return value.reshape((value.shape[0], -1))
+        # # Self-attention projections
+        # if "self_attention.query.kernel" in key:
+        #     # From (hidden_dim, num_heads, head_dim) -> (hidden_dim, hidden_dim)
+        #     return value.reshape((value.shape[0], -1))
         
-        elif "self_attention.key.kernel" in key or "self_attention.value.kernel" in key:
-            return value.reshape((value.shape[0], -1)).transpose(1, 0)
+        # elif "self_attention.key.kernel" in key or "self_attention.value.kernel" in key:
+        #     return value.reshape((value.shape[0], -1)).transpose(1, 0)
         
-        elif "self_attention.out.kernel" in key:
-            # From (num_heads, head_dim, hidden_dim) -> (hidden_dim, hidden_dim)
-            return value.transpose(0, 1, 2).reshape((-1, value.shape[-1]))
+        # elif "self_attention.out.kernel" in key:
+        #     # From (num_heads, head_dim, hidden_dim) -> (hidden_dim, hidden_dim)
+        #     return value.transpose(0, 1, 2).reshape((-1, value.shape[-1]))
 
-        elif "mlp" in key:
-            return value.T
+        # elif "mlp" in key:
+        #     return value.T
+
+        # else:
+        #     return value  # No reshape needed
+        # Q: (hidden, n_q_heads, head_dim) -> (hidden, hidden)
+        if "self_attention.query.kernel" in orbax_key:
+            v = np.asarray(value).reshape(value.shape[0], -1)
+            return v
+
+        # K / V: (hidden, n_kv_heads, head_dim) -> (hidden, hidden)
+        elif "self_attention.key.kernel" in orbax_key or "self_attention.value.kernel" in orbax_key:
+            v = np.asarray(value).reshape(value.shape[0], -1)
+            return v
+
+        # O: (n_q_heads, head_dim, hidden) -> (hidden, hidden)
+        elif "self_attention.out.kernel" in orbax_key:
+            v = np.asarray(value)
+            if v.ndim == 3:
+                v = v.transpose(0, 1, 2).reshape(v.shape[0]*v.shape[1], v.shape[2])
+            return v
+
+        # MLP: already transposed in conversion
+        elif ".mlp." in orbax_key:
+            return np.asarray(value)
 
         else:
-            return value  # No reshape needed
+            return np.asarray(value)
 
     matched = 0
     mismatched = 0
