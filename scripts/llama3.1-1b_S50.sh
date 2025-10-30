@@ -14,6 +14,7 @@ for arg in "$@"; do
         --grad_clip=*) GRAD_CLIP="${arg#*=}" ;;
         --min_lr_ratio=*) MIN_LR_RATIO="${arg#*=}" ;;
         --warmup_ratio=*) WARMUP_RATIO="${arg#*=}" ;;
+        --max_to_keep=*) MAX_TO_KEEP="${arg#*=}" ;;
         *) echo "[WARN] Unknown arg $arg" ;;
     esac
 done
@@ -29,6 +30,7 @@ export MIN_LR_RATIO=${MIN_LR_RATIO:-0.1}
 export WARMUP_RATIO=${WARMUP_RATIO:-0.05}
 export ASYNC_CHECKPOINTING=false
 export BASE_OUTPUT_DIRECTORY="gs://${BUCKET_NAME}/model_ckpts/maxtext"
+export MAX_TO_KEEP=${MAX_TO_KEEP:-1}
 export DATA_FILES="/home/zephyr/gcs-bucket/datasets/dclm/llama3_64_array_record/*.array_record"
 export RUN_NAME="${MODEL_NAME}_S50_seqlen_${SEQ_LEN}_bs_${BATCH_SIZE}_grad_accum_${GRAD_ACCUM}_lr_${LR}_min_lr_ratio_${MIN_LR_RATIO}_warmup_ratio_${WARMUP_RATIO}"
 export JAX_PLATFORMS=tpu
@@ -62,7 +64,7 @@ python -u multihost_runner_orig.py \
         cosine_learning_rate_final_fraction=${MIN_LR_RATIO} \
         warmup_steps_fraction=${WARMUP_RATIO} \
         checkpoint_period=500 \
-        checkpoint_max_to_keep=1000 \
+        checkpoint_max_to_keep=${MAX_TO_KEEP} \
         use_wandb=True \
         wandb_project=llm_pruning \
         wandb_run_name=${TPU_PREFIX}_${RUN_NAME} \
