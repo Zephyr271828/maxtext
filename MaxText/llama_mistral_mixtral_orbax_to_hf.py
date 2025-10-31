@@ -141,49 +141,49 @@ def convert_state_to_hf(training_state, model_size):
     print(f"Converting weights for layer {layer_int}")
 
     # Attention layers
+    hf_model_params[f"model.layers.{layer_int}.self_attn.q_proj.weight"] = torch.tensor(
+        np.asarray(
+            unpermute_from_match_maxtext_rope(
+                reverse_scale(
+                    training_state.params["params"]["decoder"]["layers"]["self_attention"]["query"]["kernel"][
+                        :, layer_int, :, :
+                    ],
+                    head_dim,
+                ),
+                model_size,
+            )
+            .reshape(emb_dim, base_num_query_heads * head_dim)
+            .T
+        ),
+        
+    )
     # hf_model_params[f"model.layers.{layer_int}.self_attn.q_proj.weight"] = torch.tensor(
     #     np.asarray(
-    #         unpermute_from_match_maxtext_rope(
-    #             reverse_scale(
-    #                 training_state.params["params"]["decoder"]["layers"]["self_attention"]["query"]["kernel"][
-    #                     :, layer_int, :, :
-    #                 ],
-    #                 head_dim,
-    #             ),
-    #             model_size,
-    #         )
+    #         training_state.params["params"]["decoder"]["layers"]["self_attention"]["query"]["kernel"][:, layer_int, :, :]
     #         .reshape(emb_dim, base_num_query_heads * head_dim)
     #         .T
     #     ),
-    #     
+        
     # )
-    hf_model_params[f"model.layers.{layer_int}.self_attn.q_proj.weight"] = torch.tensor(
+    hf_model_params[f"model.layers.{layer_int}.self_attn.k_proj.weight"] = torch.tensor(
         np.asarray(
-            training_state.params["params"]["decoder"]["layers"]["self_attention"]["query"]["kernel"][:, layer_int, :, :]
-            .reshape(emb_dim, base_num_query_heads * head_dim)
+            unpermute_from_match_maxtext_rope(
+                training_state.params["params"]["decoder"]["layers"]["self_attention"]["key"]["kernel"][:, layer_int, :, :],
+                model_size,
+            )
+            .reshape(emb_dim, base_num_kv_heads * head_dim)
             .T
         ),
         
     )
     # hf_model_params[f"model.layers.{layer_int}.self_attn.k_proj.weight"] = torch.tensor(
     #     np.asarray(
-    #         unpermute_from_match_maxtext_rope(
-    #             training_state.params["params"]["decoder"]["layers"]["self_attention"]["key"]["kernel"][:, layer_int, :, :],
-    #             model_size,
-    #         )
+    #         training_state.params["params"]["decoder"]["layers"]["self_attention"]["key"]["kernel"][:, layer_int, :, :]
     #         .reshape(emb_dim, base_num_kv_heads * head_dim)
     #         .T
     #     ),
-    #     
-    # )
-    hf_model_params[f"model.layers.{layer_int}.self_attn.k_proj.weight"] = torch.tensor(
-        np.asarray(
-            training_state.params["params"]["decoder"]["layers"]["self_attention"]["key"]["kernel"][:, layer_int, :, :]
-            .reshape(emb_dim, base_num_kv_heads * head_dim)
-            .T
-        ),
         
-    )
+    # )
     hf_model_params[f"model.layers.{layer_int}.self_attn.v_proj.weight"] = torch.tensor(
         np.asarray(
             training_state.params["params"]["decoder"]["layers"]["self_attention"]["value"]["kernel"][:, layer_int, :, :]

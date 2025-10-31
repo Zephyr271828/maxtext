@@ -1616,15 +1616,15 @@ class Attention(nn.Module):
           num_attention_heads=self.config.num_attention_heads_for_vit,
           rope_theta=self.config.rope_theta_for_vit,
       )
-    elif self.config.model_name.startswith("llama3.1") or rope_type.startswith("llama3.1"):
-      rotary_embedding = llama_rotary_embedding_as_linen(
-          min_timescale=self.config.rope_min_timescale,
-          max_timescale=self.config.rope_max_timescale,
-          embedding_dims=rope_embedding_dims,
-          fprop_dtype=self.dtype,
-          name=name,
-          use_scale=rope_use_scale,
-      )
+    # elif self.config.model_name.startswith("llama3.1") or rope_type.startswith("llama3.1"):
+    #   rotary_embedding = llama_rotary_embedding_as_linen(
+    #       min_timescale=self.config.rope_min_timescale,
+    #       max_timescale=self.config.rope_max_timescale,
+    #       embedding_dims=rope_embedding_dims,
+    #       fprop_dtype=self.dtype,
+    #       name=name,
+    #       use_scale=rope_use_scale,
+    #   )
     elif rope_type.startswith("yarn"):
       rotary_embedding = yarn_rotary_embedding_as_linen(
           max_position_embeddings=self.config.max_position_embeddings,

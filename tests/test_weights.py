@@ -12,6 +12,14 @@ from MaxText import pyconfig
 from MaxText.layers import models
 from MaxText.layers import quantizations
 
+def unpermute_from_match_maxtext_rope(arr):
+  """
+  Function to get the RoPE values in correct ordering
+  """
+  evens = arr[..., ::2]
+  odds = arr[..., 1::2]
+  return np.concatenate((evens, odds), axis=arr.ndim - 1)
+
 def compare_hf_model_weights(hf_model_1, hf_model_2):
     sd1 = hf_model_1.state_dict()
     sd2 = hf_model_2.state_dict()
@@ -79,14 +87,19 @@ def compare_hf_orbax_model_weights(hf_model, orbax_state, config, atol=1e-3, rto
         # Self-attention projections
         if "self_attention.query.kernel" in key:
             # From (hidden_dim, num_heads, head_dim) -> (hidden_dim, hidden_dim)
-            return value.reshape((value.shape[0], -1))
+            value = unpermute_from_match_maxtext_rope(value)
+            return value.reshape((value.shape[0], -1)).transpose()
         
-        elif "self_attention.key.kernel" in key or "self_attention.value.kernel" in key:
-            return value.reshape((value.shape[0], -1)).transpose(1, 0)
+        elif "self_attention.key.kernel" in key:
+            value = unpermute_from_match_maxtext_rope(value)
+            return value.reshape((value.shape[0], -1)).transpose()
+        
+        elif "self_attention.value.kernel" in key:
+            return value.reshape((value.shape[0], -1)).transpose()
         
         elif "self_attention.out.kernel" in key:
             # From (num_heads, head_dim, hidden_dim) -> (hidden_dim, hidden_dim)
-            return value.transpose(0, 1, 2).reshape((-1, value.shape[-1]))
+            return value.transpose(0, 1, 2).reshape((-1, value.shape[-1])).transpose()
 
         elif "mlp" in key:
             return value.T
@@ -183,7 +196,7 @@ def patch_orbax_weights(hf_model, orbax_state, config, limit=1000):
             print(f"⚠️  HF param not found for {orbax_key} → {hf_key}")
             continue
 
-        hf_tensor = hf_params[hf_key].detach().float().cpu().numpy()
+        hf_tensor = hf_params[hf_key].detach().cpu().numpy()
         hidden_dim = hf_tensor.shape[1]  # q_proj/k_proj weight shape: [in_dim, out_dim] → [4096, 4096]
 
         # print("HF tensor shape", hf_tensor.shape)
