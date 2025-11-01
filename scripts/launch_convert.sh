@@ -12,7 +12,7 @@ for arg in "$@"; do
   esac
 done
 
-model=llama3.1-1b
+model=${model:-llama3.1-1b}
 step=$((host_id * 500 + 500))
 direct_run_name="${orbax_ckpt_name}_step_${step}"
 bash scripts/convert.sh gen_param_ckpt \
