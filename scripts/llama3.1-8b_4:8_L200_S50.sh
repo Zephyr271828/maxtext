@@ -15,6 +15,8 @@ for arg in "$@"; do
         --min_lr_ratio=*) MIN_LR_RATIO="${arg#*=}" ;;
         --warmup_ratio=*) WARMUP_RATIO="${arg#*=}" ;;
         --max_to_keep=*) MAX_TO_KEEP="${arg#*=}" ;;
+        --data_files=*) DATA_FILES="${arg#*=}" ;;
+        --tag=*) TAG="${arg#*=}" ;;
         *) echo "[WARN] Unknown arg $arg" ;;
     esac
 done
@@ -31,8 +33,11 @@ export WARMUP_RATIO=${WARMUP_RATIO:-0.05}
 export ASYNC_CHECKPOINTING=false
 export BASE_OUTPUT_DIRECTORY="gs://${BUCKET_NAME}/model_ckpts/maxtext"
 export MAX_TO_KEEP=${MAX_TO_KEEP:-1}
-export DATA_FILES="/home/zephyr/gcs-bucket/datasets/dclm/llama3_64_array_record/*.array_record"
+export DATA_FILES="${DATA_FILES:-/home/zephyr/gcs-bucket/datasets/dclm/llama3_64_array_record/*.array_record}"
 export RUN_NAME="${MODEL_NAME}_4:8_L200_S50_seqlen_${SEQ_LEN}_bs_${BATCH_SIZE}_grad_accum_${GRAD_ACCUM}_lr_${LR}_min_lr_ratio_${MIN_LR_RATIO}_warmup_ratio_${WARMUP_RATIO}"
+if [ ! -z "${TAG:-}" ]; then
+    export RUN_NAME="${RUN_NAME}_${TAG}"
+fi
 export JAX_PLATFORMS=tpu
 export SPARSE_MODEL_TRAINING=True
 
