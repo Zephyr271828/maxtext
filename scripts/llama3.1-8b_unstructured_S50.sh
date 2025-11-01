@@ -16,6 +16,7 @@ for arg in "$@"; do
         --warmup_ratio=*) WARMUP_RATIO="${arg#*=}" ;;
         --max_to_keep=*) MAX_TO_KEEP="${arg#*=}" ;;
         --data_files=*) DATA_FILES="${arg#*=}" ;;
+        --shuffle=*) SHUFFLE="${arg#*=}" ;;
         --tag=*) TAG="${arg#*=}" ;;
         *) echo "[WARN] Unknown arg $arg" ;;
     esac
@@ -34,6 +35,7 @@ export ASYNC_CHECKPOINTING=false
 export BASE_OUTPUT_DIRECTORY="gs://${BUCKET_NAME}/model_ckpts/maxtext"
 export MAX_TO_KEEP=${MAX_TO_KEEP:-1}
 export DATA_FILES="${DATA_FILES:-/home/zephyr/gcs-bucket/datasets/dclm/llama3_64_array_record/*.array_record}"
+export SHUFFLE="${SHUFFLE:-True}"
 export RUN_NAME="${MODEL_NAME}_unstructured_S50_seqlen_${SEQ_LEN}_bs_${BATCH_SIZE}_grad_accum_${GRAD_ACCUM}_lr_${LR}_min_lr_ratio_${MIN_LR_RATIO}_warmup_ratio_${WARMUP_RATIO}"
 if [ ! -z "${TAG:-}" ]; then
     export RUN_NAME="${RUN_NAME}_${TAG}"
@@ -56,7 +58,7 @@ python -u multihost_runner_orig.py \
         start_from_file_index=50 \
         grain_file_type='arrayrecord' \
         grain_worker_count=1 \
-        enable_data_shuffling=True \
+        enable_data_shuffling=${SHUFFLE} \
         tokenize_train_data=False \
         tokenize_eval_data=False \
         max_target_length=${SEQ_LEN} \
