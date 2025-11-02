@@ -8,12 +8,14 @@ for arg in "$@"; do
   case $arg in
     --model=*) model="${arg#*=}" ;;
     --orbax_ckpt_name=*) orbax_ckpt_name="${arg#*=}" ;;
+    --offset=*) offset="${arg#*=}" ;;
     *) echo "[WARN] Unknown arg $arg" ;;
   esac
 done
 
 model=${model:-llama3.1-1b}
-step=$((host_id * 500 + 500))
+offset=${offset:-500}
+step=$((host_id * 500 + $offset))
 direct_run_name="${orbax_ckpt_name}_step_${step}"
 bash scripts/convert.sh gen_param_ckpt \
     --model=${model} \
