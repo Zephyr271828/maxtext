@@ -23,7 +23,7 @@ def generate_script(
     exp_type = "unknown"
     if not load_parameters_path:
         # if we are using a small model
-        if any(x in model_name.lower() for x in ["4b", "3b", "2b", "1.5b", "1b"]):
+        if any(x in model_name.lower() for x in ["4b", "3b", "2b", "1.5b", "1b", "440m"]):
             exp_type = f"S{num_steps // 250}"
         elif any(x in model_name.lower() for x in ["8b", "7b"]):
             exp_type = f"L{num_steps // 250}"
@@ -175,7 +175,7 @@ if __name__ == "__main__":
                 # output_path=args.output_path,
             )
             
-    for model_name in ["llama3.1-1b", "llama3.1-1.5b-depth", "llama3.1-2b-depth", "llama3.1-3b-depth"]:
+    for model_name in ["llama3.1-440m", "llama3.1-1b", "llama3.1-1.5b-depth", "llama3.1-2b-depth", "llama3.1-3b-depth"]:
         for num_steps in [12500]:
             generate_script(
                 model_name=model_name,
