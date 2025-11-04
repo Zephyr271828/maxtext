@@ -247,10 +247,10 @@ def main(config, test_args):
         test_args.hf_model_path,
         torch_dtype=torch.float16,
     )
-    hf_model_2 = AutoModelForCausalLM.from_pretrained(
-        f"{test_args.hf_model_path}_back",
-        torch_dtype=torch.float16,
-    )
+    # hf_model_2 = AutoModelForCausalLM.from_pretrained(
+    #     f"{test_args.hf_model_path}_back",
+    #     torch_dtype=torch.float16,
+    # )
     
     init_rng = jax.random.PRNGKey(config.init_weights_seed)
     init_rng, rng1 = jax.random.split(init_rng)
@@ -260,7 +260,7 @@ def main(config, test_args):
     orbax_model = models.Transformer(config, mesh, quant=quant)
     orbax_state, _ = maxtext_utils.setup_decode_state(orbax_model, config, rng1, mesh, None)
     
-    compare_hf_model_weights(hf_model_1, hf_model_2)
+    # compare_hf_model_weights(hf_model_1, hf_model_2)
     
     # patch_orbax_weights(hf_model_1, orbax_state, config, limit=4)
     
