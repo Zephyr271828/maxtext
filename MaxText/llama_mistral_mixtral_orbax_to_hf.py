@@ -44,7 +44,7 @@ import numpy as np
 
 from jax.sharding import Mesh
 
-from transformers import LlamaForCausalLM, MistralForCausalLM, AutoModelForCausalLM, AutoConfig
+from transformers import LlamaForCausalLM, MistralForCausalLM, AutoModelForCausalLM, AutoConfig, LlamaConfig
 
 from MaxText import checkpointing
 from MaxText import llama_or_mistral_ckpt
