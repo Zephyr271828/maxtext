@@ -75,18 +75,49 @@ def load_hf_model(model_size):
     model = MistralForCausalLM.from_pretrained("mistralai/Mistral-7B-v0.1")
   elif model_size == "mixtral-8x7b":
     model = AutoModelForCausalLM.from_pretrained("mistralai/Mixtral-8x7B-v0.1", device_map="auto")
-  elif model_size == "llama3.1-8b":
-    config = AutoConfig.from_pretrained("/home/zephyr/gcs-bucket/model_ckpts/Llama-3.1-8B")
-    model = AutoModelForCausalLM.from_config(config)
-  elif model_size == 'llama3.1-4b-depth':
-    config = AutoConfig.from_pretrained("/home/zephyr/gcs-bucket/model_ckpts/llama3_4b_depth_hf")
-    model = AutoModelForCausalLM.from_config(config)
-  elif model_size == 'llama3.1-4b-width':
-    config = AutoConfig.from_pretrained("/home/zephyr/gcs-bucket/model_ckpts/llama3_4b_width_hf")
-    model = AutoModelForCausalLM.from_config(config)
-  elif model_size == 'llama3.1-1b' or model_size == 'llama3-1b':
-    config = AutoConfig.from_pretrained("/home/zephyr/gcs-bucket/model_ckpts/hf/llama3.1_1b_scratch")
-    model = AutoModelForCausalLM.from_config(config)
+  elif "llama3" in model_size:
+    config = LlamaConfig(
+      attention_bias=False,
+      attention_dropout=0.0,
+      bos_token_id=128000,
+      eos_token_id=128001,
+      hidden_act="silu",
+      hidden_size=4096,
+      initializer_range=0.02,
+      intermediate_size=14336,
+      max_position_embeddings=8192,
+      mlp_bias=False,
+      num_attention_heads=32,
+      num_key_value_heads=8,
+      num_hidden_layers=32,
+      rms_norm_eps=1e-5,
+      rope_theta=500000.0,
+      tie_word_embeddings=False,
+      use_cache=True,
+      vocab_size=128256,
+    )
+    if model_size == 'llama3.1-8b' or model_size == 'llama3-8b':
+      pass
+    elif model_size == 'llama3.1-4b-depth' or model_size == 'llama3-4b-depth':
+      config.num_hidden_layers = 16
+    elif model_size == 'llama3.1-4b-width' or model_size == 'llama3-4b-width':
+      config.hidden_size = 3072
+      config.intermediate_size = 9216
+    elif model_size == 'llama3.1-1b' or model_size == 'llama3-1b':
+      config.hidden_size = 1024
+      config.intermediate_size = 4096
+      config.num_attention_heads = 16
+      config.num_key_value_heads = 4
+      config.num_hidden_layers = 16
+    elif model_size == 'llama3.1-440m' or model_size == 'llama3-440m':
+      config.hidden_size = 1024
+      config.intermediate_size = 2816
+      config.num_attention_heads = 8
+      config.num_key_value_heads = 8
+      config.num_hidden_layers = 24
+    else:
+      raise NotImplementedError
+    config = AutoConfig.from_pretrained("/home/zephyr/gcs-bucket/model_ckpts/hf/Llama-3.1-8B_minitron_depth_nlayers_16_fp16")
   else:
     raise NotImplementedError
   return model
