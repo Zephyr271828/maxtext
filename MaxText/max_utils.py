@@ -769,12 +769,12 @@ def unpermute_from_match_maxtext_rope(arr, model_size):
   """
   Function to get the RoPE values in correct ordering
   """
-  # return arr
-  if model_size[:8] != "llama3.1":
-    return arr
-  evens = arr[..., ::2]
-  odds = arr[..., 1::2]
-  return jax.numpy.concatenate((evens, odds), axis=arr.ndim - 1)
+  return arr
+  # if model_size[:8] != "llama3.1":
+  #   return arr
+  # evens = arr[..., ::2]
+  # odds = arr[..., 1::2]
+  # return jax.numpy.concatenate((evens, odds), axis=arr.ndim - 1)
 
 
 @partial(jax.jit, static_argnames=("cp_size", "seq_dim", "to_contiguous"))

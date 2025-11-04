@@ -856,6 +856,8 @@ def _convert_huggingface_to_jax_weights(base_model_path: str, model_size: str, m
     wq = chkpt_vars[f"layers.{layer_idx}.attention.wq.weight"].numpy().transpose()
     wk = chkpt_vars[f"layers.{layer_idx}.attention.wk.weight"].numpy().transpose()
     wv = chkpt_vars[f"layers.{layer_idx}.attention.wv.weight"].numpy().transpose()
+    
+    # import pdb; pdb.set_trace()
 
     wq = np.reshape(wq, [base_emb_dim, base_num_query_heads, head_dim])
     wk = np.reshape(wk, [base_emb_dim, base_num_kv_heads, head_dim])

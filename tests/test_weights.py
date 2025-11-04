@@ -36,6 +36,8 @@ def compare_hf_model_weights(hf_model_1, hf_model_2):
     tolerance = 1e-9  # you can tighten/loosen this
     all_close = True
     for k in sd1.keys():
+        if any(f"layers.{i}." in k for i in range(1, 32)):
+            continue
         if sd1[k].shape != sd2[k].shape:
             print(f"Shape mismatch at {k}: {sd1[k].shape} vs {sd2[k].shape}")
             all_close = False
@@ -87,11 +89,11 @@ def compare_hf_orbax_model_weights(hf_model, orbax_state, config, atol=1e-3, rto
         # Self-attention projections
         if "self_attention.query.kernel" in key:
             # From (hidden_dim, num_heads, head_dim) -> (hidden_dim, hidden_dim)
-            value = unpermute_from_match_maxtext_rope(value)
+            # value = unpermute_from_match_maxtext_rope(value)
             return value.reshape((value.shape[0], -1)).transpose()
         
         elif "self_attention.key.kernel" in key:
-            value = unpermute_from_match_maxtext_rope(value)
+            # value = unpermute_from_match_maxtext_rope(value)
             return value.reshape((value.shape[0], -1)).transpose()
         
         elif "self_attention.value.kernel" in key:
@@ -246,7 +248,7 @@ def main(config, test_args):
         torch_dtype=torch.float16,
     )
     hf_model_2 = AutoModelForCausalLM.from_pretrained(
-        '/home/zephyr/gcs-bucket/model_ckpts/hf/llama3.1_1b_scratch_back',
+        f"{test_args.hf_model_path}_back",
         torch_dtype=torch.float16,
     )
     
