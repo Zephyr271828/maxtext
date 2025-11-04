@@ -43,7 +43,7 @@ export ORBAX_CKPT_DIR="gs://${BUCKET_NAME}/model_ckpts/maxtext"
 export STEP="${STEP:-0}"
 export DIRECT_CKPT_DIR="gs://${BUCKET_NAME}/model_ckpts/direct"
 export HF_CKPT_DIR="/home/zephyr/gcs-bucket/model_ckpts/hf"
-export PYTHONPATH="/home/zephyr/maxtext":${PYTHONPATH:-''}
+export PYTHONPATH="$(pwd)":${PYTHONPATH:-''}
 
 case "$MODE" in
   hf_to_orbax)
