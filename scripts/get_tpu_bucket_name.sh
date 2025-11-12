@@ -41,4 +41,4 @@ BUCKET_NAME=$(get_bucket_name)
 echo "✅ Detected Bucket name: ${BUCKET_NAME:-unknown}"
 
 NUM_HOSTS=$(get_num_hosts)
-echp "✅ Detected number of hosts: ${NUM_HOSTS:-unknown}"
+echo "✅ Detected number of hosts: ${NUM_HOSTS:-unknown}"
