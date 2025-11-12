@@ -30,7 +30,7 @@ get_bucket_name() {
 get_num_hosts() {
   ZONE=$(get_zone)
   TPU_NAME=$(get_tpu_name)
-  HOSTS=$(gcloud compute tpus tpu-vm describe "$TPU_NAME" --zone="$ZONE" --format="value(networkEndpoints.ipAddress)")
+  HOSTS=$(gcloud compute tpus tpu-vm describe "$TPU_NAME" --zone="$ZONE" --format="value(networkEndpoints)" | grep -o "ipAddress" | wc -l) 
   echo "$HOSTS"
 }
 
@@ -39,3 +39,6 @@ echo "✅ Detected TPU name: ${TPU_NAME:-unknown}"
 
 BUCKET_NAME=$(get_bucket_name)
 echo "✅ Detected Bucket name: ${BUCKET_NAME:-unknown}"
+
+NUM_HOSTS=$(get_num_hosts)
+echp "✅ Detected number of hosts: ${NUM_HOSTS:-unknown}"

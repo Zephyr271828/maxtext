@@ -76,7 +76,7 @@ def generate_script(
     export SEQ_LEN={seq_len}
     export BATCH_SIZE=${{BATCH_SIZE:-2}}
     export GLOBAL_BATCH_SIZE=${{GLOBAL_BATCH_SIZE:-512}}
-    export GRAD_ACCUM=$((GLOBAL_BATCH_SIZE / BATCH_SIZE / NUM_HOSTS))
+    export GRAD_ACCUM=$((GLOBAL_BATCH_SIZE / BATCH_SIZE / NUM_HOSTS / 4))
     export GRAD_CLIP=${{GRAD_CLIP:-1.0}}
     export LR=${{LR:-0.0003}}
     export MIN_LR_RATIO=${{MIN_LR_RATIO:-0.1}}
