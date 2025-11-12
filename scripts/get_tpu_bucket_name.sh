@@ -1,3 +1,5 @@
+#!/bin/bash
+
 get_tpu_name() {
   local zone ip name
   zone=$(curl -s -H "Metadata-Flavor: Google" \
@@ -13,10 +15,23 @@ get_tpu_name() {
   echo "$name"
 }
 
+get_zone() {
+  zone=$(curl -s -H "Metadata-Flavor: Google" \
+    http://metadata.google.internal/computeMetadata/v1/instance/zone | awk -F'/' '{print $NF}')
+  echo "$zone"
+}
+
 get_bucket_name() {
   MOUNT_DIR="/home/zephyr/gcs-bucket" 
   BUCKET_NAME=$(mount | grep "on ${MOUNT_DIR}" | awk '{print $1}')
   echo "${BUCKET_NAME#gs://}"
+}
+
+get_num_hosts() {
+  ZONE=$(get_zone)
+  TPU_NAME=$(get_tpu_name)
+  HOSTS=$(gcloud compute tpus tpu-vm describe "$TPU_NAME" --zone="$ZONE" --format="value(networkEndpoints.ipAddress)")
+  echo "$HOSTS"
 }
 
 TPU_NAME=$(get_tpu_name)

@@ -5,12 +5,13 @@ source scripts/get_tpu_bucket_name.sh
 
 export TPU_PREFIX="$(get_tpu_name)"
 export BUCKET_NAME="$(get_bucket_name)"
+export NUM_HOSTS=$(get_num_hosts)
 
 for arg in "$@"; do
     case $arg in
         --lr=*) LR="${arg#*=}" ;;
         --batch_size=*) BATCH_SIZE="${arg#*=}" ;;
-        --grad_accum=*) GRAD_ACCUM="${arg#*=}" ;;
+        --global_batch_size=*) GLOBAL_BATCH_SIZE="${arg#*=}" ;;
         --grad_clip=*) GRAD_CLIP="${arg#*=}" ;;
         --min_lr_ratio=*) MIN_LR_RATIO="${arg#*=}" ;;
         --warmup_ratio=*) WARMUP_RATIO="${arg#*=}" ;;
@@ -26,7 +27,8 @@ export MODEL_NAME="llama3.1-4b-depth"
 export NUM_STEPS=62500
 export SEQ_LEN=8192
 export BATCH_SIZE=${BATCH_SIZE:-2}
-export GRAD_ACCUM=${GRAD_ACCUM:-4}
+export GLOBAL_BATCH_SIZE=${GLOBAL_BATCH_SIZE:-512}
+export GRAD_ACCUM=$((GLOBAL_BATCH_SIZE / BATCH_SIZE / NUM_HOSTS))
 export GRAD_CLIP=${GRAD_CLIP:-1.0}
 export LR=${LR:-0.0003}
 export MIN_LR_RATIO=${MIN_LR_RATIO:-0.1}
