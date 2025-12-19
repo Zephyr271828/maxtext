@@ -229,8 +229,15 @@ if __name__ == "__main__":
                 # load_parameters_path=args.load_parameters_path,
                 # output_path=args.output_path,
             )
-            
-    for load_path in ["model_ckpts/maxtext/llama3.1_8b_L200_unstructured_0.5/checkpoints/0/items", "model_ckpts/maxtext/llama3.1_8b_L200_unstructured_0.5_reinit/checkpoints/0/items"]:
+                    
+    for load_path in [
+        "model_ckpts/maxtext/llama3.1_8b_L200_unstructured_0.5/checkpoints/0/items",
+        "model_ckpts/maxtext/llama3.1_8b_L200_4:8_0.5/checkpoints/0/items", 
+        "model_ckpts/maxtext/llama3.1_8b_L200_2:4_0.5/checkpoints/0/items",
+        "model_ckpts/maxtext/llama3.1_8b_L200_unstructured_0.5_reinit/checkpoints/0/items",
+        "model_ckpts/maxtext/llama3.1_8b_L200_4:8_0.5_reinit/checkpoints/0/items",
+        "model_ckpts/maxtext/llama3.1_8b_L200_2:4_0.5_reinit/checkpoints/0/items",
+    ]:
         generate_script(
             model_name="llama3.1-8b",
             num_steps=12500,
@@ -240,16 +247,15 @@ if __name__ == "__main__":
             # load_parameters_path=args.load_parameters_path,
             # output_path=args.output_path,
         )
-                    
+    
     for load_path in [
-        "model_ckpts/maxtext/llama3.1_8b_L200_4:8_0.5/checkpoints/0/items", 
-        "model_ckpts/maxtext/llama3.1_8b_L200_2:4_0.5/checkpoints/0/items",
+        "model_ckpts/maxtext/llama3.1_8b_L200_unstructured_0.5_reinit/checkpoints/0/items",
         "model_ckpts/maxtext/llama3.1_8b_L200_4:8_0.5_reinit/checkpoints/0/items",
         "model_ckpts/maxtext/llama3.1_8b_L200_2:4_0.5_reinit/checkpoints/0/items"
     ]:
         generate_script(
             model_name="llama3.1-8b",
-            num_steps=12500,
+            num_steps=62500,
             load_parameters_path=load_path,
             sparse_model_training=True,
             # load_parameters_path="model_ckpts/llama3.1-4b-depth-orbax/0/items",
