@@ -51,7 +51,7 @@ python -u multihost_runner_orig.py \
     export TPU_LOG_DIR=/home/zephyr/tpu_logs
     export WANDB_API_KEY='7d11bbca76b3081b6bd1efbbcf1572aab26c5d56'
     source ~/maxtext_env/bin/activate
-    python3.10 -u -m MaxText.train MaxText/configs/base.yml \
+    ~/maxtext_env/bin/python -u -m MaxText.train MaxText/configs/base.yml \
         run_name=${RUN_NAME} \
         load_parameters_path=gs://${BUCKET_NAME}/model_ckpts/maxtext/llama3.1_8b_L200_2:4_0.5/checkpoints/0/items \
         base_output_directory=${BASE_OUTPUT_DIRECTORY} \
