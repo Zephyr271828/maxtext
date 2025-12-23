@@ -10,7 +10,6 @@ def generate_script(
     load_parameters_path: str = "",
     output_path: str = None,
     sparse_model_training: bool = False,
-    output_dir: str = "scripts/examples",
     # start_from_file_index: int = 0,
 ):
     """Generate a TPU MaxText training shell script from template."""
@@ -59,8 +58,8 @@ def generate_script(
     for arg in "$@"; do
         case $arg in
             --lr=*) LR="${{arg#*=}}" ;;
+            --batch_size=*) BATCH_SIZE="${{arg#*=}}" ;;
             --global_batch_size=*) GLOBAL_BATCH_SIZE="${{arg#*=}}" ;;
-            --micro_batch_size=*) MICRO_BATCH_SIZE="${{arg#*=}}" ;;
             --grad_clip=*) GRAD_CLIP="${{arg#*=}}" ;;
             --min_lr_ratio=*) MIN_LR_RATIO="${{arg#*=}}" ;;
             --warmup_ratio=*) WARMUP_RATIO="${{arg#*=}}" ;;
@@ -75,9 +74,9 @@ def generate_script(
     export MODEL_NAME="{model_name}"
     export NUM_STEPS={num_steps}
     export SEQ_LEN={seq_len}
+    export BATCH_SIZE=${{BATCH_SIZE:-2}}
     export GLOBAL_BATCH_SIZE=${{GLOBAL_BATCH_SIZE:-512}}
-    export MICRO_BATCH_SIZE=${{MICRO_BATCH_SIZE:-2}}
-    export GRAD_ACCUM=$((GLOBAL_BATCH_SIZE / MICRO_BATCH_SIZE / NUM_HOSTS / 4))
+    export GRAD_ACCUM=$((GLOBAL_BATCH_SIZE / BATCH_SIZE / NUM_HOSTS / 4))
     export GRAD_CLIP=${{GRAD_CLIP:-1.0}}
     export LR=${{LR:-0.0003}}
     export MIN_LR_RATIO=${{MIN_LR_RATIO:-0.1}}
@@ -100,7 +99,7 @@ def generate_script(
         export TPU_LOG_DIR=/home/zephyr/tpu_logs
         export WANDB_API_KEY='7d11bbca76b3081b6bd1efbbcf1572aab26c5d56'
         source ~/maxtext_env/bin/activate
-        python3.10 -u -m MaxText.train MaxText/configs/base.yml \\
+        ~/maxtext_env/bin/python -u -m MaxText.train MaxText/configs/base.yml \\
             run_name=${{RUN_NAME}} \\
             {load_path_line}base_output_directory=${{BASE_OUTPUT_DIRECTORY}} \\
             dataset_type=grain \\
@@ -115,7 +114,7 @@ def generate_script(
             async_checkpointing=${{ASYNC_CHECKPOINTING}} \\
             model_name=${{MODEL_NAME}} \\
             steps=${{NUM_STEPS}} \\
-            per_device_batch_size=${{MICRO_BATCH_SIZE}} \\
+            per_device_batch_size=${{BATCH_SIZE}} \\
             gradient_accumulation_steps=${{GRAD_ACCUM}} \\
             gradient_clipping_threshold=${{GRAD_CLIP}} \\
             learning_rate=${{LR}} \\
@@ -145,7 +144,7 @@ def generate_script(
 
     # Default script name if not provided
     if output_path is None:
-        output_path = f"{output_dir}/{job_name}.sh"
+        output_path = f"scripts/{job_name}.sh"
 
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
     with open(output_path, "w") as f:
@@ -230,8 +229,15 @@ if __name__ == "__main__":
                 # load_parameters_path=args.load_parameters_path,
                 # output_path=args.output_path,
             )
-            
-    for load_path in ["model_ckpts/maxtext/llama3.1_8b_L200_unstructured_0.5/checkpoints/0/items", "model_ckpts/maxtext/llama3.1_8b_L200_unstructured_0.5_reinit/checkpoints/0/items"]:
+                    
+    for load_path in [
+        "model_ckpts/maxtext/llama3.1_8b_L200_unstructured_0.5/checkpoints/0/items",
+        "model_ckpts/maxtext/llama3.1_8b_L200_4:8_0.5/checkpoints/0/items", 
+        "model_ckpts/maxtext/llama3.1_8b_L200_2:4_0.5/checkpoints/0/items",
+        "model_ckpts/maxtext/llama3.1_8b_L200_unstructured_0.5_reinit/checkpoints/0/items",
+        "model_ckpts/maxtext/llama3.1_8b_L200_4:8_0.5_reinit/checkpoints/0/items",
+        "model_ckpts/maxtext/llama3.1_8b_L200_2:4_0.5_reinit/checkpoints/0/items",
+    ]:
         generate_script(
             model_name="llama3.1-8b",
             num_steps=12500,
@@ -241,16 +247,15 @@ if __name__ == "__main__":
             # load_parameters_path=args.load_parameters_path,
             # output_path=args.output_path,
         )
-                    
+    
     for load_path in [
-        "model_ckpts/maxtext/llama3.1_8b_L200_4:8_0.5/checkpoints/0/items", 
-        "model_ckpts/maxtext/llama3.1_8b_L200_2:4_0.5/checkpoints/0/items",
+        "model_ckpts/maxtext/llama3.1_8b_L200_unstructured_0.5_reinit/checkpoints/0/items",
         "model_ckpts/maxtext/llama3.1_8b_L200_4:8_0.5_reinit/checkpoints/0/items",
         "model_ckpts/maxtext/llama3.1_8b_L200_2:4_0.5_reinit/checkpoints/0/items"
     ]:
         generate_script(
             model_name="llama3.1-8b",
-            num_steps=12500,
+            num_steps=62500,
             load_parameters_path=load_path,
             sparse_model_training=True,
             # load_parameters_path="model_ckpts/llama3.1-4b-depth-orbax/0/items",
