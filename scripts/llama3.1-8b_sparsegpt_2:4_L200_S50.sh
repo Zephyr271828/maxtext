@@ -53,7 +53,7 @@ python -u multihost_runner_orig.py \
     source ~/maxtext_env/bin/activate
     ~/maxtext_env/bin/python -u -m MaxText.train MaxText/configs/base.yml \
         run_name=${RUN_NAME} \
-        load_parameters_path=gs://${BUCKET_NAME}//home/zephyr/gcs-bucket/model_ckpts/hf/llama3.1-8b_l200_sparsegpt_2:4_0.5/checkpoints/0/items \
+        load_parameters_path=gs://${BUCKET_NAME}/model_ckpts/maxtext/llama3.1-8b_l200_sparsegpt_2:4_0.5/checkpoints/0/items \
         base_output_directory=${BASE_OUTPUT_DIRECTORY} \
         dataset_type=grain \
         grain_train_files=${DATA_FILES} \
