@@ -39,6 +39,10 @@ def generate_script(
                     else:
                         exp_type = f"{sparsity}_L200_S{num_steps // 250}"
                     break
+            if "sparsegpt" in load_parameters_path:
+                exp_type = f"sparsegpt_{exp_type}"
+            else:
+                exp_type = f"wanda_{exp_type}"
         else:
             exp_type = f"HF_S{num_steps // 250}"
         start_from_file_index = 50
@@ -237,6 +241,11 @@ if __name__ == "__main__":
         "model_ckpts/maxtext/llama3.1_8b_L200_unstructured_0.5_reinit/checkpoints/0/items",
         "model_ckpts/maxtext/llama3.1_8b_L200_4:8_0.5_reinit/checkpoints/0/items",
         "model_ckpts/maxtext/llama3.1_8b_L200_2:4_0.5_reinit/checkpoints/0/items",
+        
+        "/home/zephyr/gcs-bucket/model_ckpts/hf/llama3.1-8b_l200_sparsegpt_unstructured_0.5/checkpoints/0/items",
+        "/home/zephyr/gcs-bucket/model_ckpts/hf/llama3.1-8b_l200_sparsegpt_2:4_0.5/checkpoints/0/items",
+        "/home/zephyr/gcs-bucket/model_ckpts/hf/llama3.1-8b_l200_sparsegpt_unstructured_0.5_reinit/checkpoints/0/items",
+        "/home/zephyr/gcs-bucket/model_ckpts/hf/llama3.1-8b_l200_sparsegpt_2:4_0.5_reinit/checkpoints/0/items",
     ]:
         generate_script(
             model_name="llama3.1-8b",
@@ -251,7 +260,11 @@ if __name__ == "__main__":
     for load_path in [
         "model_ckpts/maxtext/llama3.1_8b_L200_unstructured_0.5_reinit/checkpoints/0/items",
         "model_ckpts/maxtext/llama3.1_8b_L200_4:8_0.5_reinit/checkpoints/0/items",
-        "model_ckpts/maxtext/llama3.1_8b_L200_2:4_0.5_reinit/checkpoints/0/items"
+        "model_ckpts/maxtext/llama3.1_8b_L200_2:4_0.5_reinit/checkpoints/0/items",
+        
+        "/home/zephyr/gcs-bucket/model_ckpts/hf/llama3.1-8b_l200_sparsegpt_unstructured_0.5_reinit/checkpoints/0/items",
+        "/home/zephyr/gcs-bucket/model_ckpts/hf/llama3.1-8b_l200_sparsegpt_2:4_0.5_reinit/checkpoints/0/items",
+        
     ]:
         generate_script(
             model_name="llama3.1-8b",
@@ -262,4 +275,3 @@ if __name__ == "__main__":
             # load_parameters_path=args.load_parameters_path,
             # output_path=args.output_path,
         )
-    
