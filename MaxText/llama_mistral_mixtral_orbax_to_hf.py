@@ -117,7 +117,7 @@ def load_hf_model(model_size):
       config.num_hidden_layers = 24
     else:
       raise NotImplementedError
-    config = AutoConfig.from_pretrained("/home/zephyr/gcs-bucket/model_ckpts/hf/Llama-3.1-8B_minitron_depth_nlayers_16_fp16")
+    config = AutoConfig.from_pretrained("/home/zephyr/gcs-bucket/model_ckpts/configs/llama3.1-8b")
   else:
     raise NotImplementedError
   return model
