@@ -69,8 +69,43 @@ def load_hf_model(model_size):
   Load the model that we are interested in from HuggingFace
 
   """
-  if model_size == "llama2-7b":
-    model = LlamaForCausalLM.from_pretrained("meta-llama/Llama-2-7b-hf")
+  if "llama2" in model_size:
+    config = LlamaConfig(
+      attention_bias=False,
+      attention_dropout=0.0,
+      bos_token_id=1,
+      eos_token_id=2,
+      hidden_act="silu",
+      hidden_size=4096,
+      initializer_range=0.02,
+      intermediate_size=11008,
+      max_position_embeddings=4096,
+      mlp_bias=False,
+      num_attention_heads=32,
+      num_key_value_heads=32,
+      num_hidden_layers=32,
+      rms_norm_eps=1e-5,
+      rope_theta=10000.0,
+      tie_word_embeddings=False,
+      use_cache=True,
+      vocab_size=32000,
+    )
+    if model_size == 'llama2-7b':
+      pass
+    elif model_size == 'llama2-2.7b':
+      config.hidden_size = 2560
+      config.intermediate_size = 6912
+      config.num_attention_heads = 20
+      config.num_key_value_heads = 20
+    elif model_size == 'llama2-1.3b':
+      config.hidden_size = 2048
+      config.intermediate_size = 5504
+      config.num_attention_heads = 16
+      config.num_key_value_heads = 16
+      config.num_hidden_layers = 24
+    else:
+      raise NotImplementedError
+    model = AutoModelForCausalLM.from_config(config)
   elif model_size == "mistral-7b":
     model = MistralForCausalLM.from_pretrained("mistralai/Mistral-7B-v0.1")
   elif model_size == "mixtral-8x7b":
@@ -117,7 +152,7 @@ def load_hf_model(model_size):
       config.num_hidden_layers = 24
     else:
       raise NotImplementedError
-    config = AutoConfig.from_pretrained("/home/zephyr/gcs-bucket/model_ckpts/configs/llama3.1-8b")
+    model = AutoModelForCausalLM.from_config(config)
   else:
     raise NotImplementedError
   return model
