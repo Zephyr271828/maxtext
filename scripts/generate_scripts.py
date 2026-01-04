@@ -21,6 +21,7 @@ def generate_script(
     
     # handle experiment type
     exp_type = "unknown"
+    start_from_file_index = 0
     if not load_parameters_path:
         # if we are using a small model
         if any(x in model_name.lower() for x in ["4b", "3b", "2b", "1.5b", "1b", "440m"]):
@@ -31,6 +32,7 @@ def generate_script(
     else:
         if "minitron" in load_parameters_path:
             exp_type = f"L200_S{num_steps // 250}"
+            start_from_file_index = 50
         elif any(x in load_parameters_path for x in ["unstructured", "4:8", "2:4"]):
             for sparsity in ["unstructured", "4:8", "2:4"]:
                 if sparsity in load_parameters_path:
@@ -38,6 +40,7 @@ def generate_script(
                         exp_type = f"{sparsity}_S{num_steps // 250}"
                     else:
                         exp_type = f"{sparsity}_L200_S{num_steps // 250}"
+                        start_from_file_index = 50
                     break
             if "sparsegpt" in load_parameters_path:
                 exp_type = f"sparsegpt_{exp_type}"
@@ -45,7 +48,7 @@ def generate_script(
                 exp_type = f"wanda_{exp_type}"
         else:
             exp_type = f"HF_S{num_steps // 250}"
-        start_from_file_index = 50
+            start_from_file_index = 50
 
     job_name = f"{model_name}_{exp_type}"
 
