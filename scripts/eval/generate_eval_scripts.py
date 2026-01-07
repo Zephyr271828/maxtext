@@ -60,7 +60,8 @@ def generate_script(
 
     export TPU_PREFIX="$(get_tpu_name)"
     export BUCKET_NAME="$(get_bucket_name)"
-    export NUM_HOSTS=$(get_num_hosts)
+    # export NUM_HOSTS=$(get_num_hosts)
+    export NUM_HOSTS=32
     
     for arg in "$@"; do
         case $arg in
@@ -99,42 +100,6 @@ def generate_script(
     fi
     export JAX_PLATFORMS=tpu
     export SPARSE_MODEL_TRAINING={sparse_model_training}
-
-    python -u multihost_runner_orig.py \\
-        --TPU_PREFIX=${{TPU_PREFIX}} \\
-        --COMMAND="
-        export TPU_LOG_DIR=/home/zephyr/tpu_logs
-        export WANDB_API_KEY='7d11bbca76b3081b6bd1efbbcf1572aab26c5d56'
-        source ~/maxtext_env/bin/activate
-        ~/maxtext_env/bin/python -u -m MaxText.train MaxText/configs/base.yml \\
-            run_name=${{RUN_NAME}} \\
-            {load_path_line}base_output_directory=${{BASE_OUTPUT_DIRECTORY}} \\
-            dataset_type=grain \\
-            grain_train_files=${{DATA_FILES}} \\
-            start_from_file_index={start_from_file_index} \\
-            grain_file_type='arrayrecord' \\
-            grain_worker_count=1 \\
-            enable_data_shuffling=${{SHUFFLE}} \\
-            tokenize_train_data=False \\
-            tokenize_eval_data=False \\
-            max_target_length=${{SEQ_LEN}} \\
-            async_checkpointing=${{ASYNC_CHECKPOINTING}} \\
-            model_name=${{MODEL_NAME}} \\
-            steps=${{NUM_STEPS}} \\
-            per_device_batch_size=${{BATCH_SIZE}} \\
-            gradient_accumulation_steps=${{GRAD_ACCUM}} \\
-            gradient_clipping_threshold=${{GRAD_CLIP}} \\
-            learning_rate=${{LR}} \\
-            cosine_learning_rate_final_fraction=${{MIN_LR_RATIO}} \\
-            warmup_steps_fraction=${{WARMUP_RATIO}} \\
-            checkpoint_period=500 \\
-            checkpoint_max_to_keep=${{MAX_TO_KEEP}} \\
-            use_wandb=True \\
-            wandb_project=llm_pruning \\
-            wandb_run_name=${{TPU_PREFIX}}_${{RUN_NAME}} \\
-            packing=false \\
-            sparse_model_training=${{SPARSE_MODEL_TRAINING}} \\
-        "
     
     bash scripts/convert.sh gen_param_ckpt \\
         --model=${{MODEL_NAME}} \\
@@ -151,7 +116,7 @@ def generate_script(
 
     # Default script name if not provided
     if output_path is None:
-        output_path = f"scripts/{job_name}.sh"
+        output_path = f"scripts/eval/{job_name}.sh"
 
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
     with open(output_path, "w") as f:
