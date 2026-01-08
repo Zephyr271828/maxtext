@@ -135,15 +135,14 @@ class OrbaxLM(LM):
         
     def _create_fast_forward(self):
         @partial(pjit,
-                 in_shardings=(self.state_mesh_shardings.params, None, None, None, None),
+                 in_shardings=(self.state_mesh_shardings.params, None, None, None),
                  out_shardings=None)
-        def fast_forward(params, input_ids, positions, segment_ids, decoder_target_mask):
+        def fast_forward(params, input_ids, positions, segment_ids):
             return self.model.apply(
                 params,
                 input_ids,
                 positions,
                 segment_ids,
-                decoder_target_mask=decoder_target_mask,
                 enable_dropout=False,
                 rngs={"aqt": jax.random.PRNGKey(0)},
             )
@@ -157,17 +156,13 @@ class OrbaxLM(LM):
         segment_ids = jnp.ones((batch_size, seq_len), dtype=jnp.int32)
         positions = jnp.tile(jnp.arange(seq_len, dtype=jnp.int32), (batch_size, 1))
 
-        pad_id = self.tokenizer.pad_token_id or self.tokenizer.eos_token_id
-        decoder_target_mask = (input_ids != pad_id)
-
-        # with self.mesh, nn_partitioning.axis_rules(self.config.logical_axis_rules):
-        jax_logits = self._compiled_forward(
-            self.state.params,
-            input_ids_jax,
-            positions,
-            segment_ids,
-            decoder_target_mask,
-        )
+        with self.mesh, nn_partitioning.axis_rules(self.config.logical_axis_rules):
+            jax_logits = self._compiled_forward(
+                self.state.params,
+                input_ids_jax,
+                positions,
+                segment_ids,
+            )
 
         class Output:
             def __init__(self, logits):
@@ -238,48 +233,38 @@ class OrbaxLM(LM):
     ) -> list[tuple[float, bool]]:
         results = []
 
-        max_len = max(len(ctx) + len(cont) for _, ctx, cont in requests)
-        pad_id = self.tokenizer.pad_token_id or self.tokenizer.eos_token_id
-        def pad(seq):
-            return seq + [pad_id] * (max_len - len(seq))
+        for (_text, context_enc, continuation_enc) in tqdm(requests, disable=disable_tqdm):
+            input_ids = context_enc + continuation_enc
+            input_ids = jnp.asarray([input_ids], dtype=jnp.int32)
 
-        with self.mesh, nn_partitioning.axis_rules(self.config.logical_axis_rules):
-            for (_, context_enc, continuation_enc) in tqdm(requests, disable=disable_tqdm):
+            batch_size, seq_len = input_ids.shape
+            segment_ids = jnp.ones((batch_size, seq_len), dtype=jnp.int32)
+            positions = jnp.tile(jnp.arange(seq_len, dtype=jnp.int32), (batch_size, 1))
 
-                seq = context_enc + continuation_enc
-                seq_len = len(seq)
-                seq = pad(seq)
-                input_ids = jnp.asarray([seq], dtype=jnp.int32)
+            logits = self._compiled_forward(
+                self.state.params,
+                input_ids,
+                positions,
+                segment_ids,
+            )
 
-                L = input_ids.shape[1]
-                positions = jnp.tile(jnp.arange(L, dtype=jnp.int32), (1, 1))
-                segment_ids = jnp.ones((1, L), dtype=jnp.int32)
-                
-                decoder_target_mask = (input_ids != pad_id)
+            # logits: [1, seq_len, vocab_size]
+            # compute log-probs over continuation tokens
+            logits = jax.nn.log_softmax(logits, axis=-1)
+            cont_len = len(continuation_enc)
+            cont_start = input_ids.shape[1] - cont_len
 
-                logits = self._compiled_forward(
-                    self.state.params, 
-                    input_ids, 
-                    positions, 
-                    segment_ids, 
-                    decoder_target_mask,
-                )
-                logits = jnp.where(decoder_target_mask[..., None], logits, -1e30)
-                logits = jax.nn.log_softmax(logits, axis=-1)
+            log_probs = []
+            match = True
+            for i, tok in enumerate(continuation_enc):
+                logp = logits[0, cont_start + i - 1, tok]  # use previous token's logits
+                log_probs.append(logp)
+                pred = int(jnp.argmax(logits[0, cont_start + i - 1]))
+                if pred != tok:
+                    match = False
 
-                cont_len = len(continuation_enc)
-                cont_start = seq_len - cont_len
-
-                idxs = jnp.arange(cont_start - 1, cont_start - 1 + cont_len)
-                tok_ids = jnp.asarray(continuation_enc)
-
-                log_probs = logits[0, idxs, tok_ids]
-                ll = float(jnp.sum(log_probs))
-
-                preds = jnp.argmax(logits[0, idxs], axis=-1)
-                match = bool(jnp.all(preds == tok_ids))
-
-                results.append((ll, match))
+            loglikelihood = float(jnp.sum(jnp.stack(log_probs)))
+            results.append((loglikelihood, match))
 
         return results
     
