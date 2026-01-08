@@ -157,12 +157,16 @@ class OrbaxLM(LM):
         segment_ids = jnp.ones((batch_size, seq_len), dtype=jnp.int32)
         positions = jnp.tile(jnp.arange(seq_len, dtype=jnp.int32), (batch_size, 1))
 
+        pad_id = self.tokenizer.pad_token_id or self.tokenizer.eos_token_id
+        decoder_target_mask = (input_ids != pad_id)
+
         # with self.mesh, nn_partitioning.axis_rules(self.config.logical_axis_rules):
         jax_logits = self._compiled_forward(
             self.state.params,
             input_ids_jax,
             positions,
             segment_ids,
+            decoder_target_mask,
         )
 
         class Output:
