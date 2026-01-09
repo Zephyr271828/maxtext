@@ -207,17 +207,26 @@ def get_ppl(
     calib_size: int = 256,
     max_length: int = 8192,
     add_special_tokens: bool = True,
-    task_range: list = []
+    eval_log_path: str = None
 ):
     # devices_in_data_fsdp = model.devices_in_data_fsdp
     # if batch_size % devices_in_data_fsdp != 0:
     #     print(f"🔁 Adjusting batch_size {batch_size} → {devices_in_data_fsdp * ((batch_size + devices_in_data_fsdp - 1) // devices_in_data_fsdp)} for device mesh compatibility.")
     #     batch_size = devices_in_data_fsdp * ((batch_size + devices_in_data_fsdp - 1) // devices_in_data_fsdp)
-    if task_range:
-        tasks = [t for t in tasks if t in task_range]
+    all_results = {}
+    if os.path.exists(eval_log_path):
+        with open(eval_log_path, 'r') as f:
+            for l in f:
+                d = json.loads(l)
+                if "num_fewshot" in d:
+                    continue
+                all_results[d["alias"]] = d
     
     ppl_res = {}
     for task in tasks:
+        if task in all_results:
+            print(all_results[task])
+            continue
         testenc = get_ppl_enc(task, tokenizer, add_special_tokens=add_special_tokens)
         tot_loss = 0
         tot_tokens = 0
@@ -247,13 +256,22 @@ def get_ppl(
                 tot_tokens += seq_len * (j - i)
                 
             ppl_res[task] = torch.exp(torch.tensor(tot_loss / tot_tokens)).item()
-            print(task, ppl_res[task])
+            res = {"alias": task, "ppl": ppl_res[task]}
+            print(res)
+            with open(eval_log_path, "a") as f:
+                f.write(json.dumps(res) + "\n")
             if task == "dclm":
                 print("dclm val loss", math.log(ppl_res[task]))
                 
     return ppl_res
 
-def get_acc(model, tokenizer, tasks, task_range=[], limit=1000000):
+def get_acc(
+    model, 
+    tokenizer, 
+    tasks, 
+    limit=1000000,
+    eval_log_path=None,
+):
     # lm_eval_model = models.orbax_lm.HFLM(
     #     pretrained=model, 
     #     tokenizer=tokenizer,
@@ -263,15 +281,28 @@ def get_acc(model, tokenizer, tasks, task_range=[], limit=1000000):
     #         "top_p": 0.95,
     #     }
     # )
-    if task_range:
-        tasks = [cfg for cfg in tasks if cfg["name"] in task_range]
+    all_results = {}
+    if os.path.exists(eval_log_path):
+        with open(eval_log_path, 'r') as f:
+            for l in f:
+                d = json.loads(l)
+                if "num_fewshot" not in d:
+                    continue
+                alias = d["alias"]
+                num_fewshot = d["num_fewshot"]
+                all_results[f"{alias}_fs_{num_fewshot}"] = d
     
     print("tasks to evaluate:")
     print(json.dumps(tasks, indent=2))
     acc_res = {}
     for cfg in tasks:
         task = cfg["name"]
-        res = evaluator.simple_evaluate(
+        fewshot = cfg["num_fewshot"]
+        if f"{task}_fs_{fewshot}" in all_results:
+            print(all_results[f"{task}_fs_{fewshot}"])
+            continue
+        
+        results = evaluator.simple_evaluate(
             model=model,
             tasks=[task],
             num_fewshot=cfg["num_fewshot"],
@@ -282,10 +313,15 @@ def get_acc(model, tokenizer, tasks, task_range=[], limit=1000000):
             limit=limit
         )
         
-        print(res['results'][task])
+        res = results['results'][task]
+        res["num_fewshot"] = cfg["num_fewshot"]
+        print(res)
+        with open(eval_log_path, "a") as f:
+            f.write(json.dumps(res) + '\n')
+        
         acc_key = cfg["acc_key"]
         if acc_key is not None:
-            acc_res[task] = res['results'][task][acc_key]
+            acc_res[f"{task}_fs_{fewshot}"] = res[acc_key]
 
     return acc_res
 
@@ -298,6 +334,7 @@ def cast_orbax_state_to_bf16(orbax_state):
     return orbax_state
 
 def main(config, test_args):
+    
     tokenizer = AutoTokenizer.from_pretrained(test_args.hf_model_path)
     
     init_rng = jax.random.PRNGKey(config.init_weights_seed)
@@ -316,6 +353,12 @@ def main(config, test_args):
 
     model = OrbaxLM(orbax_model, orbax_state, tokenizer, config, state_mesh_shardings, mesh)
     
+    load_model_path = config.load_parameters_path
+    model_name = load_model_path.strip('/').split('/')[-4]
+    eval_log_dir = os.path.join(os.environ["HOME"], "gcs-bucket", "eval_logs", model_name)
+    os.makedirs(eval_log_dir, exist_ok=True)
+    eval_log_path = os.path.join(eval_log_dir, "results.jsonl")
+    
     ppl_res = get_ppl(
         model, 
         tokenizer, 
@@ -325,7 +368,7 @@ def main(config, test_args):
         max_length=config.max_target_length, 
         tasks=PPL_TASKS,
         add_special_tokens=test_args.add_special_tokens,
-        task_range=test_args.tasks,
+        eval_log_path=eval_log_path
     )
     print(ppl_res)
 
@@ -333,8 +376,8 @@ def main(config, test_args):
         model,
         tokenizer,
         tasks=ACC_TASKS,
-        task_range=test_args.tasks,
-        limit=test_args.limit
+        limit=test_args.limit,
+        eval_log_path=eval_log_path
     )
     print(acc_res)
     
