@@ -143,10 +143,10 @@ def generate_script(
         --hf_model_name=Llama-3.1-8B \\
         --direct_run_name=${{RUN_NAME}}
         
-    bash scripts/convert.sh eval \\
-        --model=${{MODEL_NAME}} \\
-        --hf_model_name=Llama-3.1-8B \\
-        --direct_run_name=${{RUN_NAME}}
+    # bash scripts/convert.sh eval \\
+    #     --model=${{MODEL_NAME}} \\
+    #     --hf_model_name=Llama-3.1-8B \\
+    #     --direct_run_name=${{RUN_NAME}}
     """)
 
     # Default script name if not provided

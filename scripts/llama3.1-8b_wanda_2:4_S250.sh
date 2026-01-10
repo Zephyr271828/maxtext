@@ -89,7 +89,7 @@ bash scripts/convert.sh gen_param_ckpt \
     --hf_model_name=Llama-3.1-8B \
     --direct_run_name=${RUN_NAME}
 
-bash scripts/convert.sh eval \
-    --model=${MODEL_NAME} \
-    --hf_model_name=Llama-3.1-8B \
-    --direct_run_name=${RUN_NAME}
+# bash scripts/convert.sh eval \
+#     --model=${MODEL_NAME} \
+#     --hf_model_name=Llama-3.1-8B \
+#     --direct_run_name=${RUN_NAME}
