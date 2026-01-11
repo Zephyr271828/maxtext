@@ -357,6 +357,7 @@ def main(config, test_args):
     model_name = load_model_path.strip('/').split('/')[-4]
     eval_log_dir = os.path.join(os.environ["HOME"], "gcs-bucket", "eval_logs", model_name)
     os.makedirs(eval_log_dir, exist_ok=True)
+    print("[INFO] Created eval log dir:", eval_log_dir)
     eval_log_path = os.path.join(eval_log_dir, "results.jsonl")
     
     ppl_res = get_ppl(
