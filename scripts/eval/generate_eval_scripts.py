@@ -94,10 +94,15 @@ def generate_script(
     export MAX_TO_KEEP=${{MAX_TO_KEEP:-1}}
     export DATA_FILES="${{DATA_FILES:-{data_files}}}"
     export SHUFFLE="${{SHUFFLE:-True}}"
-    export RUN_NAME="${{MODEL_NAME}}_{exp_type}_seqlen_${{SEQ_LEN}}_bs_${{BATCH_SIZE}}_grad_accum_${{GRAD_ACCUM}}_lr_${{LR}}_min_lr_ratio_${{MIN_LR_RATIO}}_warmup_ratio_${{WARMUP_RATIO}}"
-    if [ ! -z "${{TAG:-}}" ]; then
-        export RUN_NAME="${{RUN_NAME}}_${{TAG}}"
-    fi
+    
+    # export RUN_NAME="${{MODEL_NAME}}_{exp_type}_seqlen_${{SEQ_LEN}}_bs_${{BATCH_SIZE}}_grad_accum_${{GRAD_ACCUM}}_lr_${{LR}}_min_lr_ratio_${{MIN_LR_RATIO}}_warmup_ratio_${{WARMUP_RATIO}}"
+    # if [ ! -z "${{TAG:-}}" ]; then
+    #     export RUN_NAME="${{RUN_NAME}}_${{TAG}}"
+    # fi
+    
+    CKPT_DIR=$(ls -d /home/zephyr/gcs-bucket/model_ckpts/maxtext/${{MODEL_NAME}}_{exp_type}_seqlen_${{SEQ_LEN}}_bs_*_grad_accum_*_lr_${{LR}}_min_lr_ratio_${{MIN_LR_RATIO}}_warmup_ratio_${{WARMUP_RATIO}}*/checkpoints/$(( NUM_STEPS - 1 )) )
+    RUN_NAME=$(basename "$(dirname "$(dirname "$CKPT_DIR")")")
+    
     export JAX_PLATFORMS=tpu
     export SPARSE_MODEL_TRAINING={sparse_model_training}
     
