@@ -185,8 +185,40 @@ else
 fi
 sudo rm -f /tmp/libtpu_lockfile"""
 
+def delete_old_run_dirs(slices):
+  commands = []
+  worker_list = []
+  
+  delete_cmd = "rm -rf ~/2025* ~/2026* || true"
+
+  for cur_slice in slices:
+    for worker_num in range(cur_slice.num_workers):
+      cmd = [
+          "gcloud", "alpha", "compute", "tpus", "tpu-vm", "ssh",
+          cur_slice.name,
+          f"--worker={worker_num}",
+          "--command", delete_cmd,
+          "--ssh-key-file=~/.ssh/id_rsa",
+          "--strict-host-key-checking=no",
+          f"--project={args.PROJECT}",
+          f"--zone={args.ZONE}",
+      ]
+      if args.INTERNAL_IP:
+        cmd.append("--internal-ip")
+
+      commands.append(cmd)
+      worker_list.append([cur_slice.slice_num, worker_num])
+
+  print("🧹 Deleting old ~/2025* and ~/2026* directories on TPU workers...", flush=True)
+  return_code, _ = run_commands(commands, 0, "CLEANUP", worker_list)
+  return return_code
+
 def scps(slices, run_name_dir, zip_name):
   """ Zip the script directory, scp it to the TPUs, and unzip it there. """
+  cleanup_rc = delete_old_run_dirs(slices)
+  if cleanup_rc != 0:
+    print("⚠️ Warning: cleanup failed on some workers, continuing anyway.", flush=True)
+  
   original_working_directory = os.getcwd()
   os.chdir(args.SCRIPT_DIR) # To tar script_dir, it is most convenient to cd there.
   
