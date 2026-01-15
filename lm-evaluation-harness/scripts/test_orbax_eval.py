@@ -71,21 +71,21 @@ ACC_TASKS = [
         "num_fewshot": 0,
         "acc_key": "acc_norm,none",
     },
-    # {
-    #     "name": "arc_challenge",
-    #     "num_fewshot": 25,
-    #     "acc_key": "acc_norm,none",
-    # },
+    {
+        "name": "arc_challenge",
+        "num_fewshot": 25,
+        "acc_key": "acc_norm,none",
+    },
     {
         "name": "hellaswag",
         "num_fewshot": 0,
         "acc_key": "acc_norm,none",
     },
-    {
-        "name": "hellaswag",        
-        "num_fewshot": 10,
-        "acc_key": "acc_norm,none",
-    },
+    # {
+    #     "name": "hellaswag",        
+    #     "num_fewshot": 10,
+    #     "acc_key": "acc_norm,none",
+    # },
     {
         "name": "truthfulqa_mc1",
         "num_fewshot": 0,
