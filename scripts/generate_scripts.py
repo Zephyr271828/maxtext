@@ -185,7 +185,7 @@ if __name__ == "__main__":
             )
             
     for model_name in ["llama3.1-440m", "llama3.1-1b", "llama3.1-1.5b-depth", "llama3.1-2b-depth", "llama3.1-3b-depth"]:
-        for num_steps in [12500]:
+        for num_steps in [12500, 62500]:
             generate_script(
                 model_name=model_name,
                 num_steps=num_steps,
