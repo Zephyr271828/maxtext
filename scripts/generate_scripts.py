@@ -184,7 +184,11 @@ if __name__ == "__main__":
                 # output_path=args.output_path,
             )
             
-    for model_name in ["llama3.1-440m", "llama3.1-1b", "llama3.1-1.5b-depth", "llama3.1-2b-depth", "llama3.1-3b-depth"]:
+    for model_name in [
+        "llama3.1-440m", "llama3.1-1b", 
+        "llama3.1-1.5b-depth", "llama3.1-2b-depth", "llama3.1-3b-depth",
+        "llama3.1-2b-width", "llama3.1-3b-width",
+    ]:
         for num_steps in [12500, 62500]:
             generate_script(
                 model_name=model_name,
