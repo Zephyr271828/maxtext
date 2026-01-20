@@ -46,7 +46,7 @@ PPL_TASKS = [
     "c4",
     "wikitext",
     "wikitext2",
-    "cnn_dailymail",
+    # "cnn_dailymail",
     "dclm"
 ]
 
@@ -56,11 +56,11 @@ ACC_TASKS = [
         "num_fewshot": 0,
         "acc_key": "acc,none",
     },
-    {
-        "name": "winogrande",
-        "num_fewshot": 5,
-        "acc_key": "acc,none",
-    },
+    # {
+    #     "name": "winogrande",
+    #     "num_fewshot": 5,
+    #     "acc_key": "acc,none",
+    # },
     {
         "name": "arc_easy",
         "num_fewshot": 0,
@@ -71,11 +71,11 @@ ACC_TASKS = [
         "num_fewshot": 0,
         "acc_key": "acc_norm,none",
     },
-    {
-        "name": "arc_challenge",
-        "num_fewshot": 25,
-        "acc_key": "acc_norm,none",
-    },
+    # {
+    #     "name": "arc_challenge",
+    #     "num_fewshot": 25,
+    #     "acc_key": "acc_norm,none",
+    # },
     {
         "name": "hellaswag",
         "num_fewshot": 0,
@@ -111,41 +111,41 @@ ACC_TASKS = [
         "num_fewshot": 0,
         "acc_key": "acc,none",
     },
-    {
-        "name": "anli_r1",
-        "num_fewshot": 0,
-        "acc_key": None,
-    },
-    {
-        "name": "anli_r2",
-        "num_fewshot": 0,
-        "acc_key": None,
-    },
-    {
-        "name": "anli_r3",
-        "num_fewshot": 0,
-        "acc_key": None,
-    },
+    # {
+    #     "name": "anli_r1",
+    #     "num_fewshot": 0,
+    #     "acc_key": None,
+    # },
+    # {
+    #     "name": "anli_r2",
+    #     "num_fewshot": 0,
+    #     "acc_key": None,
+    # },
+    # {
+    #     "name": "anli_r3",
+    #     "num_fewshot": 0,
+    #     "acc_key": None,
+    # },
     {
         "name": "openbookqa",
         "num_fewshot": 0,
         "acc_key": None,
     },
+    # {
+    #     "name": "rte",
+    #     "num_fewshot": 0,
+    #     "acc_key": None,
+    # },
     {
-        "name": "rte",
+        "name": "mmlu",
         "num_fewshot": 0,
         "acc_key": None,
     },
-    {
-        "name": "mmlu",
-        "num_fewshot": 0,
-        "acc_key": None,
-    },
-    {
-        "name": "mmlu",
-        "num_fewshot": 5,
-        "acc_key": None,
-    },
+    # {
+    #     "name": "mmlu",
+    #     "num_fewshot": 5,
+    #     "acc_key": None,
+    # },
     {
         "name": "record",
         "num_fewshot": 0,
