@@ -10,6 +10,7 @@ def generate_script(
     load_parameters_path: str = "",
     output_path: str = None,
     sparse_model_training: bool = False,
+    pretrain_tokens = None,
     # start_from_file_index: int = 0,
 ):
     """Generate a TPU MaxText training shell script from template."""
@@ -30,25 +31,18 @@ def generate_script(
             exp_type = f"L{num_steps // 250}"
         start_from_file_index = 0
     else:
-        if "minitron" in load_parameters_path:
-            exp_type = f"L200_S{num_steps // 250}"
+        exp_type = f"S{num_steps // 250}"
+        if pretrain_tokens is not None:
+            exp_type = f"{pretrain_tokens}_{exp_type}"
             start_from_file_index = 50
-        elif any(x in load_parameters_path for x in ["unstructured", "4:8", "2:4"]):
-            for sparsity in ["unstructured", "4:8", "2:4"]:
-                if sparsity in load_parameters_path:
-                    if "reinit" in load_parameters_path:
-                        exp_type = f"{sparsity}_S{num_steps // 250}"
-                    else:
-                        exp_type = f"{sparsity}_L200_S{num_steps // 250}"
-                        start_from_file_index = 50
-                    break
+        sparsities = ["unstructured", "4:8", "2:4"]
+        if any(x in load_parameters_path for x in sparsities):
+            sparsity = [s for s in sparsities if s in load_parameters_path][0]
+            exp_type = f"{sparsity}_{exp_type}"
             if "sparsegpt" in load_parameters_path:
                 exp_type = f"sparsegpt_{exp_type}"
             else:
                 exp_type = f"wanda_{exp_type}"
-        else:
-            exp_type = f"HF_S{num_steps // 250}"
-            start_from_file_index = 50
 
     job_name = f"{model_name}_{exp_type}"
 
@@ -207,6 +201,7 @@ if __name__ == "__main__":
                 model_name=model_name,
                 num_steps=num_steps,
                 load_parameters_path=load_path,
+                pretrain_tokens="L200",
                 # load_parameters_path="model_ckpts/llama3.1-4b-depth-orbax/0/items",
                 # load_parameters_path=args.load_parameters_path,
                 # output_path=args.output_path,
@@ -221,6 +216,7 @@ if __name__ == "__main__":
                 model_name=model_name,
                 num_steps=num_steps,
                 load_parameters_path=load_path,
+                pretrain_tokens="HF",
                 # load_parameters_path="model_ckpts/llama3.1-4b-depth-orbax/0/items",
                 # load_parameters_path=args.load_parameters_path,
                 # output_path=args.output_path,
@@ -236,6 +232,28 @@ if __name__ == "__main__":
                 model_name=model_name,
                 num_steps=num_steps,
                 load_parameters_path=load_path,
+                pretrain_tokens="L200",
+                # load_parameters_path="model_ckpts/llama3.1-4b-depth-orbax/0/items",
+                # load_parameters_path=args.load_parameters_path,
+                # output_path=args.output_path,
+            )
+            
+    for load_path, model_name in zip(
+        [
+            "model_ckpts/llama3-8b-l200_width_task_wikitext_hidden_size_1792_ffn_hidden_size_5632_calib_size_128_seqlen_8192/checkpoints/0/items", 
+            "model_ckpts/llama3-8b-l200_width_task_wikitext_hidden_size_2432_ffn_hidden_size_6144_calib_size_128_seqlen_8192/checkpoints/0/items"
+        ],
+        [   
+            "llama3.1-2b-width", 
+            "llama3.1-3b-width"
+        ]
+    ):
+        for num_steps in [12500]:
+            generate_script(
+                model_name=model_name,
+                num_steps=num_steps,
+                load_parameters_path=load_path,
+                pretrain_tokens="L200",
                 # load_parameters_path="model_ckpts/llama3.1-4b-depth-orbax/0/items",
                 # load_parameters_path=args.load_parameters_path,
                 # output_path=args.output_path,
@@ -245,20 +263,17 @@ if __name__ == "__main__":
         "model_ckpts/maxtext/llama3.1_8b_L200_unstructured_0.5/checkpoints/0/items",
         "model_ckpts/maxtext/llama3.1_8b_L200_4:8_0.5/checkpoints/0/items", 
         "model_ckpts/maxtext/llama3.1_8b_L200_2:4_0.5/checkpoints/0/items",
-        "model_ckpts/maxtext/llama3.1_8b_L200_unstructured_0.5_reinit/checkpoints/0/items",
-        "model_ckpts/maxtext/llama3.1_8b_L200_4:8_0.5_reinit/checkpoints/0/items",
-        "model_ckpts/maxtext/llama3.1_8b_L200_2:4_0.5_reinit/checkpoints/0/items",
         
         "model_ckpts/maxtext/llama3.1-8b_l200_sparsegpt_unstructured_0.5/checkpoints/0/items",
         "model_ckpts/maxtext/llama3.1-8b_l200_sparsegpt_2:4_0.5/checkpoints/0/items",
-        "model_ckpts/maxtext/llama3.1-8b_l200_sparsegpt_unstructured_0.5_reinit/checkpoints/0/items",
-        "model_ckpts/maxtext/llama3.1-8b_l200_sparsegpt_2:4_0.5_reinit/checkpoints/0/items",
+       
     ]:
         generate_script(
             model_name="llama3.1-8b",
             num_steps=12500,
             load_parameters_path=load_path,
             sparse_model_training=True,
+            pretrain_tokens="L200",
             # load_parameters_path="model_ckpts/llama3.1-4b-depth-orbax/0/items",
             # load_parameters_path=args.load_parameters_path,
             # output_path=args.output_path,
@@ -266,22 +281,22 @@ if __name__ == "__main__":
     
     for load_path in [
         "model_ckpts/maxtext/llama3.1_8b_L200_unstructured_0.5_reinit/checkpoints/0/items",
-        "model_ckpts/maxtext/llama3.1_8b_L200_4:8_0.5_reinit/checkpoints/0/items",
+        # "model_ckpts/maxtext/llama3.1_8b_L200_4:8_0.5_reinit/checkpoints/0/items",
         "model_ckpts/maxtext/llama3.1_8b_L200_2:4_0.5_reinit/checkpoints/0/items",
-        
-        "model_ckpts/maxtext/llama3.1-8b_l200_sparsegpt_unstructured_0.5_reinit/checkpoints/0/items",
         "model_ckpts/maxtext/llama3.1-8b_l200_sparsegpt_2:4_0.5_reinit/checkpoints/0/items",
-        
+        "model_ckpts/maxtext/llama3.1-8b_l200_sparsegpt_2:4_0.5_reinit/checkpoints/0/items",
     ]:
-        generate_script(
-            model_name="llama3.1-8b",
-            num_steps=62500,
-            load_parameters_path=load_path,
-            sparse_model_training=True,
-            # load_parameters_path="model_ckpts/llama3.1-4b-depth-orbax/0/items",
-            # load_parameters_path=args.load_parameters_path,
-            # output_path=args.output_path,
-        )
+        for num_steps in [12500, 62500]:
+            generate_script(
+                model_name="llama3.1-8b",
+                num_steps=num_steps,
+                load_parameters_path=load_path,
+                sparse_model_training=True,
+                # pretrain_tokens="L200",
+                # load_parameters_path="model_ckpts/llama3.1-4b-depth-orbax/0/items",
+                # load_parameters_path=args.load_parameters_path,
+                # output_path=args.output_path,
+            )
         
     for model_name in ["llama2-1.3b", "llama2-2.7b"]:
         for num_steps in [12500, 62500]:
