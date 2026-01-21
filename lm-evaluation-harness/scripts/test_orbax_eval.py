@@ -46,7 +46,7 @@ PPL_TASKS = [
     "c4",
     "wikitext",
     "wikitext2",
-    # "cnn_dailymail",
+    "cnn_dailymail",
     "dclm"
 ]
 
