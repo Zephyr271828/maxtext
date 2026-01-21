@@ -111,21 +111,21 @@ ACC_TASKS = [
         "num_fewshot": 0,
         "acc_key": "acc,none",
     },
-    # {
-    #     "name": "anli_r1",
-    #     "num_fewshot": 0,
-    #     "acc_key": None,
-    # },
-    # {
-    #     "name": "anli_r2",
-    #     "num_fewshot": 0,
-    #     "acc_key": None,
-    # },
-    # {
-    #     "name": "anli_r3",
-    #     "num_fewshot": 0,
-    #     "acc_key": None,
-    # },
+    {
+        "name": "anli_r1",
+        "num_fewshot": 0,
+        "acc_key": None,
+    },
+    {
+        "name": "anli_r2",
+        "num_fewshot": 0,
+        "acc_key": None,
+    },
+    {
+        "name": "anli_r3",
+        "num_fewshot": 0,
+        "acc_key": None,
+    },
     {
         "name": "openbookqa",
         "num_fewshot": 0,
