@@ -131,11 +131,11 @@ ACC_TASKS = [
         "num_fewshot": 0,
         "acc_key": None,
     },
-    # {
-    #     "name": "rte",
-    #     "num_fewshot": 0,
-    #     "acc_key": None,
-    # },
+    {
+        "name": "rte",
+        "num_fewshot": 0,
+        "acc_key": None,
+    },
     {
         "name": "mmlu",
         "num_fewshot": 0,
