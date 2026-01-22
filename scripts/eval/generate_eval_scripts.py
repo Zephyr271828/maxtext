@@ -94,7 +94,7 @@ def generate_script(
     #     export RUN_NAME="${{RUN_NAME}}_${{TAG}}"
     # fi
     
-     CKPT_DIR=$(ls -d /home/zephyr/gcs-bucket/model_ckpts/maxtext/${{MODEL_NAME}}_{exp_type}_seqlen_${{SEQ_LEN}}_bs_*_grad_accum_*_lr_${{LR/e/*e}}_min_lr_ratio_${{MIN_LR_RATIO}}_warmup_ratio_${{WARMUP_RATIO}}*/checkpoints/$(( NUM_STEPS - 1 )) )
+    CKPT_DIR=$(ls -d /home/zephyr/gcs-bucket/model_ckpts/maxtext/${{MODEL_NAME}}_{exp_type}_seqlen_${{SEQ_LEN}}_bs_*_grad_accum_*_lr_${{LR/e/*e}}_min_lr_ratio_${{MIN_LR_RATIO}}_warmup_ratio_${{WARMUP_RATIO}}*/checkpoints/$(( NUM_STEPS - 1 )) )
     RUN_NAME=$(basename "$(dirname "$(dirname "$CKPT_DIR")")")
     
     export JAX_PLATFORMS=tpu
@@ -253,7 +253,7 @@ if __name__ == "__main__":
         "model_ckpts/maxtext/llama3.1_8b_L200_unstructured_0.5_reinit/checkpoints/0/items",
         # "model_ckpts/maxtext/llama3.1_8b_L200_4:8_0.5_reinit/checkpoints/0/items",
         "model_ckpts/maxtext/llama3.1_8b_L200_2:4_0.5_reinit/checkpoints/0/items",
-        "model_ckpts/maxtext/llama3.1-8b_l200_sparsegpt_2:4_0.5_reinit/checkpoints/0/items",
+        "model_ckpts/maxtext/llama3.1-8b_l200_sparsegpt_unstructured_0.5_reinit/checkpoints/0/items",
         "model_ckpts/maxtext/llama3.1-8b_l200_sparsegpt_2:4_0.5_reinit/checkpoints/0/items",
     ]:
         for num_steps in [12500, 62500]:
