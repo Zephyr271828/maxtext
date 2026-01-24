@@ -5,8 +5,8 @@ source scripts/get_tpu_bucket_name.sh
 
 export TPU_PREFIX="$(get_tpu_name)"
 export BUCKET_NAME="$(get_bucket_name)"
-# export NUM_HOSTS=$(get_num_hosts)
-export NUM_HOSTS=32
+export NUM_HOSTS=$(get_num_hosts)
+# export NUM_HOSTS=32
 
 for arg in "$@"; do
     case $arg in
@@ -57,6 +57,9 @@ bash scripts/convert.sh gen_param_ckpt \
     --step=12499 \
     --hf_model_name=Llama-3.1-8B \
     --direct_run_name=${RUN_NAME}
+
+CKPT_DIR=$(ls -d /home/zephyr/gcs-bucket/model_ckpts/direct/${MODEL_NAME}_sparsegpt_2:4_S50_seqlen_${SEQ_LEN}_bs_*_grad_accum_*_lr_${LR/e/*e}_min_lr_ratio_${MIN_LR_RATIO}_warmup_ratio_${WARMUP_RATIO}* )
+RUN_NAME=$(basename $CKPT_DIR)
 
 bash scripts/convert.sh eval \
     --model=${MODEL_NAME} \
