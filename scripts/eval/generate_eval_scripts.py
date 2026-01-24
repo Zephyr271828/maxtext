@@ -48,7 +48,7 @@ def generate_script(
 
     script = dedent(f"""\
     #!/bin/bash
-    set -euo pipefail
+    # set -euo pipefail
     
     source scripts/get_tpu_bucket_name.sh
 
