@@ -240,8 +240,8 @@ if __name__ == "__main__":
             
     for load_path, model_name in zip(
         [
-            "model_ckpts/llama3-8b-l200_width_task_wikitext_hidden_size_1792_ffn_hidden_size_5632_calib_size_128_seqlen_8192/checkpoints/0/items", 
-            "model_ckpts/llama3-8b-l200_width_task_wikitext_hidden_size_2432_ffn_hidden_size_6144_calib_size_128_seqlen_8192/checkpoints/0/items"
+            "model_ckpts/maxtext/llama3-8b-l200_width_task_wikitext_hidden_size_1792_ffn_hidden_size_5632_calib_size_128_seqlen_8192/checkpoints/0/items", 
+            "model_ckpts/maxtext/llama3-8b-l200_width_task_wikitext_hidden_size_2432_ffn_hidden_size_6144_calib_size_128_seqlen_8192/checkpoints/0/items"
         ],
         [   
             "llama3.1-2b-width", 
