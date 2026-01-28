@@ -107,8 +107,8 @@ def generate_script(
         --hf_model_name=Llama-3.1-8B \\
         --direct_run_name=${{RUN_NAME}}
         
-    CKPT_DIR=$(ls -d /home/zephyr/gcs-bucket/model_ckpts/direct/${{MODEL_NAME}}_{exp_type}_seqlen_${{SEQ_LEN}}_bs_*_grad_accum_*_lr_${{LR/e/*e}}_min_lr_ratio_${{MIN_LR_RATIO}}_warmup_ratio_${{WARMUP_RATIO}}* )
-    RUN_NAME=$(basename $CKPT_DIR)
+    CKPT_DIR=$(ls -d /home/zephyr/gcs-bucket/model_ckpts/direct/${{MODEL_NAME}}_{exp_type}_seqlen_${{SEQ_LEN}}_bs_*_grad_accum_*_lr_${{LR/e/*e}}_min_lr_ratio_${{MIN_LR_RATIO}}_warmup_ratio_${{WARMUP_RATIO}}*/checkpoints/0 )
+    RUN_NAME=$(basename "$(dirname "$(dirname "$CKPT_DIR")")")
         
     bash scripts/convert.sh eval \\
         --model=${{MODEL_NAME}} \\
