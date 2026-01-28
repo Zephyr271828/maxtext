@@ -45,7 +45,7 @@ export SHUFFLE="${SHUFFLE:-True}"
 #     export RUN_NAME="${RUN_NAME}_${TAG}"
 # fi
 
-CKPT_DIR=$(ls -d /home/zephyr/gcs-bucket/model_ckpts/maxtext/${MODEL_NAME}_sparsegpt_unstructured_S250_seqlen_${SEQ_LEN}_bs_*_grad_accum_*_lr_${LR/e/*e}_min_lr_ratio_${MIN_LR_RATIO}_warmup_ratio_${WARMUP_RATIO}*/checkpoints/$(( NUM_STEPS - 1 )) )
+CKPT_DIR=$(gsutil ls -d gs://${BUCKET_NAME}/model_ckpts/maxtext/${MODEL_NAME}_sparsegpt_unstructured_S250_seqlen_${SEQ_LEN}_bs_*_grad_accum_*_lr_${LR/e/*e}_min_lr_ratio_${MIN_LR_RATIO}_warmup_ratio_${WARMUP_RATIO}*/checkpoints/$(( NUM_STEPS - 1 )) )
 RUN_NAME=$(basename "$(dirname "$(dirname "$CKPT_DIR")")")
 
 export JAX_PLATFORMS=tpu
@@ -58,7 +58,7 @@ bash scripts/convert.sh gen_param_ckpt \
     --hf_model_name=Llama-3.1-8B \
     --direct_run_name=${RUN_NAME}
 
-CKPT_DIR=$(ls -d /home/zephyr/gcs-bucket/model_ckpts/direct/${MODEL_NAME}_sparsegpt_unstructured_S250_seqlen_${SEQ_LEN}_bs_*_grad_accum_*_lr_${LR/e/*e}_min_lr_ratio_${MIN_LR_RATIO}_warmup_ratio_${WARMUP_RATIO}*/checkpoints/0 )
+CKPT_DIR=$(gsutil ls -d gs://${BUCKET_NAME}/model_ckpts/direct/${MODEL_NAME}_sparsegpt_unstructured_S250_seqlen_${SEQ_LEN}_bs_*_grad_accum_*_lr_${LR/e/*e}_min_lr_ratio_${MIN_LR_RATIO}_warmup_ratio_${WARMUP_RATIO}*/checkpoints/0 )
 RUN_NAME=$(basename "$(dirname "$(dirname "$CKPT_DIR")")")
 
 bash scripts/convert.sh eval \
