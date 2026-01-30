@@ -289,7 +289,7 @@ def generate_script(*args, **kwargs):
 if __name__ == "__main__":
 
     for model_name in ["llama3.1-4b-depth", "llama3.1-4b-width"]:
-        for num_steps in [12500, 62500]:
+        for num_steps in [2500, 7500, 12500, 25000, 37500, 50000, 62500]:
             generate_script(
                 model_name=model_name,
                 num_steps=num_steps,
@@ -323,10 +323,16 @@ if __name__ == "__main__":
             )
             
     for load_path, model_name in zip(
-        ["model_ckpts/maxtext/llama3.1_minitron_depth_hf/0/items", "model_ckpts/maxtext/llama3.1_minitron_width_hf/0/items"],
-        ["llama3.1-4b-depth", "llama3.1-4b-width"]
+        [
+            "model_ckpts/maxtext/llama3-8b-l200_depth_task_wikitext_nlayers_16_calib_size_128_seqlen_8192/0/items",
+            "model_ckpts/maxtext/llama3-8b-l200_width_task_wikitext_hidden_size_3072_ffn_hidden_size_9216_calib_size_128_seqlen_8192/0/items", 
+        ],
+        [
+            "llama3.1-4b-depth", 
+            "llama3.1-4b-width"
+        ]
     ):
-        for num_steps in [12500, 62500]:
+        for num_steps in [2500, 7500, 12500, 25000, 37500, 50000, 62500]:
             generate_script(
                 model_name=model_name,
                 num_steps=num_steps,

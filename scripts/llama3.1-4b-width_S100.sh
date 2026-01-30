@@ -23,8 +23,8 @@ for arg in "$@"; do
     esac
 done
 
-export MODEL_NAME="llama3.1-4b-depth"
-export NUM_STEPS=12500
+export MODEL_NAME="llama3.1-4b-width"
+export NUM_STEPS=25000
 export SEQ_LEN=8192
 export BATCH_SIZE=${BATCH_SIZE:-2}
 export GLOBAL_BATCH_SIZE=${GLOBAL_BATCH_SIZE:-512}
@@ -38,7 +38,7 @@ export BASE_OUTPUT_DIRECTORY="gs://${BUCKET_NAME}/model_ckpts/maxtext"
 export MAX_TO_KEEP=${MAX_TO_KEEP:-1}
 export DATA_FILES="${DATA_FILES:-/home/zephyr/gcs-bucket/datasets/dclm/llama3_64_array_record/*.array_record}"
 export SHUFFLE="${SHUFFLE:-True}"
-export RUN_NAME="${MODEL_NAME}_L200_S50_seqlen_${SEQ_LEN}_bs_${BATCH_SIZE}_grad_accum_${GRAD_ACCUM}_lr_${LR}_min_lr_ratio_${MIN_LR_RATIO}_warmup_ratio_${WARMUP_RATIO}"
+export RUN_NAME="${MODEL_NAME}_S100_seqlen_${SEQ_LEN}_bs_${BATCH_SIZE}_grad_accum_${GRAD_ACCUM}_lr_${LR}_min_lr_ratio_${MIN_LR_RATIO}_warmup_ratio_${WARMUP_RATIO}"
 if [ ! -z "${TAG:-}" ]; then
     export RUN_NAME="${RUN_NAME}_${TAG}"
 fi
@@ -53,11 +53,10 @@ python -u multihost_runner_orig.py \
     source ~/maxtext_env/bin/activate
     ~/maxtext_env/bin/python -u -m MaxText.train MaxText/configs/base.yml \
         run_name=${RUN_NAME} \
-        load_parameters_path=gs://${BUCKET_NAME}/model_ckpts/maxtext/llama3-8b-l200_depth_task_wikitext_nlayers_16_calib_size_128_seqlen_8192/0/items \
         base_output_directory=${BASE_OUTPUT_DIRECTORY} \
         dataset_type=grain \
         grain_train_files=${DATA_FILES} \
-        start_from_file_index=50 \
+        start_from_file_index=0 \
         grain_file_type='arrayrecord' \
         grain_worker_count=1 \
         enable_data_shuffling=${SHUFFLE} \
@@ -85,7 +84,7 @@ python -u multihost_runner_orig.py \
 bash scripts/convert.sh gen_param_ckpt \
     --model=${MODEL_NAME} \
     --orbax_ckpt_name=${RUN_NAME} \
-    --step=12499 \
+    --step=24999 \
     --hf_model_name=Llama-3.1-8B \
     --direct_run_name=${RUN_NAME}
 
