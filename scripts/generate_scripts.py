@@ -324,8 +324,8 @@ if __name__ == "__main__":
             
     for load_path, model_name in zip(
         [
-            "model_ckpts/maxtext/llama3-8b-l200_depth_task_wikitext_nlayers_16_calib_size_128_seqlen_8192/0/items",
-            "model_ckpts/maxtext/llama3-8b-l200_width_task_wikitext_hidden_size_3072_ffn_hidden_size_9216_calib_size_128_seqlen_8192/0/items", 
+            "model_ckpts/maxtext/llama3-8b-l200_depth_task_wikitext_nlayers_16_calib_size_128_seqlen_8192/checkpoints/0/items",
+            "model_ckpts/maxtext/llama3-8b-l200_width_task_wikitext_hidden_size_3072_ffn_hidden_size_9216_calib_size_128_seqlen_8192/checkpoints/0/items", 
         ],
         [
             "llama3.1-4b-depth", 
