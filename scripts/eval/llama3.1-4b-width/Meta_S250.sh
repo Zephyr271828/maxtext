@@ -24,8 +24,8 @@ for arg in "$@"; do
     esac
 done
 
-export MODEL_NAME="llama3.1-4b-depth"
-export NUM_STEPS=250000
+export MODEL_NAME="llama3.1-4b-width"
+export NUM_STEPS=62500
 export SEQ_LEN=8192
 export BATCH_SIZE=${BATCH_SIZE:-2}
 export GLOBAL_BATCH_SIZE=${GLOBAL_BATCH_SIZE:-512}
@@ -38,14 +38,14 @@ export ASYNC_CHECKPOINTING=false
 export BASE_OUTPUT_DIRECTORY="gs://${BUCKET_NAME}/model_ckpts/maxtext"
 export MAX_TO_KEEP=${MAX_TO_KEEP:-1}
 export DATA_FILES="${DATA_FILES:-/home/zephyr/gcs-bucket/datasets/dclm/llama3_array_record_with_special_tokens_1T/*.array_record}"
-export SHUFFLE="${SHUFFLE:-True}"
+export SHUFFLE="${SHUFFLE:-False}"
 
-# export RUN_NAME="${MODEL_NAME}_L200_S1000_seqlen_${SEQ_LEN}_bs_${BATCH_SIZE}_grad_accum_${GRAD_ACCUM}_lr_${LR}_min_lr_ratio_${MIN_LR_RATIO}_warmup_ratio_${WARMUP_RATIO}"
+# export RUN_NAME="${MODEL_NAME}_Meta_S250_seqlen_${SEQ_LEN}_bs_${BATCH_SIZE}_grad_accum_${GRAD_ACCUM}_lr_${LR}_min_lr_ratio_${MIN_LR_RATIO}_warmup_ratio_${WARMUP_RATIO}"
 # if [ ! -z "${TAG:-}" ]; then
 #     export RUN_NAME="${RUN_NAME}_${TAG}"
 # fi
 
-CKPT_DIR=$(gsutil ls -d gs://${BUCKET_NAME}/model_ckpts/maxtext/${MODEL_NAME}_L200_S1000_seqlen_${SEQ_LEN}_bs_*_grad_accum_*_lr_${LR/e/*e}_min_lr_ratio_${MIN_LR_RATIO}_warmup_ratio_${WARMUP_RATIO}*/checkpoints/$(( NUM_STEPS - 1 )) )
+CKPT_DIR=$(gsutil ls -d gs://${BUCKET_NAME}/model_ckpts/maxtext/${MODEL_NAME}_Meta_S250_seqlen_${SEQ_LEN}_bs_*_grad_accum_*_lr_${LR/e/*e}_min_lr_ratio_${MIN_LR_RATIO}_warmup_ratio_${WARMUP_RATIO}*/checkpoints/$(( NUM_STEPS - 1 )) )
 RUN_NAME=$(basename "$(dirname "$(dirname "$CKPT_DIR")")")
 
 export JAX_PLATFORMS=tpu
@@ -54,11 +54,11 @@ export SPARSE_MODEL_TRAINING=False
 bash scripts/convert.sh gen_param_ckpt \
     --model=${MODEL_NAME} \
     --orbax_ckpt_name=${RUN_NAME} \
-    --step=249999 \
+    --step=62499 \
     --hf_model_name=Llama-3.1-8B \
     --direct_run_name=${RUN_NAME}
 
-CKPT_DIR=$(gsutil ls -d gs://${BUCKET_NAME}/model_ckpts/direct/${MODEL_NAME}_L200_S1000_seqlen_${SEQ_LEN}_bs_*_grad_accum_*_lr_${LR/e/*e}_min_lr_ratio_${MIN_LR_RATIO}_warmup_ratio_${WARMUP_RATIO}*/checkpoints/0 )
+CKPT_DIR=$(gsutil ls -d gs://${BUCKET_NAME}/model_ckpts/direct/${MODEL_NAME}_Meta_S250_seqlen_${SEQ_LEN}_bs_*_grad_accum_*_lr_${LR/e/*e}_min_lr_ratio_${MIN_LR_RATIO}_warmup_ratio_${WARMUP_RATIO}*/checkpoints/0 )
 RUN_NAME=$(basename "$(dirname "$(dirname "$CKPT_DIR")")")
 
 bash scripts/convert.sh eval \

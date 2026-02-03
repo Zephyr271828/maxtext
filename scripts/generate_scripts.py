@@ -86,7 +86,7 @@ def generate_training_script(
     export BASE_OUTPUT_DIRECTORY="gs://${{BUCKET_NAME}}/model_ckpts/maxtext"
     export MAX_TO_KEEP=${{MAX_TO_KEEP:-1}}
     export DATA_FILES="${{DATA_FILES:-{data_files}}}"
-    export SHUFFLE="${{SHUFFLE:-True}}"
+    export SHUFFLE="${{SHUFFLE:-False}}"
     export RUN_NAME="${{MODEL_NAME}}_{exp_type}_seqlen_${{SEQ_LEN}}_bs_${{BATCH_SIZE}}_grad_accum_${{GRAD_ACCUM}}_lr_${{LR}}_min_lr_ratio_${{MIN_LR_RATIO}}_warmup_ratio_${{WARMUP_RATIO}}"
     if [ ! -z "${{TAG:-}}" ]; then
         export RUN_NAME="${{RUN_NAME}}_${{TAG}}"
@@ -241,7 +241,7 @@ def generate_eval_script(
     export BASE_OUTPUT_DIRECTORY="gs://${{BUCKET_NAME}}/model_ckpts/maxtext"
     export MAX_TO_KEEP=${{MAX_TO_KEEP:-1}}
     export DATA_FILES="${{DATA_FILES:-{data_files}}}"
-    export SHUFFLE="${{SHUFFLE:-True}}"
+    export SHUFFLE="${{SHUFFLE:-False}}"
     
     # export RUN_NAME="${{MODEL_NAME}}_{exp_type}_seqlen_${{SEQ_LEN}}_bs_${{BATCH_SIZE}}_grad_accum_${{GRAD_ACCUM}}_lr_${{LR}}_min_lr_ratio_${{MIN_LR_RATIO}}_warmup_ratio_${{WARMUP_RATIO}}"
     # if [ ! -z "${{TAG:-}}" ]; then
@@ -291,7 +291,7 @@ if __name__ == "__main__":
     ## Minitron-depth
     # train from scratch
     for model_name in ["llama3.1-4b-depth"]:
-        for num_steps in [12500, 62500, 112500, 250000]:
+        for num_steps in [12500, 62500, 125000]:
             generate_script(
                 model_name=model_name,
                 num_steps=num_steps,
@@ -302,7 +302,7 @@ if __name__ == "__main__":
             
     # L200_finetune
     for model_name in ["llama3.1-4b-depth"]:
-        for num_steps in [12500, 62500, 112500, 250000]:
+        for num_steps in [12500, 62500, 125000]:
             generate_script(
                 model_name=model_name,
                 num_steps=num_steps,
@@ -313,20 +313,24 @@ if __name__ == "__main__":
                 # output_path=args.output_path,
             )
             
+    
+            
     # Meta_finetune
-    # for model_name in ["llama3.1-4b-depth", "llama3.1-4b-width"]:
-    #     for num_steps in [12500, 250000]:
-    #         generate_script(
-    #             model_name=model_name,
-    #             num_steps=num_steps,
-    #             # load_parameters_path="model_ckpts/llama3.1-4b-depth-orbax/0/items",
-    #             # load_parameters_path=args.load_parameters_path,
-    #             # output_path=args.output_path,
-    #         )
+    for model_name in ["llama3.1-4b-depth"]:
+        for num_steps in [12500, 62500, 125000]:
+            generate_script(
+                model_name=model_name,
+                num_steps=num_steps,
+                load_parameters_path="model_ckpts/maxtext/Llama-3.1-8B_depth_task_wikitext_nlayers_16_calib_size_1024_seqlen_8192_fewshot_0/checkpoints/0/items",
+                pretrain_tokens="Meta",
+                # load_parameters_path="model_ckpts/llama3.1-4b-depth-orbax/0/items",
+                # load_parameters_path=args.load_parameters_path,
+                # output_path=args.output_path,
+            )
     
     ## Minitron-width
     for model_name in ["llama3.1-4b-width"]:
-        for num_steps in [12500, 62500, 112500, 250000]:
+        for num_steps in [12500, 62500, 125000]:
             generate_script(
                 model_name=model_name,
                 num_steps=num_steps,
@@ -335,8 +339,9 @@ if __name__ == "__main__":
                 # output_path=args.output_path,
             )
             
+    # L200 fine-tune
     for model_name in ["llama3.1-4b-width"]:
-        for num_steps in [12500, 62500, 112500, 250000]:
+        for num_steps in [12500, 62500, 125000]:
             generate_script(
                 model_name=model_name,
                 num_steps=num_steps,
@@ -347,3 +352,15 @@ if __name__ == "__main__":
                 # output_path=args.output_path,
             )
             
+    # Meta fine-tune        
+    for model_name in ["llama3.1-4b-width"]:
+        for num_steps in [12500, 62500, 125000]:
+            generate_script(
+                model_name=model_name,
+                num_steps=num_steps,
+                load_parameters_path="model_ckpts/maxtext/Llama-3.1-8B_width_task_wikitext_hidden_size_3072_ffn_hidden_size_9216_calib_size_1024_seqlen_8192_fewshot_0/checkpoints/0/items",
+                pretrain_tokens="Meta",
+                # load_parameters_path="model_ckpts/llama3.1-4b-depth-orbax/0/items",
+                # load_parameters_path=args.load_parameters_path,
+                # output_path=args.output_path,
+            )

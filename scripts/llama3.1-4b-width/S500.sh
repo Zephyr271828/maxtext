@@ -23,8 +23,8 @@ for arg in "$@"; do
     esac
 done
 
-export MODEL_NAME="llama3.1-4b-depth"
-export NUM_STEPS=112500
+export MODEL_NAME="llama3.1-4b-width"
+export NUM_STEPS=125000
 export SEQ_LEN=8192
 export BATCH_SIZE=${BATCH_SIZE:-2}
 export GLOBAL_BATCH_SIZE=${GLOBAL_BATCH_SIZE:-512}
@@ -37,8 +37,8 @@ export ASYNC_CHECKPOINTING=false
 export BASE_OUTPUT_DIRECTORY="gs://${BUCKET_NAME}/model_ckpts/maxtext"
 export MAX_TO_KEEP=${MAX_TO_KEEP:-1}
 export DATA_FILES="${DATA_FILES:-/home/zephyr/gcs-bucket/datasets/dclm/llama3_array_record_with_special_tokens_1T/*.array_record}"
-export SHUFFLE="${SHUFFLE:-True}"
-export RUN_NAME="${MODEL_NAME}_S450_seqlen_${SEQ_LEN}_bs_${BATCH_SIZE}_grad_accum_${GRAD_ACCUM}_lr_${LR}_min_lr_ratio_${MIN_LR_RATIO}_warmup_ratio_${WARMUP_RATIO}"
+export SHUFFLE="${SHUFFLE:-False}"
+export RUN_NAME="${MODEL_NAME}_S500_seqlen_${SEQ_LEN}_bs_${BATCH_SIZE}_grad_accum_${GRAD_ACCUM}_lr_${LR}_min_lr_ratio_${MIN_LR_RATIO}_warmup_ratio_${WARMUP_RATIO}"
 if [ ! -z "${TAG:-}" ]; then
     export RUN_NAME="${RUN_NAME}_${TAG}"
 fi
@@ -84,7 +84,7 @@ python -u multihost_runner_orig.py \
 bash scripts/convert.sh gen_param_ckpt \
     --model=${MODEL_NAME} \
     --orbax_ckpt_name=${RUN_NAME} \
-    --step=112499 \
+    --step=124999 \
     --hf_model_name=Llama-3.1-8B \
     --direct_run_name=${RUN_NAME}
 
