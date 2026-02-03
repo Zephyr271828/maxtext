@@ -11,7 +11,6 @@ def generate_training_script(
     output_path: str = None,
     sparse_model_training: bool = False,
     pretrain_tokens = None,
-    # start_from_file_index: int = 0,
 ):
     """Generate a TPU MaxText training shell script from template."""
 
@@ -22,19 +21,16 @@ def generate_training_script(
     
     # handle experiment type
     exp_type = "unknown"
-    start_from_file_index = 0
     if not load_parameters_path:
         # if we are using a small model
         if any(x in model_name.lower() for x in ["4b", "3b", "2b", "1.5b", "1b", "440m", "1.3b", "2.7b"]):
             exp_type = f"S{num_steps // 250}"
         elif any(x in model_name.lower() for x in ["8b", "7b"]):
             exp_type = f"L{num_steps // 250}"
-        start_from_file_index = 0
     else:
         exp_type = f"S{num_steps // 250}"
         if pretrain_tokens is not None:
             exp_type = f"{pretrain_tokens}_{exp_type}"
-            start_from_file_index = 50
         sparsities = ["unstructured", "4:8", "2:4"]
         if any(x in load_parameters_path for x in sparsities):
             sparsity = [s for s in sparsities if s in load_parameters_path][0]
@@ -105,7 +101,7 @@ def generate_training_script(
             {load_path_line}base_output_directory=${{BASE_OUTPUT_DIRECTORY}} \\
             dataset_type=grain \\
             grain_train_files=${{DATA_FILES}} \\
-            start_from_file_index={start_from_file_index} \\
+            start_from_file_index=0 \\
             grain_file_type='arrayrecord' \\
             grain_worker_count=1 \\
             enable_data_shuffling=${{SHUFFLE}} \\
@@ -165,7 +161,6 @@ def generate_eval_script(
     output_path: str = None,
     sparse_model_training: bool = False,
     pretrain_tokens = None,
-    # start_from_file_index: int = 0,
 ):
     """Generate a TPU MaxText training shell script from template."""
 
@@ -176,19 +171,16 @@ def generate_eval_script(
     
     # handle experiment type
     exp_type = "unknown"
-    start_from_file_index = 0
     if not load_parameters_path:
         # if we are using a small model
         if any(x in model_name.lower() for x in ["4b", "3b", "2b", "1.5b", "1b", "440m", "1.3b", "2.7b"]):
             exp_type = f"S{num_steps // 250}"
         elif any(x in model_name.lower() for x in ["8b", "7b"]):
             exp_type = f"L{num_steps // 250}"
-        start_from_file_index = 0
     else:
         exp_type = f"S{num_steps // 250}"
         if pretrain_tokens is not None:
             exp_type = f"{pretrain_tokens}_{exp_type}"
-            start_from_file_index = 50
         sparsities = ["unstructured", "4:8", "2:4"]
         if any(x in load_parameters_path for x in sparsities):
             sparsity = [s for s in sparsities if s in load_parameters_path][0]
