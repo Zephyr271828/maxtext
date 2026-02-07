@@ -90,6 +90,7 @@ def generate_training_script(
     export JAX_PLATFORMS=tpu
     export SPARSE_MODEL_TRAINING={sparse_model_training}
 
+    pip install -r requirements.txt
     python -u multihost_runner_orig.py \\
         --TPU_PREFIX=${{TPU_PREFIX}} \\
         --COMMAND="

@@ -45,6 +45,7 @@ fi
 export JAX_PLATFORMS=tpu
 export SPARSE_MODEL_TRAINING=False
 
+pip install -r requirements.txt
 python -u multihost_runner_orig.py \
     --TPU_PREFIX=${TPU_PREFIX} \
     --COMMAND="
