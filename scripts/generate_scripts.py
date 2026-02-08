@@ -365,7 +365,7 @@ if __name__ == "__main__":
             generate_script(
                 model_name=model_name,
                 num_steps=num_steps,
-                data_files="/home/zephyr/gcs-bucket/datasets/dclm/llama2_array_record_with_special_tokens_64",
+                data_files="/home/zephyr/gcs-bucket/datasets/dclm/llama2_array_record_with_special_tokens_64/*.array_record",
                 # load_parameters_path="model_ckpts/maxtext/Llama-3.1-8B_depth_task_wikitext_nlayers_16_calib_size_1024_seqlen_8192_fewshot_0/checkpoints/0/items",
                 # pretrain_tokens="Meta",
             )
