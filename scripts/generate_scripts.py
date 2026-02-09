@@ -285,7 +285,7 @@ if __name__ == "__main__":
     ## Minitron-depth
     # train from scratch
     for model_name in ["llama3.1-4b-depth"]:
-        for num_steps in [12500, 62500, 125000]:
+        for num_steps in [2500, 7500, 12500, 62500, 125000]:
             generate_script(
                 model_name=model_name,
                 num_steps=num_steps,
@@ -296,7 +296,7 @@ if __name__ == "__main__":
             
     # L200_finetune
     for model_name in ["llama3.1-4b-depth"]:
-        for num_steps in [12500, 62500, 125000]:
+        for num_steps in [2500, 7500, 12500, 62500, 125000]:
             generate_script(
                 model_name=model_name,
                 num_steps=num_steps,
@@ -311,7 +311,7 @@ if __name__ == "__main__":
             
     # Meta_finetune
     for model_name in ["llama3.1-4b-depth"]:
-        for num_steps in [12500, 62500, 125000]:
+        for num_steps in [2500, 7500, 12500, 62500, 125000]:
             generate_script(
                 model_name=model_name,
                 num_steps=num_steps,
@@ -324,7 +324,7 @@ if __name__ == "__main__":
     
     ## Minitron-width
     for model_name in ["llama3.1-4b-width"]:
-        for num_steps in [12500, 62500, 125000]:
+        for num_steps in [2500, 7500, 12500, 62500, 125000]:
             generate_script(
                 model_name=model_name,
                 num_steps=num_steps,
@@ -335,7 +335,7 @@ if __name__ == "__main__":
             
     # L200 fine-tune
     for model_name in ["llama3.1-4b-width"]:
-        for num_steps in [12500, 62500, 125000]:
+        for num_steps in [2500, 7500, 12500, 62500, 125000]:
             generate_script(
                 model_name=model_name,
                 num_steps=num_steps,
@@ -348,7 +348,7 @@ if __name__ == "__main__":
             
     # Meta fine-tune        
     for model_name in ["llama3.1-4b-width"]:
-        for num_steps in [12500, 62500, 125000]:
+        for num_steps in [2500, 7500, 12500, 62500, 125000]:
             generate_script(
                 model_name=model_name,
                 num_steps=num_steps,
@@ -358,7 +358,6 @@ if __name__ == "__main__":
                 # load_parameters_path=args.load_parameters_path,
                 # output_path=args.output_path,
             )
-            
     
     for model_name in ["llama2-7b"]:
         for num_steps in [50000]:
