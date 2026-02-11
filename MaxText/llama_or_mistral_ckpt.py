@@ -738,6 +738,19 @@ def convert_lora_weights_to_jax_weights(lora_config: dict, model_size: str):
 
   return jax_weights_lora
 
+def iter_ckpt_tensors(ckpt_path):
+    if ckpt_path.suffix == ".safetensors":
+        with safe_open(ckpt_path, framework="pt", device="cpu") as f:
+            for key in f.keys():
+                yield key, f.get_tensor(key)
+
+    elif ckpt_path.suffix == ".bin":
+        state_dict = torch.load(ckpt_path, map_location="cpu")
+        for key, tensor in state_dict.items():
+            yield key, tensor
+
+    else:
+        raise ValueError(f"Unsupported checkpoint format: {ckpt_path}")
 
 def _convert_huggingface_to_jax_weights(base_model_path: str, model_size: str, model_params: dict, mem_info: psutil.Process):
   """Convert a Huggingface Checkpoint to a dictionary of Numpy arrays representing the weights.
@@ -765,24 +778,28 @@ def _convert_huggingface_to_jax_weights(base_model_path: str, model_size: str, m
   scale_query = model_params.get("scale_query", False)
 
   max_logging.log(f"Loading the base model from {base_model_path}")
-  ckpt_paths = sorted(pathlib.Path(base_model_path).glob("[!.]*.safetensors"))
+  ckpt_paths = sorted(
+    list(pathlib.Path(base_model_path).glob("[!.]*.safetensors")) +
+    list(pathlib.Path(base_model_path).glob("[!.]*.bin"))
+  )
   chkpt_vars = {}
   for i, ckpt_path in enumerate(ckpt_paths):
     max_logging.log(f"Loading checkpoint {i+1} of {len(ckpt_paths)} ...")
 
-    with safe_open(ckpt_path, framework="pt", device="cpu") as f:
-      for key in f.keys():
+    for key, tensor in iter_ckpt_tensors(ckpt_path):
         parts = key.split(".")
+
         if is_llama4_model:
-          layer = int(parts[3]) if "layers" in key else 0
-          # TODO: update when mutli-modality support is added
-          if "vision" in key or "multi_modal_projector" in key:
-            print("WARNING: skipping vision or multi-modal key: ", key)
-            continue
+            layer = int(parts[3]) if "layers" in key else 0
+            # TODO: update when multi-modality support is added
+            if "vision" in key or "multi_modal_projector" in key:
+                print("WARNING: skipping vision or multi-modal key:", key)
+                continue
         else:
-          layer = int(parts[2]) if "layers" in key else 0
+            layer = int(parts[2]) if "layers" in key else 0
+
         mapped_key = _hf_to_maxtext_mapping(layer)[key]
-        chkpt_vars[mapped_key] = f.get_tensor(key)
+        chkpt_vars[mapped_key] = tensor
 
   logging.debug("Memory usage: %f GB", mem_info.memory_info().rss / (1024**3))
 
