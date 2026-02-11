@@ -387,7 +387,7 @@ if __name__ == "__main__":
                 model_name=model_name,
                 num_steps=num_steps,
                 data_files="/home/zephyr/gcs-bucket/datasets/dclm/llama2_array_record_with_special_tokens_1T/*.array_record",
-                load_parameters_path="model_ckpts/maxtext/llama2-2.7b-meta",
+                load_parameters_path="model_ckpts/maxtext/llama2-2.7b-meta/checkpoints/0/items",
                 pretrain_tokens="Meta",
                 # pretrain_tokens="Meta",
             )

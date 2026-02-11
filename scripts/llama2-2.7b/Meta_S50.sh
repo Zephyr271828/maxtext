@@ -55,7 +55,7 @@ python -u multihost_runner_orig.py \
     pip install -r requirements.txt && \
     ~/maxtext_env/bin/python -u -m MaxText.train MaxText/configs/base.yml \
         run_name=${RUN_NAME} \
-        load_parameters_path=gs://${BUCKET_NAME}/model_ckpts/maxtext/llama2-2.7b-meta \
+        load_parameters_path=gs://${BUCKET_NAME}/model_ckpts/maxtext/llama2-2.7b-meta/checkpoints/0/items \
         base_output_directory=${BASE_OUTPUT_DIRECTORY} \
         dataset_type=grain \
         grain_train_files=${DATA_FILES} \

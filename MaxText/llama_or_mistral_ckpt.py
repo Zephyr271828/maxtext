@@ -780,7 +780,7 @@ def _convert_huggingface_to_jax_weights(base_model_path: str, model_size: str, m
   max_logging.log(f"Loading the base model from {base_model_path}")
   ckpt_paths = sorted(
     list(pathlib.Path(base_model_path).glob("[!.]*.safetensors")) +
-    list(pathlib.Path(base_model_path).glob("[!.]*.bin"))
+    list(pathlib.Path(base_model_path).glob("*.bin"))
   )
   chkpt_vars = {}
   for i, ckpt_path in enumerate(ckpt_paths):
