@@ -12,6 +12,12 @@ get_tpu_name() {
     --format="value(name,networkEndpoints.ipAddress)" \
     | awk -v ip="$ip" 'index($2, ip) {print $1; exit}')
 
+  # Check that TPU name contains 'yufeng'
+  if [[ ! "${name}" =~ yufeng ]]; then
+    echo "❌ Error: TPU name '${name}' does not contain 'yufeng'. Exiting."
+    exit 1
+  fi
+
   echo "$name"
 }
 
