@@ -55,7 +55,7 @@ python -u multihost_runner_orig.py \
     pip install -r requirements.txt && \
     ~/maxtext_env/bin/python -u -m MaxText.train MaxText/configs/base.yml \
         run_name=${RUN_NAME} \
-        load_parameters_path=gs://${BUCKET_NAME}/model_ckpts/maxtext/Llama-3.1-8B_width_task_wikitext_hidden_size_3072_ffn_hidden_size_9216_calib_size_1024_seqlen_8192_fewshot_0/checkpoints/0/items \
+        load_parameters_path=gs://${BUCKET_NAME}/model_ckpts/maxtext/flap_ablate_kv5_m6528_WIFV_UL-MM_Llama-3.1-8B/checkpoints/0/items \
         base_output_directory=${BASE_OUTPUT_DIRECTORY} \
         dataset_type=grain \
         grain_train_files=${DATA_FILES} \
