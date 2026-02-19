@@ -37,6 +37,8 @@ if [[ $MODE == "help" ]]; then
   exit 0
 fi
 
+pip install -r requirements.txt
+
 ### ====== CONFIG ======
 # place to save the maxtext ckpts
 export ORBAX_CKPT_DIR="gs://${BUCKET_NAME}/model_ckpts/maxtext"
