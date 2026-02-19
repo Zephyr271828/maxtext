@@ -24,7 +24,7 @@ for arg in "$@"; do
     esac
 done
 
-export MODEL_NAME="llama3.1-4b-depth"
+export MODEL_NAME="llama3.1-4b-flap"
 export NUM_STEPS=2500
 export SEQ_LEN=8192
 export BATCH_SIZE=${BATCH_SIZE:-2}
