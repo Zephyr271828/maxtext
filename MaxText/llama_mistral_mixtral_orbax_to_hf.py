@@ -138,6 +138,10 @@ def load_hf_model(model_size):
     elif model_size == 'llama3.1-4b-width' or model_size == 'llama3-4b-width':
       config.hidden_size = 3072
       config.intermediate_size = 9216
+    elif model_size == "llama3.1-4b-flap" or model_size == "llama3-4b-flap":
+      config.num_attention_heads = 20
+      config.num_key_value_heads = 5
+      config.intermediate_size = 6528
     elif model_size == 'llama3.1-1b' or model_size == 'llama3-1b':
       config.hidden_size = 1024
       config.intermediate_size = 4096

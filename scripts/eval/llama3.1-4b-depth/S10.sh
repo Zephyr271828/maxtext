@@ -51,17 +51,20 @@ RUN_NAME=$(basename "$(dirname "$(dirname "$CKPT_DIR")")")
 export JAX_PLATFORMS=tpu
 export SPARSE_MODEL_TRAINING=False
 
-pip install -r requirements.txt
+# pip install -r requirements.txt
 
-bash scripts/convert.sh gen_param_ckpt \
-    --model=${MODEL_NAME} \
-    --orbax_ckpt_name=${RUN_NAME} \
-    --step=2499 \
-    --hf_model_name=Llama-3.1-8B \
-    --direct_run_name=${RUN_NAME}
+# bash scripts/convert.sh gen_param_ckpt \
+#     --model=${MODEL_NAME} \
+#     --orbax_ckpt_name=${RUN_NAME} \
+#     --step=2499 \
+#     --hf_model_name=Llama-3.1-8B \
+#     --direct_run_name=${RUN_NAME}
 
 CKPT_DIR=$(gsutil ls -d gs://${BUCKET_NAME}/model_ckpts/direct/${MODEL_NAME}_S10_seqlen_${SEQ_LEN}_bs_*_grad_accum_*_lr_${LR/e/*e}_min_lr_ratio_${MIN_LR_RATIO}_warmup_ratio_${WARMUP_RATIO}*/checkpoints/0 )
 RUN_NAME=$(basename "$(dirname "$(dirname "$CKPT_DIR")")")
+
+echo $RUN_NAME
+exit 0
 
 bash scripts/convert.sh eval \
     --model=${MODEL_NAME} \

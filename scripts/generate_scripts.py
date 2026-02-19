@@ -391,3 +391,40 @@ if __name__ == "__main__":
                 pretrain_tokens="Meta",
                 # pretrain_tokens="Meta",
             )
+            
+     ## llama3.1-4b-FLAP
+    for model_name in ["llama3.1-4b-flap"]:
+        for num_steps in [2500, 7500, 12500, 62500, 125000]:
+            generate_script(
+                model_name=model_name,
+                num_steps=num_steps,
+                # load_parameters_path="model_ckpts/llama3.1-4b-depth-orbax/0/items",
+                # load_parameters_path=args.load_parameters_path,
+                # output_path=args.output_path,
+            )
+            
+    # L200 fine-tune
+    for model_name in ["llama3.1-4b-flap"]:
+        for num_steps in [2500, 7500, 12500, 62500, 125000]:
+            generate_script(
+                model_name=model_name,
+                num_steps=num_steps,
+                load_parameters_path="model_ckpts/maxtext/llama3-8b-l200_width_task_wikitext_hidden_size_3072_ffn_hidden_size_9216_calib_size_128_seqlen_8192/checkpoints/0/items",
+                pretrain_tokens="L200",
+                # load_parameters_path="model_ckpts/llama3.1-4b-depth-orbax/0/items",
+                # load_parameters_path=args.load_parameters_path,
+                # output_path=args.output_path,
+            )
+            
+    # Meta fine-tune        
+    for model_name in ["llama3.1-4b-flap"]:
+        for num_steps in [2500, 7500, 12500, 62500, 125000]:
+            generate_script(
+                model_name=model_name,
+                num_steps=num_steps,
+                load_parameters_path="model_ckpts/maxtext/Llama-3.1-8B_width_task_wikitext_hidden_size_3072_ffn_hidden_size_9216_calib_size_1024_seqlen_8192_fewshot_0/checkpoints/0/items",
+                pretrain_tokens="Meta",
+                # load_parameters_path="model_ckpts/llama3.1-4b-depth-orbax/0/items",
+                # load_parameters_path=args.load_parameters_path,
+                # output_path=args.output_path,
+            )
