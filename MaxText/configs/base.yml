@@ -276,6 +276,11 @@ v_head_dim: 128
 fused_qkv: False
 fused_mlp: False
 
+# Linear projection bias controls for llama/mistral-style decoders.
+# Keep False for compatibility with standard Llama/Mistral checkpoints.
+use_bias_in_projections: False
+use_bias_in_mlp: False
+
 record_internal_nn_metrics: 0
 
 # Output directory

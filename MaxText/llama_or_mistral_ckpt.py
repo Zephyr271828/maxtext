@@ -460,9 +460,13 @@ def _hf_to_maxtext_mapping(layer_idx: int = -1, expert_idx: int = -1) -> dict:
       f"model.layers.{layer_idx}.input_layernorm.weight": f"layers.{layer_idx}.attention_norm.weight",
       f"model.layers.{layer_idx}.post_attention_layernorm.weight": f"layers.{layer_idx}.ffn_norm.weight",
       f"model.layers.{layer_idx}.self_attn.q_proj.weight": f"layers.{layer_idx}.attention.wq.weight",
+      f"model.layers.{layer_idx}.self_attn.q_proj.bias": f"layers.{layer_idx}.attention.wq.bias",
       f"model.layers.{layer_idx}.self_attn.k_proj.weight": f"layers.{layer_idx}.attention.wk.weight",
+      f"model.layers.{layer_idx}.self_attn.k_proj.bias": f"layers.{layer_idx}.attention.wk.bias",
       f"model.layers.{layer_idx}.self_attn.v_proj.weight": f"layers.{layer_idx}.attention.wv.weight",
+      f"model.layers.{layer_idx}.self_attn.v_proj.bias": f"layers.{layer_idx}.attention.wv.bias",
       f"model.layers.{layer_idx}.self_attn.o_proj.weight": f"layers.{layer_idx}.attention.wo.weight",
+      f"model.layers.{layer_idx}.self_attn.o_proj.bias": f"layers.{layer_idx}.attention.wo.bias",
       f"model.layers.{layer_idx}.self_attn.rotary_emb.inv_freq": f"layers.{layer_idx}.attention.rotary_emb.inv_freq",
       # MOE model
       f"model.layers.{layer_idx}.block_sparse_moe.gate.weight": f"layers.{layer_idx}.feed_forward.gate.weight",
@@ -471,8 +475,11 @@ def _hf_to_maxtext_mapping(layer_idx: int = -1, expert_idx: int = -1) -> dict:
       f"model.layers.{layer_idx}.block_sparse_moe.experts.{expert_idx}.w3.weight": f"layers.{layer_idx}.feed_forward.experts.{expert_idx}.w3.weight",
       # FFN
       f"model.layers.{layer_idx}.mlp.gate_proj.weight": f"layers.{layer_idx}.feed_forward.w1.weight",
+      f"model.layers.{layer_idx}.mlp.gate_proj.bias": f"layers.{layer_idx}.feed_forward.w1.bias",
       f"model.layers.{layer_idx}.mlp.up_proj.weight": f"layers.{layer_idx}.feed_forward.w2.weight",
+      f"model.layers.{layer_idx}.mlp.up_proj.bias": f"layers.{layer_idx}.feed_forward.w2.bias",
       f"model.layers.{layer_idx}.mlp.down_proj.weight": f"layers.{layer_idx}.feed_forward.w3.weight",
+      f"model.layers.{layer_idx}.mlp.down_proj.bias": f"layers.{layer_idx}.feed_forward.w3.bias",
       # llama4
       "language_model.model.embed_tokens.weight": "tok_embeddings.weight",
       "language_model.model.norm.weight": "norm.weight",
@@ -480,21 +487,29 @@ def _hf_to_maxtext_mapping(layer_idx: int = -1, expert_idx: int = -1) -> dict:
       f"language_model.model.layers.{layer_idx}.input_layernorm.weight": f"layers.{layer_idx}.attention_norm.weight",
       f"language_model.model.layers.{layer_idx}.post_attention_layernorm.weight": f"layers.{layer_idx}.ffn_norm.weight",
       f"language_model.model.layers.{layer_idx}.self_attn.q_proj.weight": f"layers.{layer_idx}.attention.wq.weight",
+      f"language_model.model.layers.{layer_idx}.self_attn.q_proj.bias": f"layers.{layer_idx}.attention.wq.bias",
       f"language_model.model.layers.{layer_idx}.self_attn.k_proj.weight": f"layers.{layer_idx}.attention.wk.weight",
+      f"language_model.model.layers.{layer_idx}.self_attn.k_proj.bias": f"layers.{layer_idx}.attention.wk.bias",
       f"language_model.model.layers.{layer_idx}.self_attn.v_proj.weight": f"layers.{layer_idx}.attention.wv.weight",
+      f"language_model.model.layers.{layer_idx}.self_attn.v_proj.bias": f"layers.{layer_idx}.attention.wv.bias",
       f"language_model.model.layers.{layer_idx}.self_attn.o_proj.weight": f"layers.{layer_idx}.attention.wo.weight",
+      f"language_model.model.layers.{layer_idx}.self_attn.o_proj.bias": f"layers.{layer_idx}.attention.wo.bias",
       # llama4 MoE
       f"language_model.model.layers.{layer_idx}.feed_forward.router.weight": f"layers.{layer_idx}.feed_forward.gate.weight",
       f"language_model.model.layers.{layer_idx}.feed_forward.experts.down_proj": f"layers.{layer_idx}.feed_forward.experts.down_proj",
       # NOTE: this contains up_proj and gate_proj concated together (we'll split/chunk them later)
       f"language_model.model.layers.{layer_idx}.feed_forward.experts.gate_up_proj": f"layers.{layer_idx}.feed_forward.experts.gate_up_proj",
       f"language_model.model.layers.{layer_idx}.feed_forward.shared_expert.gate_proj.weight": f"layers.{layer_idx}.feed_forward.shared_experts.gate_proj.weight",
+      f"language_model.model.layers.{layer_idx}.feed_forward.shared_expert.gate_proj.weight": f"layers.{layer_idx}.feed_forward.shared_experts.gate_proj.bias",
       f"language_model.model.layers.{layer_idx}.feed_forward.shared_expert.down_proj.weight": f"layers.{layer_idx}.feed_forward.shared_experts.down_proj.weight",
       f"language_model.model.layers.{layer_idx}.feed_forward.shared_expert.up_proj.weight": f"layers.{layer_idx}.feed_forward.shared_experts.up_proj.weight",
       # llama4 FFN
       f"language_model.model.layers.{layer_idx}.feed_forward.gate_proj.weight": f"layers.{layer_idx}.feed_forward.w1.weight",
+        f"language_model.model.layers.{layer_idx}.feed_forward.gate_proj.bias": f"layers.{layer_idx}.feed_forward.w1.bias",
       f"language_model.model.layers.{layer_idx}.feed_forward.up_proj.weight": f"layers.{layer_idx}.feed_forward.w2.weight",
+        f"language_model.model.layers.{layer_idx}.feed_forward.up_proj.bias": f"layers.{layer_idx}.feed_forward.w2.bias",
       f"language_model.model.layers.{layer_idx}.feed_forward.down_proj.weight": f"layers.{layer_idx}.feed_forward.w3.weight",
+        f"language_model.model.layers.{layer_idx}.feed_forward.down_proj.bias": f"layers.{layer_idx}.feed_forward.w3.bias",
   }
 
 
@@ -807,7 +822,14 @@ def _convert_huggingface_to_jax_weights(base_model_path: str, model_size: str, m
         else:
             layer = int(parts[2]) if "layers" in key else 0
 
-        mapped_key = _hf_to_maxtext_mapping(layer)[key]
+        layer_mapping = _hf_to_maxtext_mapping(layer)
+        if key not in layer_mapping:
+          if key.endswith(".bias"):
+            max_logging.log(f"WARNING: skipping unsupported bias key from HF checkpoint: {key}")
+            continue
+          raise KeyError(f"Missing HF->MaxText key mapping for: {key}")
+
+        mapped_key = layer_mapping[key]
         chkpt_vars[mapped_key] = tensor
 
   logging.debug("Memory usage: %f GB", mem_info.memory_info().rss / (1024**3))
@@ -961,6 +983,27 @@ def _convert_huggingface_to_jax_weights(base_model_path: str, model_size: str, m
     self_attention["value"]["kernel"][block_layer_idx, ...] = wv  # pylint: disable=E1137
     self_attention["out"]["kernel"][block_layer_idx, ...] = w_post  # pylint: disable=E1137
 
+    if f"layers.{layer_idx}.attention.wq.bias" in chkpt_vars:
+      bq = chkpt_vars[f"layers.{layer_idx}.attention.wq.bias"].numpy()
+      bk = chkpt_vars[f"layers.{layer_idx}.attention.wk.bias"].numpy()
+      bv = chkpt_vars[f"layers.{layer_idx}.attention.wv.bias"].numpy()
+      bo = chkpt_vars[f"layers.{layer_idx}.attention.wo.bias"].numpy()
+
+      bq = np.reshape(bq, [base_num_query_heads, head_dim])
+      bk = np.reshape(bk, [base_num_kv_heads, head_dim])
+      bv = np.reshape(bv, [base_num_kv_heads, head_dim])
+
+      if "bias" not in self_attention["query"]:
+        self_attention["query"]["bias"] = np.zeros(stack_shape + bq.shape)
+        self_attention["key"]["bias"] = np.zeros(stack_shape + bk.shape)
+        self_attention["value"]["bias"] = np.zeros(stack_shape + bv.shape)
+        self_attention["out"]["bias"] = np.zeros(stack_shape + bo.shape)
+
+      self_attention["query"]["bias"][block_layer_idx, ...] = bq
+      self_attention["key"]["bias"][block_layer_idx, ...] = bk
+      self_attention["value"]["bias"][block_layer_idx, ...] = bv
+      self_attention["out"]["bias"][block_layer_idx, ...] = bo
+
   self_attention_list = (
       [jax_weights["decoder"]["layers"]["self_attention"]]
       if not is_llama4_model
@@ -984,6 +1027,12 @@ def _convert_huggingface_to_jax_weights(base_model_path: str, model_size: str, m
     self_attention["out"]["kernel"] = np.transpose(
         self_attention["out"]["kernel"], axes=(2, 0, 3, 1)
     )  # [q, layer, head_dim, embed]
+
+    if "bias" in self_attention["query"]:
+      self_attention["query"]["bias"] = np.transpose(self_attention["query"]["bias"], axes=(1, 0, 2))
+      self_attention["key"]["bias"] = np.transpose(self_attention["key"]["bias"], axes=(1, 0, 2))
+      self_attention["value"]["bias"] = np.transpose(self_attention["value"]["bias"], axes=(1, 0, 2))
+      self_attention["out"]["bias"] = np.transpose(self_attention["out"]["bias"], axes=(1, 0))
 
     # scale the query weights
     # import pdb; pdb.set_trace()
@@ -1073,6 +1122,20 @@ def _convert_huggingface_to_jax_weights(base_model_path: str, model_size: str, m
       layer_weight["mlp"]["wi_0"]["kernel"][block_layer_idx, ...] = wi_0  # pytype: disable=unsupported-operands
       layer_weight["mlp"]["wi_1"]["kernel"][block_layer_idx, ...] = wi_1  # pytype: disable=unsupported-operands
       layer_weight["mlp"]["wo"]["kernel"][block_layer_idx, ...] = wo  # pytype: disable=unsupported-operands
+
+      if f"layers.{layer_idx}.feed_forward.w1.bias" in chkpt_vars:
+        wi_0_bias = chkpt_vars[f"layers.{layer_idx}.feed_forward.w1.bias"].numpy()
+        wi_1_bias = chkpt_vars[f"layers.{layer_idx}.feed_forward.w2.bias"].numpy()
+        wo_bias = chkpt_vars[f"layers.{layer_idx}.feed_forward.w3.bias"].numpy()
+
+        if "bias" not in layer_weight["mlp"]["wi_0"]:
+          layer_weight["mlp"]["wi_0"]["bias"] = np.zeros(stack_shape + wi_0_bias.shape)
+          layer_weight["mlp"]["wi_1"]["bias"] = np.zeros(stack_shape + wi_1_bias.shape)
+          layer_weight["mlp"]["wo"]["bias"] = np.zeros(stack_shape + wo_bias.shape)
+
+        layer_weight["mlp"]["wi_0"]["bias"][block_layer_idx, ...] = wi_0_bias
+        layer_weight["mlp"]["wi_1"]["bias"][block_layer_idx, ...] = wi_1_bias
+        layer_weight["mlp"]["wo"]["bias"][block_layer_idx, ...] = wo_bias
     elif is_llama4_model:
       # no need to gather for llama4 safetensors
       # 1 gate: Llama4MoEBlock_0.MoeBlock_0.gate.kernel
@@ -1189,6 +1252,10 @@ def _convert_huggingface_to_jax_weights(base_model_path: str, model_size: str, m
       layer_weight["mlp"]["wi_0"]["kernel"] = np.transpose(layer_weight["mlp"]["wi_0"]["kernel"], axes=(1, 0, 2))
       layer_weight["mlp"]["wi_1"]["kernel"] = np.transpose(layer_weight["mlp"]["wi_1"]["kernel"], axes=(1, 0, 2))
       layer_weight["mlp"]["wo"]["kernel"] = np.transpose(layer_weight["mlp"]["wo"]["kernel"], axes=(1, 0, 2))
+      if "bias" in layer_weight["mlp"]["wi_0"]:
+        layer_weight["mlp"]["wi_0"]["bias"] = np.transpose(layer_weight["mlp"]["wi_0"]["bias"], axes=(1, 0))
+        layer_weight["mlp"]["wi_1"]["bias"] = np.transpose(layer_weight["mlp"]["wi_1"]["bias"], axes=(1, 0))
+        layer_weight["mlp"]["wo"]["bias"] = np.transpose(layer_weight["mlp"]["wo"]["bias"], axes=(1, 0))
     else:
       # no need to transpose for wi_0, wi_1, wo in MoeBlock_0
       layer_weight["MoeBlock_0"]["gate"]["kernel"] = np.transpose(
@@ -1202,6 +1269,10 @@ def _convert_huggingface_to_jax_weights(base_model_path: str, model_size: str, m
         layer_weight["mlp"]["wi_0"]["kernel"] = np.transpose(layer_weight["mlp"]["wi_0"]["kernel"], axes=(1, 0, 2))
         layer_weight["mlp"]["wi_1"]["kernel"] = np.transpose(layer_weight["mlp"]["wi_1"]["kernel"], axes=(1, 0, 2))
         layer_weight["mlp"]["wo"]["kernel"] = np.transpose(layer_weight["mlp"]["wo"]["kernel"], axes=(1, 0, 2))
+        if "bias" in layer_weight["mlp"]["wi_0"]:
+          layer_weight["mlp"]["wi_0"]["bias"] = np.transpose(layer_weight["mlp"]["wi_0"]["bias"], axes=(1, 0))
+          layer_weight["mlp"]["wi_1"]["bias"] = np.transpose(layer_weight["mlp"]["wi_1"]["bias"], axes=(1, 0))
+          layer_weight["mlp"]["wo"]["bias"] = np.transpose(layer_weight["mlp"]["wo"]["bias"], axes=(1, 0))
       else:
         layer_weight["Llama4MoEBlock_0"]["MoeBlock_0"]["gate"]["kernel"] = np.transpose(
             layer_weight["Llama4MoEBlock_0"]["MoeBlock_0"]["gate"]["kernel"], axes=(1, 0, 2)

@@ -97,6 +97,7 @@ class MistralDecoderLayer(nn.Module):
         prefill_cache_axis_order=tuple(map(int, cfg.prefill_cache_axis_order.split(","))),
         ar_cache_axis_order=tuple(map(int, cfg.ar_cache_axis_order.split(","))),
         compute_axis_order=tuple(map(int, cfg.compute_axis_order.split(","))),
+        use_bias_in_projections=cfg.use_bias_in_projections,
     )
 
     attention_lnx = attention_layer(
@@ -137,6 +138,7 @@ class MistralDecoderLayer(nn.Module):
         name="mlp",
         config=cfg,
         quant=self.quant,
+        use_bias=cfg.use_bias_in_mlp,
     )(hidden_states, deterministic=deterministic)
     mlp_lnx = nn.with_logical_constraint(mlp_lnx, ("activation_batch", "activation_norm_length", "activation_embed"))
 

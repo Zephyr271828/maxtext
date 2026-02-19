@@ -108,6 +108,7 @@ class LlamaDecoderLayer(nn.Module):
         reshape_q=cfg.reshape_q,
         use_ragged_attention=cfg.use_ragged_attention,
         ragged_block_size=cfg.ragged_block_size,
+        use_bias_in_projections=cfg.use_bias_in_projections,
     )
 
     attention_lnx = attention_layer(
@@ -151,6 +152,7 @@ class LlamaDecoderLayer(nn.Module):
         config=cfg,
         quant=self.quant,
         model_mode=model_mode,
+        use_bias=cfg.use_bias_in_mlp,
     )(hidden_states, deterministic=deterministic)
     self.sow("intermediates", "mlp_lnx", mlp_lnx)
     mlp_lnx = nn.with_logical_constraint(mlp_lnx, activation_axis_names)
