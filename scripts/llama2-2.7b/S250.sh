@@ -83,12 +83,12 @@ python -u multihost_runner_orig.py \
         sparse_model_training=${SPARSE_MODEL_TRAINING} \
     "
 
-bash scripts/convert.sh gen_param_ckpt \
-    --model=${MODEL_NAME} \
-    --orbax_ckpt_name=${RUN_NAME} \
-    --step=62499 \
-    --hf_model_name=Llama-3.1-8B \
-    --direct_run_name=${RUN_NAME}
+# bash scripts/convert.sh gen_param_ckpt \
+#     --model=${MODEL_NAME} \
+#     --orbax_ckpt_name=${RUN_NAME} \
+#     --step=62499 \
+#     --hf_model_name=Llama-3.1-8B \
+#     --direct_run_name=${RUN_NAME}
 
 # bash scripts/convert.sh eval \
 #     --model=${MODEL_NAME} \
