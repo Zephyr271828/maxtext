@@ -94,7 +94,23 @@ def calculate_total_params_per_chip(params):
 
 
 def calculate_bytes_from_pytree(params):
-  params_bytes = jax.tree_util.tree_map(lambda x: x.nbytes, params)
+  def _leaf_nbytes(x):
+    # Common fast path for concrete arrays.
+    if hasattr(x, "nbytes"):
+      return x.nbytes
+
+    # During some restore/init paths (e.g. missing newly-added params),
+    # leaves can be abstract descriptors instead of concrete arrays.
+    if isinstance(x, jax.ShapeDtypeStruct):
+      return int(np.prod(x.shape) * np.dtype(x.dtype).itemsize)
+
+    # Fallback for other array-like leaves with shape/dtype metadata.
+    if hasattr(x, "shape") and hasattr(x, "dtype"):
+      return int(np.prod(x.shape) * np.dtype(x.dtype).itemsize)
+
+    raise TypeError(f"Unsupported leaf type for byte-size calculation: {type(x)}")
+
+  params_bytes = jax.tree_util.tree_map(_leaf_nbytes, params)
   total_bytes = jax.tree_util.tree_reduce(lambda x, y: x + y, params_bytes)
   return total_bytes
 
