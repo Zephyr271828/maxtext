@@ -731,6 +731,31 @@ def setup_initial_state(
     state_mesh_annotations: the mesh annotations for the train state
   """
 
+  def _merge_restored_params_with_init(restored_params, init_params):
+    """Merge partial restored params with initialized params.
+
+    Orbax may leave missing keys as `jax.ShapeDtypeStruct` when restoring from
+    parameter-only checkpoints (e.g., newly introduced bias tensors). Those
+    abstract leaves are not executable JAX values and must be replaced by the
+    initialized concrete tensors.
+    """
+
+    restored_leaves, _ = jax.tree_util.tree_flatten(restored_params)
+    missing_count = sum(isinstance(x, jax.ShapeDtypeStruct) for x in restored_leaves)
+
+    def _merge_leaf(restored_leaf, init_leaf):
+      if isinstance(restored_leaf, jax.ShapeDtypeStruct):
+        return init_leaf
+      return restored_leaf
+
+    merged = jax.tree_util.tree_map(_merge_leaf, restored_params, init_params)
+    if missing_count > 0:
+      max_logging.log(
+          f"Restored params contain {missing_count} abstract/missing leaves; "
+          "falling back to initialized values for those leaves."
+      )
+    return merged
+
   unboxed_abstract_state, state_mesh_annotations, state_mesh_shardings = get_abstract_state(
       model, tx, config, rng, mesh, is_training
   )
@@ -773,7 +798,8 @@ def setup_initial_state(
           out_shardings=state_mesh_shardings,
       )(rng)
       if raw_params:  # If we loaded a partial state, we need to merge it.
-        state = state.replace(params=raw_params)
+        merged_params = _merge_restored_params_with_init(raw_params, state.params)
+        state = state.replace(params=merged_params)
 
   state = max_utils.unbox_logicallypartioned(state)
 
