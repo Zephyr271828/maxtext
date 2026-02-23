@@ -43,6 +43,9 @@ get_num_hosts() {
 TPU_NAME=$(get_tpu_name)
 echo "✅ Detected TPU name: ${TPU_NAME:-unknown}"
 
+TPU_ZONE=$(get_zone)
+echo "✅ Detected TPU zone: ${TPU_ZONE:-unknown}"
+
 BUCKET_NAME=$(get_bucket_name)
 echo "✅ Detected Bucket name: ${BUCKET_NAME:-unknown}"
 
