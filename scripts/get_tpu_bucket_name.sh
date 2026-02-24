@@ -33,6 +33,12 @@ get_bucket_name() {
   echo "${BUCKET_NAME#gs://}"
 }
 
+get_data_bucket_name() {
+  MOUNT_DIR="/home/zephyr/gcs-data" 
+  BUCKET_NAME=$(mount | grep "on ${MOUNT_DIR}" | awk '{print $1}')
+  echo "${BUCKET_NAME#gs://}"
+}
+
 get_num_hosts() {
   ZONE=$(get_zone)
   TPU_NAME=$(get_tpu_name)
@@ -48,6 +54,11 @@ echo "✅ Detected TPU zone: ${TPU_ZONE:-unknown}"
 
 BUCKET_NAME=$(get_bucket_name)
 echo "✅ Detected Bucket name: ${BUCKET_NAME:-unknown}"
+
+if [[ -d /home/zephyr/gcs-data ]]; then
+  DATA_BUCKET_NAME=$(get_data_bucket_name)
+  echo "✅ Detected Data Bucket name: ${DATA_BUCKET_NAME:-unknown}"
+fi
 
 NUM_HOSTS=$(get_num_hosts)
 echo "✅ Detected number of hosts: ${NUM_HOSTS:-unknown}"
