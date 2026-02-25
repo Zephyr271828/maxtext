@@ -2,6 +2,7 @@
 set -euo pipefail
 
 source scripts/get_tpu_bucket_name.sh
+source scripts/check_updates.sh
 
 export TPU_PREFIX="$(get_tpu_name)"
 export BUCKET_NAME="$(get_bucket_name)"
@@ -47,6 +48,7 @@ export SPARSE_MODEL_TRAINING=False
 
 pip install -r requirements.txt
 python -u multihost_runner_orig.py \
+    --USE_EXISTING_FOLDER=$(check_updates) \
     --TPU_PREFIX=${TPU_PREFIX} \
     --COMMAND="
     export TPU_LOG_DIR=/home/zephyr/tpu_logs
