@@ -48,6 +48,7 @@ export SPARSE_MODEL_TRAINING=False
 
 pip install -r requirements.txt
 python -u multihost_runner_orig.py \
+    --RUN_NAME=maxtext \
     --USE_EXISTING_FOLDER=$(check_updates) \
     --TPU_PREFIX=${TPU_PREFIX} \
     --COMMAND="
