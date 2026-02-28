@@ -103,6 +103,7 @@ def generate_training_script(
         export TPU_LOG_DIR=/home/zephyr/tpu_logs
         export WANDB_API_KEY='7d11bbca76b3081b6bd1efbbcf1572aab26c5d56'
         source ~/maxtext_env/bin/activate
+        pip install -r requirements.txt
         ~/maxtext_env/bin/python -u -m MaxText.train MaxText/configs/base.yml \\
             run_name=${{RUN_NAME}} \\
             {load_path_line}base_output_directory=${{BASE_OUTPUT_DIRECTORY}} \\
