@@ -95,6 +95,7 @@ def generate_training_script(
     # gcloud alpha compute tpus tpu-vm ssh zephyr@${{TPU_PREFIX}} --zone ${{TPU_ZONE}} --worker=all --command "cd /home/zephyr/maxtext && git pull origin test_new" || true
     # gcloud alpha compute tpus tpu-vm ssh zephyr@${{TPU_PREFIX}} --zone ${{TPU_ZONE}} --worker=all --command "source /home/zephyr/maxtext_env/bin/activate && pip install -r /home/zephyr/maxtext/requirements.txt" || true
 
+    pip install -r requirements.txt
     python -u multihost_runner_orig.py \\
         --REMOTE=$(git config --get remote.origin.url) \\
         --BRANCH=$(git rev-parse --abbrev-ref HEAD) \\
