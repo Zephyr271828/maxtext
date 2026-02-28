@@ -99,7 +99,7 @@ def generate_training_script(
         --REMOTE=$(git config --get remote.origin.url) \\
         --BRANCH=$(git rev-parse --abbrev-ref HEAD) \\
         --TPU_PREFIX=${{TPU_PREFIX}} \\
-        --INTERNAL_IPS=True \\
+        --INTERNAL_IP=True \\
         --COMMAND="
         export TPU_LOG_DIR=/home/zephyr/tpu_logs
         export WANDB_API_KEY='7d11bbca76b3081b6bd1efbbcf1572aab26c5d56'
