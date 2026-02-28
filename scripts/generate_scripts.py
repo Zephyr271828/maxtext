@@ -96,9 +96,10 @@ def generate_training_script(
     # gcloud alpha compute tpus tpu-vm ssh zephyr@${{TPU_PREFIX}} --zone ${{TPU_ZONE}} --worker=all --command "source /home/zephyr/maxtext_env/bin/activate && pip install -r /home/zephyr/maxtext/requirements.txt" || true
 
     python -u multihost_runner_orig.py \\
-        --REMOTE=$(git config --get remote.origin.url) \
-        --BRANCH=$(git rev-parse --abbrev-ref HEAD) \
+        --REMOTE=$(git config --get remote.origin.url) \\
+        --BRANCH=$(git rev-parse --abbrev-ref HEAD) \\
         --TPU_PREFIX=${{TPU_PREFIX}} \\
+        --INTERNAL_IPS=True \\
         --COMMAND="
         export TPU_LOG_DIR=/home/zephyr/tpu_logs
         export WANDB_API_KEY='7d11bbca76b3081b6bd1efbbcf1572aab26c5d56'
