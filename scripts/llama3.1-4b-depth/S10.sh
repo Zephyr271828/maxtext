@@ -46,14 +46,12 @@ fi
 export JAX_PLATFORMS=tpu
 export SPARSE_MODEL_TRAINING=False
 
-gcloud alpha compute tpus tpu-vm ssh zephyr@${TPU_PREFIX} --zone ${TPU_ZONE} --worker=all --command "cd /home/zephyr && git clone -b test_new https://github.com/Zephyr271828/maxtext.git" || true
-gcloud alpha compute tpus tpu-vm ssh zephyr@${TPU_PREFIX} --zone ${TPU_ZONE} --worker=all --command "cd /home/zephyr/maxtext && git pull origin test_new" || true
-gcloud alpha compute tpus tpu-vm ssh zephyr@${TPU_PREFIX} --zone ${TPU_ZONE} --worker=all --command "source /home/zephyr/maxtext_env/bin/activate && pip install -r /home/zephyr/maxtext/requirements.txt" || true
+# gcloud alpha compute tpus tpu-vm ssh zephyr@${TPU_PREFIX} --zone ${TPU_ZONE} --worker=all --command "cd /home/zephyr && git clone -b test_new https://github.com/Zephyr271828/maxtext.git" || true
+# gcloud alpha compute tpus tpu-vm ssh zephyr@${TPU_PREFIX} --zone ${TPU_ZONE} --worker=all --command "cd /home/zephyr/maxtext && git pull origin test_new" || true
+# gcloud alpha compute tpus tpu-vm ssh zephyr@${TPU_PREFIX} --zone ${TPU_ZONE} --worker=all --command "source /home/zephyr/maxtext_env/bin/activate && pip install -r /home/zephyr/maxtext/requirements.txt" || true
 
 python -u multihost_runner_orig.py \
-    --USE_EXISTING_FOLDER=true \
-    --RUN_NAME=maxtext \
-    --TPU_PREFIX=${TPU_PREFIX} \
+    --REMOTE=$(git config --get remote.origin.url)         --BRANCH=$(git rev-parse --abbrev-ref HEAD)         --TPU_PREFIX=${TPU_PREFIX} \
     --COMMAND="
     export TPU_LOG_DIR=/home/zephyr/tpu_logs
     export WANDB_API_KEY='7d11bbca76b3081b6bd1efbbcf1572aab26c5d56'

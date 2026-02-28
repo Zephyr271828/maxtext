@@ -11,6 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import pdb
+import shlex
 from tempfile import gettempdir
 
 from MaxText.globals import PKG_DIR
@@ -89,6 +91,8 @@ parser.add_argument('--INTERNAL_IP', type=str, default="False",
                     help="Set true if running script locally from a TPU or GCE instance, false otherwise.")
 parser.add_argument('--SCP_TIMEOUT_SECS', type=int, default=600,
                     help="Timeout to give up on the SCP operation, which moves local code to the workers.")
+parser.add_argument("--REMOTE", type=str, required=True)
+parser.add_argument("--BRANCH", type=str, required=True)
 args = parser.parse_args()
 args.USE_EXISTING_FOLDER = args.USE_EXISTING_FOLDER.lower() == "true"
 args.INTERNAL_IP = args.INTERNAL_IP.lower() == "true"
@@ -240,15 +244,27 @@ def scps(slices, run_name_dir, zip_name):
   worker_list = []
   for cur_slice in slices:
     for worker_num in range(cur_slice.num_workers):
-      command = [
-          "gcloud", "compute", "tpus", "tpu-vm", "scp", f"--worker={worker_num}", zip_path,
-          f"{cur_slice.name}:~/", "--ssh-key-file=~/.ssh/id_rsa", "--strict-host-key-checking=no", f"--project={args.PROJECT}", f"--zone={args.ZONE}"
-      ]
-      if args.INTERNAL_IP:
-        command.append("--internal-ip")
-      commands.append(command)
+      # command = [
+      #     "gcloud", "compute", "tpus", "tpu-vm", "scp", f"--worker={worker_num}", zip_path,
+      #     f"{cur_slice.name}:~/", "--ssh-key-file=~/.ssh/id_rsa", "--strict-host-key-checking=no", f"--project={args.PROJECT}", f"--zone={args.ZONE}"
+      # ]
+      for raw in [
+        f"cd ~ && git clone -b {args.BRANCH} {args.REMOTE} {args.RUN_NAME} || true",
+        f"cd ~/{args.RUN_NAME} && git pull origin {args.BRANCH} || true",
+        # f"cd ~/{args.RUN_NAME} && pip install -r requirements.txt || true",
+      ]:
+        cmd = f"bash -lc {shlex.quote(raw)}"
+        command = [
+          "gcloud", "alpha", "compute", "tpus", "tpu-vm", "ssh", cur_slice.name, f"--worker={worker_num}", 
+          "--command", cmd,
+          "--ssh-key-file=~/.ssh/id_rsa", "--strict-host-key-checking=no", f"--project={args.PROJECT}", f"--zone={args.ZONE}"
+        ]
+        if args.INTERNAL_IP:
+          command.append("--internal-ip")
+        # pdb.set_trace()
+        commands.append(command)
       worker_list.append([cur_slice.slice_num, worker_num])
-  return_code, _ = run_commands(commands, 0, "SCP", worker_list)
+  return_code, _ = run_commands(commands, 0, "GIT CLONE", worker_list)
   if return_code != 0:
     print("Failed to scp zipped code directory with error code ", return_code)
     return return_code
@@ -270,18 +286,30 @@ def execute_main_command(main_command, slices, local_log_dir, zip_name):
     for worker_num in range(cur_slice.num_workers):
       output_filename = os.path.join(local_log_dir, f"output_slice_{cur_slice.slice_num:04d}_worker_{worker_num:04d}.txt")
       output_logs.append(output_filename)
-      mkdir_command = f"mkdir -p {args.RUN_NAME}"
-      mv_zip_command = f"mv {zip_name} {args.RUN_NAME}"
+      # mkdir_command = f"mkdir -p {args.RUN_NAME}"
+      # mv_zip_command = f"mv {zip_name} {args.RUN_NAME}"
       cd_command = f"cd {args.RUN_NAME}"
-      unzip_command = f"tar xzf {zip_name}"
+      # unzip_command = f"tar xzf {zip_name}"
       write_kill_script_command = f"echo '{kill_existing_processes_str()}' > {kill_script_name}"
       kill_existing_command = f"bash {kill_script_name} {cur_slice.version}"
 
       if args.USE_EXISTING_FOLDER is False:
-        remote_command_list = [mkdir_command , mv_zip_command , cd_command , unzip_command ,
-                        write_kill_script_command , kill_existing_command , main_command]
+        remote_command_list = [
+          # mkdir_command , 
+          # mv_zip_command , 
+          cd_command , 
+          # unzip_command ,
+          write_kill_script_command , 
+          kill_existing_command , 
+          main_command
+        ]
       else:
-        remote_command_list = [cd_command, write_kill_script_command , kill_existing_command , main_command]
+        remote_command_list = [
+          cd_command, 
+          write_kill_script_command , 
+          kill_existing_command , 
+          main_command
+        ]
       remote_command_list_str = " && ".join(remote_command_list)
       gcloud_command=[
           "gcloud", "alpha", "compute", "tpus", "tpu-vm", "ssh", cur_slice.name, f"--worker={worker_num}",
