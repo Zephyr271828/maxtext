@@ -95,6 +95,8 @@ def generate_training_script(
     # gcloud alpha compute tpus tpu-vm ssh zephyr@${{TPU_PREFIX}} --zone ${{TPU_ZONE}} --worker=all --ssh-key-file=~/.ssh/id_rsa --command "cd /home/zephyr/maxtext && git pull origin test_new" || true
     gcloud alpha compute tpus tpu-vm ssh zephyr@${{TPU_PREFIX}} --zone ${{TPU_ZONE}} --worker=all --ssh-key-file=~/.ssh/id_rsa --command "source /home/zephyr/maxtext_env/bin/activate && pip install -r /home/zephyr/maxtext/requirements.txt" || true
 
+    export PRIMARY_REPLICA=$([ "$(hostname -s)" == *-0 ] && echo "True" || echo "False")
+
     pip install -r requirements.txt
     python -u multihost_runner_orig.py \\
         --USE_EXISTING_FOLDER=True \\
@@ -111,12 +113,13 @@ def generate_training_script(
             grain_train_files=${{DATA_FILES}} \\
             start_from_file_index=0 \\
             grain_file_type='arrayrecord' \\
-            grain_worker_count=1 \\
+            grain_worker_count=8 \\
             enable_data_shuffling=$([ "${{SHUFFLE}}" = "True" ] && echo "true" || echo "false") \\
             tokenize_train_data=False \\
             tokenize_eval_data=False \\
             max_target_length=${{SEQ_LEN}} \\
             async_checkpointing=${{ASYNC_CHECKPOINTING}} \\
+            enable_single_replica_ckpt_restoring=${{PRIMARY_REPLICA}} \\
             model_name=${{MODEL_NAME}} \\
             steps=${{NUM_STEPS}} \\
             per_device_batch_size=${{BATCH_SIZE}} \\
