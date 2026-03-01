@@ -93,19 +93,17 @@ def generate_training_script(
     
     # gcloud alpha compute tpus tpu-vm ssh zephyr@${{TPU_PREFIX}} --zone ${{TPU_ZONE}} --worker=all --command "cd /home/zephyr && git clone -b test_new https://github.com/Zephyr271828/maxtext.git" || true
     # gcloud alpha compute tpus tpu-vm ssh zephyr@${{TPU_PREFIX}} --zone ${{TPU_ZONE}} --worker=all --command "cd /home/zephyr/maxtext && git pull origin test_new" || true
-    # gcloud alpha compute tpus tpu-vm ssh zephyr@${{TPU_PREFIX}} --zone ${{TPU_ZONE}} --worker=all --command "source /home/zephyr/maxtext_env/bin/activate && pip install -r /home/zephyr/maxtext/requirements.txt" || true
+    gcloud alpha compute tpus tpu-vm ssh zephyr@${{TPU_PREFIX}} --zone ${{TPU_ZONE}} --worker=all --command "source /home/zephyr/maxtext_env/bin/activate && pip install -r /home/zephyr/maxtext/requirements.txt" || true
 
     pip install -r requirements.txt
     python -u multihost_runner_orig.py \\
-        --REMOTE=$(git config --get remote.origin.url) \\
-        --BRANCH=$(git rev-parse --abbrev-ref HEAD) \\
+        --USE_EXISTING_FOLDER=True \\
+        --RUN_NAME=maxtext \\
         --TPU_PREFIX=${{TPU_PREFIX}} \\
-        --INTERNAL_IP=True \\
         --COMMAND="
         export TPU_LOG_DIR=/home/zephyr/tpu_logs
         export WANDB_API_KEY='7d11bbca76b3081b6bd1efbbcf1572aab26c5d56'
         source ~/maxtext_env/bin/activate
-        pip install -r requirements.txt
         ~/maxtext_env/bin/python -u -m MaxText.train MaxText/configs/base.yml \\
             run_name=${{RUN_NAME}} \\
             {load_path_line}base_output_directory=${{BASE_OUTPUT_DIRECTORY}} \\

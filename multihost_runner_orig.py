@@ -91,8 +91,8 @@ parser.add_argument('--INTERNAL_IP', type=str, default="False",
                     help="Set true if running script locally from a TPU or GCE instance, false otherwise.")
 parser.add_argument('--SCP_TIMEOUT_SECS', type=int, default=600,
                     help="Timeout to give up on the SCP operation, which moves local code to the workers.")
-parser.add_argument("--REMOTE", type=str, required=True)
-parser.add_argument("--BRANCH", type=str, required=True)
+parser.add_argument("--REMOTE", type=str, default=None, help="The remote git repository to clone from, e.g.")
+parser.add_argument("--BRANCH", type=str, default="main", help="The git branch to clone, e.g. main")
 args = parser.parse_args()
 args.USE_EXISTING_FOLDER = args.USE_EXISTING_FOLDER.lower() == "true"
 args.INTERNAL_IP = args.INTERNAL_IP.lower() == "true"
@@ -217,8 +217,8 @@ def delete_old_run_dirs(slices):
   return_code, _ = run_commands(commands, 0, "CLEANUP", worker_list)
   return return_code
 
-def scps(slices, run_name_dir, zip_name):
-  """ Zip the script directory, scp it to the TPUs, and unzip it there. """
+def git_clone(slices, run_name_dir, zip_name):
+  """ Git clone the code from REMOTE repository and pull the latest changes on each worker. """
   cleanup_rc = delete_old_run_dirs(slices)
   if cleanup_rc != 0:
     print("⚠️ Warning: cleanup failed on some workers, continuing anyway.", flush=True)
@@ -242,6 +242,7 @@ def scps(slices, run_name_dir, zip_name):
   # Move zip file to each tpuvm worker
   commands = []
   worker_list = []
+  assert args.BRANCH is not None and args.REMOTE is not None, "When using the git clone method, you must specify both the REMOTE and BRANCH arguments"
   for cur_slice in slices:
     for worker_num in range(cur_slice.num_workers):
       # command = [
@@ -446,12 +447,13 @@ def main() -> None:
     return 1
 
   temp_dir = gettempdir()
-  local_log_dir = os.path.join(temp_dir, args.RUN_NAME, "")
+  # local_log_dir = os.path.join(temp_dir, args.RUN_NAME, "")
+  local_log_dir = os.path.join(temp_dir, default_run_name(), "")
   zip_name = f"script_dir_zip_{args.RUN_NAME}.tar.gz"
 
   if args.USE_EXISTING_FOLDER is False:
     ##### Step 2 when using a new folder: Zip code and move it to the TPUs #####
-    return_code = scps(slices, local_log_dir, zip_name)
+    return_code = git_clone(slices, local_log_dir, zip_name)
     if return_code > 0:
       print(f"Moving the directory {args.SCRIPT_DIR} to the VMs failed with error code {return_code}")
       return return_code
