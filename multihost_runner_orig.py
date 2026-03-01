@@ -290,6 +290,7 @@ def execute_main_command(main_command, slices, local_log_dir, zip_name):
       # mkdir_command = f"mkdir -p {args.RUN_NAME}"
       # mv_zip_command = f"mv {zip_name} {args.RUN_NAME}"
       cd_command = f"cd {args.RUN_NAME}"
+      update_command = f"git pull origin {args.BRANCH}"
       # unzip_command = f"tar xzf {zip_name}"
       write_kill_script_command = f"echo '{kill_existing_processes_str()}' > {kill_script_name}"
       kill_existing_command = f"bash {kill_script_name} {cur_slice.version}"
@@ -307,6 +308,7 @@ def execute_main_command(main_command, slices, local_log_dir, zip_name):
       else:
         remote_command_list = [
           cd_command, 
+          update_command,
           write_kill_script_command , 
           kill_existing_command , 
           main_command

@@ -56,6 +56,7 @@ pip install -r requirements.txt
 python -u multihost_runner_orig.py \
     --USE_EXISTING_FOLDER=True \
     --RUN_NAME=maxtext \
+    --BRANCH=test_new \
     --TPU_PREFIX=${TPU_PREFIX} \
     --COMMAND="
     export TPU_LOG_DIR=/home/zephyr/tpu_logs
