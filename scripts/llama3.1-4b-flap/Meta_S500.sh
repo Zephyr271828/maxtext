@@ -70,7 +70,8 @@ python -u multihost_runner_orig.py \
         grain_train_files=${DATA_FILES} \
         start_from_file_index=0 \
         grain_file_type='arrayrecord' \
-        grain_worker_count=8 \
+        grain_worker_count=1 \
+        grain_worker_count_eval=1 \
         enable_data_shuffling=$([ "${SHUFFLE}" = "True" ] && echo "true" || echo "false") \
         tokenize_train_data=False \
         tokenize_eval_data=False \
