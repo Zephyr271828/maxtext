@@ -50,8 +50,10 @@ def generate_training_script(
     source scripts/check_updates.sh
 
     export TPU_PREFIX="$(get_tpu_name)"
+    export TPU_ZONE="$(get_zone)"
     export BUCKET_NAME="$(get_bucket_name)"
     export NUM_HOSTS=$(get_num_hosts)
+    gcloud config set compute/zone ${{TPU_ZONE}}
     
     for arg in "$@"; do
         case $arg in
