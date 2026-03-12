@@ -6,7 +6,7 @@ def generate_training_script(
     num_steps: int = 12500,
     seq_len: int = 8192,
     async_checkpointing: bool = False,
-    data_files: str = "/home/zephyr/gcs-data/datasets/dclm/llama3_array_record_with_special_tokens_1T/*.array_record",
+    data_files: str = "~/gcs-data/datasets/dclm/llama3_array_record_with_special_tokens_1T/*.array_record",
     load_parameters_path: str = "",
     output_path: str = None,
     sparse_model_training: bool = False,
@@ -93,9 +93,9 @@ def generate_training_script(
     export JAX_PLATFORMS=tpu
     export SPARSE_MODEL_TRAINING={sparse_model_training}
     
-    # gcloud alpha compute tpus tpu-vm ssh zephyr@${{TPU_PREFIX}} --zone ${{TPU_ZONE}} --worker=all --ssh-key-file=~/.ssh/id_rsa --command "cd /home/zephyr && git clone -b test_new https://github.com/Zephyr271828/maxtext.git" || true
-    # gcloud alpha compute tpus tpu-vm ssh zephyr@${{TPU_PREFIX}} --zone ${{TPU_ZONE}} --worker=all --ssh-key-file=~/.ssh/id_rsa --command "cd /home/zephyr/maxtext && git pull origin test_new" || true
-    gcloud alpha compute tpus tpu-vm ssh zephyr@${{TPU_PREFIX}} --zone ${{TPU_ZONE}} --worker=all --ssh-key-file=~/.ssh/id_rsa --command "source /home/zephyr/.venvs/maxtext_env/bin/activate && pip install -r /home/zephyr/maxtext/requirements.txt" || true
+    # gcloud alpha compute tpus tpu-vm ssh zephyr@${{TPU_PREFIX}} --zone ${{TPU_ZONE}} --worker=all --ssh-key-file=~/.ssh/id_rsa --command "cd ~ && git clone -b test_new https://github.com/Zephyr271828/maxtext.git" || true
+    # gcloud alpha compute tpus tpu-vm ssh zephyr@${{TPU_PREFIX}} --zone ${{TPU_ZONE}} --worker=all --ssh-key-file=~/.ssh/id_rsa --command "cd ~/maxtext && git pull origin test_new" || true
+    gcloud alpha compute tpus tpu-vm ssh zephyr@${{TPU_PREFIX}} --zone ${{TPU_ZONE}} --worker=all --ssh-key-file=~/.ssh/id_rsa --command "source ~/.venvs/maxtext_env/bin/activate && pip install -r ~/maxtext/requirements.txt" || true
 
     export PRIMARY_REPLICA=$([ "$(hostname -s)" == *-0 ] && echo "True" || echo "False")
 
@@ -106,7 +106,7 @@ def generate_training_script(
         --BRANCH=test_new \\
         --TPU_PREFIX=${{TPU_PREFIX}} \\
         --COMMAND="
-        export TPU_LOG_DIR=/home/zephyr/tpu_logs
+        export TPU_LOG_DIR=~/tpu_logs
         export WANDB_API_KEY='7d11bbca76b3081b6bd1efbbcf1572aab26c5d56'
         source ~/.venvs/maxtext_env/bin/activate
         ~/.venvs/maxtext_env/bin/python -u -m MaxText.train MaxText/configs/base.yml \\
@@ -171,7 +171,7 @@ def generate_eval_script(
     num_steps: int = 12500,
     seq_len: int = 8192,
     async_checkpointing: bool = False,
-    data_files: str = "/home/zephyr/gcs-data/datasets/dclm/llama3_array_record_with_special_tokens_1T/*.array_record",
+    data_files: str = "~/gcs-data/datasets/dclm/llama3_array_record_with_special_tokens_1T/*.array_record",
     load_parameters_path: str = "",
     output_path: str = None,
     sparse_model_training: bool = False,
@@ -379,7 +379,7 @@ if __name__ == "__main__":
             generate_script(
                 model_name=model_name,
                 num_steps=num_steps,
-                data_files="/home/zephyr/gcs-data/datasets/dclm/llama2_array_record_with_special_tokens_64/*.array_record",
+                data_files="~/gcs-data/datasets/dclm/llama2_array_record_with_special_tokens_64/*.array_record",
                 # load_parameters_path="model_ckpts/maxtext/Llama-3.1-8B_depth_task_wikitext_nlayers_16_calib_size_1024_seqlen_8192_fewshot_0/checkpoints/0/items",
                 # pretrain_tokens="Meta",
             )
@@ -389,7 +389,7 @@ if __name__ == "__main__":
             generate_script(
                 model_name=model_name,
                 num_steps=num_steps,
-                data_files="/home/zephyr/gcs-data/datasets/dclm/llama2_array_record_with_special_tokens_1T/*.array_record",
+                data_files="~/gcs-data/datasets/dclm/llama2_array_record_with_special_tokens_1T/*.array_record",
                 # load_parameters_path="model_ckpts/maxtext/Llama-3.1-8B_depth_task_wikitext_nlayers_16_calib_size_1024_seqlen_8192_fewshot_0/checkpoints/0/items",
                 # pretrain_tokens="Meta",
             )
@@ -399,7 +399,7 @@ if __name__ == "__main__":
             generate_script(
                 model_name=model_name,
                 num_steps=num_steps,
-                data_files="/home/zephyr/gcs-data/datasets/dclm/llama2_array_record_with_special_tokens_1T/*.array_record",
+                data_files="~/gcs-data/datasets/dclm/llama2_array_record_with_special_tokens_1T/*.array_record",
                 load_parameters_path="model_ckpts/maxtext/llama2-2.7b-meta/checkpoints/0/items",
                 pretrain_tokens="Meta",
                 # pretrain_tokens="Meta",

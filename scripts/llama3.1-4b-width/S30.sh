@@ -39,7 +39,7 @@ export WARMUP_RATIO=${WARMUP_RATIO:-0.05}
 export ASYNC_CHECKPOINTING=false
 export BASE_OUTPUT_DIRECTORY="gs://${BUCKET_NAME}/model_ckpts/maxtext"
 export MAX_TO_KEEP=${MAX_TO_KEEP:-1}
-export DATA_FILES="${DATA_FILES:-/home/zephyr/gcs-data/datasets/dclm/llama3_array_record_with_special_tokens_1T/*.array_record}"
+export DATA_FILES="${DATA_FILES:-~/gcs-data/datasets/dclm/llama3_array_record_with_special_tokens_1T/*.array_record}"
 export SHUFFLE="${SHUFFLE:-False}"
 export RUN_NAME="${MODEL_NAME}_S30_seqlen_${SEQ_LEN}_bs_${BATCH_SIZE}_grad_accum_${GRAD_ACCUM}_lr_${LR}_min_lr_ratio_${MIN_LR_RATIO}_warmup_ratio_${WARMUP_RATIO}"
 if [ ! -z "${TAG:-}" ]; then
@@ -48,9 +48,9 @@ fi
 export JAX_PLATFORMS=tpu
 export SPARSE_MODEL_TRAINING=False
 
-# gcloud alpha compute tpus tpu-vm ssh zephyr@${TPU_PREFIX} --zone ${TPU_ZONE} --worker=all --ssh-key-file=~/.ssh/id_rsa --command "cd /home/zephyr && git clone -b test_new https://github.com/Zephyr271828/maxtext.git" || true
-# gcloud alpha compute tpus tpu-vm ssh zephyr@${TPU_PREFIX} --zone ${TPU_ZONE} --worker=all --ssh-key-file=~/.ssh/id_rsa --command "cd /home/zephyr/maxtext && git pull origin test_new" || true
-gcloud alpha compute tpus tpu-vm ssh zephyr@${TPU_PREFIX} --zone ${TPU_ZONE} --worker=all --ssh-key-file=~/.ssh/id_rsa --command "source /home/zephyr/.venvs/maxtext_env/bin/activate && pip install -r /home/zephyr/maxtext/requirements.txt" || true
+# gcloud alpha compute tpus tpu-vm ssh zephyr@${TPU_PREFIX} --zone ${TPU_ZONE} --worker=all --ssh-key-file=~/.ssh/id_rsa --command "cd ~ && git clone -b test_new https://github.com/Zephyr271828/maxtext.git" || true
+# gcloud alpha compute tpus tpu-vm ssh zephyr@${TPU_PREFIX} --zone ${TPU_ZONE} --worker=all --ssh-key-file=~/.ssh/id_rsa --command "cd ~/maxtext && git pull origin test_new" || true
+gcloud alpha compute tpus tpu-vm ssh zephyr@${TPU_PREFIX} --zone ${TPU_ZONE} --worker=all --ssh-key-file=~/.ssh/id_rsa --command "source ~/.venvs/maxtext_env/bin/activate && pip install -r ~/maxtext/requirements.txt" || true
 
 export PRIMARY_REPLICA=$([ "$(hostname -s)" == *-0 ] && echo "True" || echo "False")
 
@@ -61,7 +61,7 @@ python -u multihost_runner_orig.py \
     --BRANCH=test_new \
     --TPU_PREFIX=${TPU_PREFIX} \
     --COMMAND="
-    export TPU_LOG_DIR=/home/zephyr/tpu_logs
+    export TPU_LOG_DIR=~/tpu_logs
     export WANDB_API_KEY='7d11bbca76b3081b6bd1efbbcf1572aab26c5d56'
     source ~/.venvs/maxtext_env/bin/activate
     ~/.venvs/maxtext_env/bin/python -u -m MaxText.train MaxText/configs/base.yml \
