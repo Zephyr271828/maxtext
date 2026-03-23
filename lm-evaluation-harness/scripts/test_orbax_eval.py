@@ -186,7 +186,7 @@ def get_ppl_enc(task, tokenizer, add_special_tokens: bool = True):
         text_column = "text"
         testenc = tokenizer.encode(" ".join(dataset[:8192][text_column]), return_tensors='pt', add_special_tokens=add_special_tokens)
     elif task == 'dclm':
-        data_path = "/home/zephyr/gcs-bucket/datasets/dclm/dclm_baseline_1.0.val.jsonl"
+        data_path = os.path.join(os.path.expanduser("~"), "gcs-bucket/datasets/dclm/dclm_baseline_1.0.val.jsonl")
         dataset = load_dataset(
             "json",
             data_files={"train": data_path},
