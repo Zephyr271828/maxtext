@@ -7,10 +7,15 @@ get_tpu_name() {
   ip=$(curl -s -H "Metadata-Flavor: Google" \
     http://metadata.google.internal/computeMetadata/v1/instance/network-interfaces/0/ip)
 
-  # Match against any semicolon-separated IP list
+  # Match against any semicolon-separated IP list (exact match to avoid substring collisions)
   name=$(gcloud compute tpus tpu-vm list --zone="$zone" \
     --format="value(name,networkEndpoints.ipAddress)" \
-    | awk -v ip="$ip" 'index($2, ip) {print $1; exit}')
+    | awk -v ip="$ip" '{
+        n = split($2, ips, ";")
+        for (i = 1; i <= n; i++) {
+          if (ips[i] == ip) { print $1; exit }
+        }
+      }')
 
   # Check that TPU name contains 'yufeng'
   if [[ ! "${name}" =~ yufeng ]]; then

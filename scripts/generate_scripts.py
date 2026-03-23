@@ -95,7 +95,7 @@ def generate_training_script(
     
     # gcloud alpha compute tpus tpu-vm ssh zephyr@${{TPU_PREFIX}} --zone ${{TPU_ZONE}} --worker=all --ssh-key-file=~/.ssh/id_rsa --command "cd ~ && git clone -b test_new https://github.com/Zephyr271828/maxtext.git" || true
     # gcloud alpha compute tpus tpu-vm ssh zephyr@${{TPU_PREFIX}} --zone ${{TPU_ZONE}} --worker=all --ssh-key-file=~/.ssh/id_rsa --command "cd ~/maxtext && git pull origin test_new" || true
-    gcloud alpha compute tpus tpu-vm ssh zephyr@${{TPU_PREFIX}} --zone ${{TPU_ZONE}} --worker=all --ssh-key-file=~/.ssh/id_rsa --command "source ~/.venvs/maxtext_env/bin/activate && pip install -r ~/maxtext/requirements.txt" || true
+    # gcloud alpha compute tpus tpu-vm ssh zephyr@${{TPU_PREFIX}} --zone ${{TPU_ZONE}} --worker=all --ssh-key-file=~/.ssh/id_rsa --command "source ~/.venvs/maxtext_env/bin/activate && pip install -r ~/maxtext/requirements.txt" || true
 
     export PRIMARY_REPLICA=$([ "$(hostname -s)" == *-0 ] && echo "True" || echo "False")
 

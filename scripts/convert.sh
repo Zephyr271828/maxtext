@@ -44,7 +44,7 @@ pip install -r requirements.txt
 export ORBAX_CKPT_DIR="gs://${BUCKET_NAME}/model_ckpts/maxtext"
 export STEP="${STEP:-0}"
 export DIRECT_CKPT_DIR="gs://${BUCKET_NAME}/model_ckpts/direct"
-export HF_CKPT_DIR="/home/zephyr/gcs-bucket/model_ckpts/hf"
+export HF_CKPT_DIR="$HOME/gcs-bucket/model_ckpts/hf"
 export PYTHONPATH="$(pwd)":${PYTHONPATH:-''}
 
 case "$MODE" in
