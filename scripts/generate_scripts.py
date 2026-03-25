@@ -78,7 +78,7 @@ def generate_training_script(
     export GLOBAL_BATCH_SIZE=${{GLOBAL_BATCH_SIZE:-512}}
     export GRAD_ACCUM=$((GLOBAL_BATCH_SIZE / BATCH_SIZE / NUM_HOSTS / 4))
     export GRAD_CLIP=${{GRAD_CLIP:-1.0}}
-    export LR=${{LR:-0.0003}}
+    export LR=${{LR:-3e-4}}
     export MIN_LR_RATIO=${{MIN_LR_RATIO:-0.1}}
     export WARMUP_RATIO=${{WARMUP_RATIO:-0.05}}
     export ASYNC_CHECKPOINTING={str(async_checkpointing).lower()}
@@ -241,7 +241,7 @@ def generate_eval_script(
     export GLOBAL_BATCH_SIZE=${{GLOBAL_BATCH_SIZE:-512}}
     export GRAD_ACCUM=$((GLOBAL_BATCH_SIZE / BATCH_SIZE / NUM_HOSTS / 4))
     export GRAD_CLIP=${{GRAD_CLIP:-1.0}}
-    export LR=${{LR:-0.0003}}
+    export LR=${{LR:-3e-4}}
     export MIN_LR_RATIO=${{MIN_LR_RATIO:-0.1}}
     export WARMUP_RATIO=${{WARMUP_RATIO:-0.05}}
     export ASYNC_CHECKPOINTING={str(async_checkpointing).lower()}
@@ -437,6 +437,18 @@ if __name__ == "__main__":
                 num_steps=num_steps,
                 load_parameters_path="model_ckpts/maxtext/flap_ablate_kv5_h4096_m6528_WIFV_UL-MM_Llama-3.1-8B/checkpoints/0/items",
                 pretrain_tokens="Meta",
+                # load_parameters_path="model_ckpts/llama3.1-4b-depth-orbax/0/items",
+                # load_parameters_path=args.load_parameters_path,
+                # output_path=args.output_path,
+            )
+            
+    # 8b pretrain
+    for model_name in ["llama3.1-8b"]:
+        for num_steps in [12500, 25000, 37500]:
+            generate_script(
+                model_name=model_name,
+                num_steps=num_steps,
+                load_parameters_path="model_ckpts/maxtext/flap_ablate_kv5_h4096_m6528_WIFV_UL-MM_Llama-3.1-8B/checkpoints/0/items",
                 # load_parameters_path="model_ckpts/llama3.1-4b-depth-orbax/0/items",
                 # load_parameters_path=args.load_parameters_path,
                 # output_path=args.output_path,
