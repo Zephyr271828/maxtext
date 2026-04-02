@@ -1,6 +1,24 @@
 import os
 from textwrap import dedent
 
+SSH_KEY_HELPER = dedent("""\
+ensure_gcloud_ssh_key() {
+    local ssh_dir="$HOME/.ssh"
+    local ssh_key_file="$ssh_dir/google_compute_engine"
+
+    mkdir -p "$ssh_dir"
+
+    if [[ -f "$ssh_key_file" && -f "${ssh_key_file}.pub" ]]; then
+        chmod 600 "$ssh_key_file" "${ssh_key_file}.pub"
+        return
+    fi
+
+    rm -f "$ssh_key_file" "${ssh_key_file}.pub"
+    ssh-keygen -t rsa -f "$ssh_key_file" -N '' -q
+    chmod 600 "$ssh_key_file" "${ssh_key_file}.pub"
+}
+""")
+
 def generate_training_script(
     model_name: str,
     num_steps: int = 12500,
@@ -43,102 +61,108 @@ def generate_training_script(
     job_name = f"{model_name}/{exp_type}"
 
     script = dedent(f"""\
-    #!/bin/bash
-    set -euo pipefail
-    
-    source scripts/get_tpu_bucket_name.sh
-    source scripts/check_updates.sh
+#!/bin/bash
+set -euo pipefail
 
-    export TPU_PREFIX="$(get_tpu_name)"
-    export TPU_ZONE="$(get_zone)"
-    export BUCKET_NAME="$(get_bucket_name)"
-    export NUM_HOSTS=$(get_num_hosts)
-    gcloud config set compute/zone ${{TPU_ZONE}}
-    
-    for arg in "$@"; do
-        case $arg in
-            --lr=*) LR="${{arg#*=}}" ;;
-            --batch_size=*) BATCH_SIZE="${{arg#*=}}" ;;
-            --global_batch_size=*) GLOBAL_BATCH_SIZE="${{arg#*=}}" ;;
-            --grad_clip=*) GRAD_CLIP="${{arg#*=}}" ;;
-            --min_lr_ratio=*) MIN_LR_RATIO="${{arg#*=}}" ;;
-            --warmup_ratio=*) WARMUP_RATIO="${{arg#*=}}" ;;
-            --max_to_keep=*) MAX_TO_KEEP="${{arg#*=}}" ;;
-            --data_files=*) DATA_FILES="${{arg#*=}}" ;;
-            --shuffle=*) SHUFFLE="${{arg#*=}}" ;;
-            --tag=*) TAG="${{arg#*=}}" ;;
-            *) echo "[WARN] Unknown arg $arg" ;;
-        esac
-    done
+source scripts/get_tpu_bucket_name.sh
+source scripts/check_updates.sh
 
-    export MODEL_NAME="{model_name}"
-    export NUM_STEPS={num_steps}
-    export SEQ_LEN={seq_len}
-    export BATCH_SIZE=${{BATCH_SIZE:-2}}
-    export GLOBAL_BATCH_SIZE=${{GLOBAL_BATCH_SIZE:-512}}
-    export GRAD_ACCUM=$((GLOBAL_BATCH_SIZE / BATCH_SIZE / NUM_HOSTS / 4))
-    export GRAD_CLIP=${{GRAD_CLIP:-1.0}}
-    export LR=${{LR:-3e-4}}
-    export MIN_LR_RATIO=${{MIN_LR_RATIO:-0.1}}
-    export WARMUP_RATIO=${{WARMUP_RATIO:-0.05}}
-    export ASYNC_CHECKPOINTING={str(async_checkpointing).lower()}
-    export BASE_OUTPUT_DIRECTORY="gs://${{BUCKET_NAME}}/model_ckpts/maxtext"
-    export MAX_TO_KEEP=${{MAX_TO_KEEP:-1}}
-    export DATA_FILES="${{DATA_FILES:-{data_files}}}"
-    export SHUFFLE="${{SHUFFLE:-False}}"
-    export RUN_NAME="${{MODEL_NAME}}_{exp_type}_seqlen_${{SEQ_LEN}}_bs_${{BATCH_SIZE}}_grad_accum_${{GRAD_ACCUM}}_lr_${{LR}}_min_lr_ratio_${{MIN_LR_RATIO}}_warmup_ratio_${{WARMUP_RATIO}}"
-    if [ ! -z "${{TAG:-}}" ]; then
-        export RUN_NAME="${{RUN_NAME}}_${{TAG}}"
-    fi
-    export JAX_PLATFORMS=tpu
-    export SPARSE_MODEL_TRAINING={sparse_model_training}
-    
-    # gcloud alpha compute tpus tpu-vm ssh zephyr@${{TPU_PREFIX}} --zone ${{TPU_ZONE}} --worker=all --ssh-key-file=~/.ssh/id_rsa --command "cd ~ && git clone -b test_new https://github.com/Zephyr271828/maxtext.git" || true
-    # gcloud alpha compute tpus tpu-vm ssh zephyr@${{TPU_PREFIX}} --zone ${{TPU_ZONE}} --worker=all --ssh-key-file=~/.ssh/id_rsa --command "cd ~/maxtext && git pull origin test_new" || true
-    # gcloud alpha compute tpus tpu-vm ssh zephyr@${{TPU_PREFIX}} --zone ${{TPU_ZONE}} --worker=all --ssh-key-file=~/.ssh/id_rsa --command "source ~/.venvs/maxtext_env/bin/activate && pip install -r ~/maxtext/requirements.txt" || true
+{SSH_KEY_HELPER}
 
-    export PRIMARY_REPLICA=$([ "$(hostname -s)" == *-0 ] && echo "True" || echo "False")
+export TPU_PREFIX="$(get_tpu_name)"
+export TPU_ZONE="$(get_zone)"
+export BUCKET_NAME="$(get_bucket_name)"
+export NUM_HOSTS=$(get_num_hosts)
+gcloud config set compute/zone ${{TPU_ZONE}}
 
-    pip install -r requirements.txt
-    python -u multihost_runner_orig.py \\
-        --USE_EXISTING_FOLDER=True \\
-        --RUN_NAME=maxtext \\
-        --BRANCH=test_new \\
-        --TPU_PREFIX=${{TPU_PREFIX}} \\
-        --COMMAND="
-        export TPU_LOG_DIR=~/tpu_logs
-        export WANDB_API_KEY='7d11bbca76b3081b6bd1efbbcf1572aab26c5d56'
-        source ~/.venvs/maxtext_env/bin/activate
-        ~/.venvs/maxtext_env/bin/python -u -m MaxText.train MaxText/configs/base.yml \\
-            run_name=${{RUN_NAME}} \\
-            {load_path_line}base_output_directory=${{BASE_OUTPUT_DIRECTORY}} \\
-            dataset_type=grain \\
-            grain_train_files=${{DATA_FILES}} \\
-            start_from_file_index=0 \\
-            grain_file_type='arrayrecord' \\
-            grain_worker_count=1 \\
-            grain_worker_count_eval=1 \\
-            enable_data_shuffling=$([ "${{SHUFFLE}}" = "True" ] && echo "true" || echo "false") \\
-            tokenize_train_data=False \\
-            tokenize_eval_data=False \\
-            max_target_length=${{SEQ_LEN}} \\
-            async_checkpointing=${{ASYNC_CHECKPOINTING}} \\
-            enable_single_replica_ckpt_restoring=${{PRIMARY_REPLICA}} \\
-            model_name=${{MODEL_NAME}} \\
-            steps=${{NUM_STEPS}} \\
-            per_device_batch_size=${{BATCH_SIZE}} \\
-            gradient_accumulation_steps=${{GRAD_ACCUM}} \\
-            gradient_clipping_threshold=${{GRAD_CLIP}} \\
-            learning_rate=${{LR}} \\
-            cosine_learning_rate_final_fraction=${{MIN_LR_RATIO}} \\
-            warmup_steps_fraction=${{WARMUP_RATIO}} \\
-            checkpoint_period=500 \\
-            checkpoint_max_to_keep=${{MAX_TO_KEEP}} \\
-            use_wandb=True \\
-            wandb_project=llm_pruning \\
-            wandb_run_name=${{TPU_PREFIX}}_${{RUN_NAME}} \\
-            packing=false \\
-            sparse_model_training=${{SPARSE_MODEL_TRAINING}} \\
+for arg in "$@"; do
+    case $arg in
+        --lr=*) LR="${{arg#*=}}" ;;
+        --batch_size=*) BATCH_SIZE="${{arg#*=}}" ;;
+        --global_batch_size=*) GLOBAL_BATCH_SIZE="${{arg#*=}}" ;;
+        --grad_clip=*) GRAD_CLIP="${{arg#*=}}" ;;
+        --min_lr_ratio=*) MIN_LR_RATIO="${{arg#*=}}" ;;
+        --warmup_ratio=*) WARMUP_RATIO="${{arg#*=}}" ;;
+        --max_to_keep=*) MAX_TO_KEEP="${{arg#*=}}" ;;
+        --data_files=*) DATA_FILES="${{arg#*=}}" ;;
+        --shuffle=*) SHUFFLE="${{arg#*=}}" ;;
+        --tag=*) TAG="${{arg#*=}}" ;;
+        *) echo "[WARN] Unknown arg $arg" ;;
+    esac
+done
+
+export MODEL_NAME="{model_name}"
+export NUM_STEPS={num_steps}
+export SEQ_LEN={seq_len}
+export BATCH_SIZE=${{BATCH_SIZE:-2}}
+export GLOBAL_BATCH_SIZE=${{GLOBAL_BATCH_SIZE:-512}}
+export GRAD_ACCUM=$((GLOBAL_BATCH_SIZE / BATCH_SIZE / NUM_HOSTS / 4))
+export GRAD_CLIP=${{GRAD_CLIP:-1.0}}
+export LR=${{LR:-3e-4}}
+export MIN_LR_RATIO=${{MIN_LR_RATIO:-0.1}}
+export WARMUP_RATIO=${{WARMUP_RATIO:-0.05}}
+export ASYNC_CHECKPOINTING={str(async_checkpointing).lower()}
+export BASE_OUTPUT_DIRECTORY="gs://${{BUCKET_NAME}}/model_ckpts/maxtext"
+export MAX_TO_KEEP=${{MAX_TO_KEEP:-1}}
+export DATA_FILES="${{DATA_FILES:-{data_files}}}"
+export SHUFFLE="${{SHUFFLE:-False}}"
+export RUN_NAME="${{MODEL_NAME}}_{exp_type}_seqlen_${{SEQ_LEN}}_bs_${{BATCH_SIZE}}_grad_accum_${{GRAD_ACCUM}}_lr_${{LR}}_min_lr_ratio_${{MIN_LR_RATIO}}_warmup_ratio_${{WARMUP_RATIO}}"
+if [ ! -z "${{TAG:-}}" ]; then
+    export RUN_NAME="${{RUN_NAME}}_${{TAG}}"
+fi
+export JAX_PLATFORMS=tpu
+export SPARSE_MODEL_TRAINING={sparse_model_training}
+
+# gcloud alpha compute tpus tpu-vm ssh zephyr@${{TPU_PREFIX}} --zone ${{TPU_ZONE}} --worker=all --ssh-key-file=~/.ssh/id_rsa --command "cd ~ && git clone -b test_new https://github.com/Zephyr271828/maxtext.git" || true
+# gcloud alpha compute tpus tpu-vm ssh zephyr@${{TPU_PREFIX}} --zone ${{TPU_ZONE}} --worker=all --ssh-key-file=~/.ssh/id_rsa --command "cd ~/maxtext && git pull origin test_new" || true
+# gcloud alpha compute tpus tpu-vm ssh zephyr@${{TPU_PREFIX}} --zone ${{TPU_ZONE}} --worker=all --ssh-key-file=~/.ssh/id_rsa --command "source ~/.venvs/maxtext_env/bin/activate && pip install -r ~/maxtext/requirements.txt" || true
+
+export PRIMARY_REPLICA=$([ "$(hostname -s)" == *-0 ] && echo "True" || echo "False")
+
+ensure_gcloud_ssh_key
+
+pip install -r requirements.txt
+export JAX_PLATFORMS=''
+python -u multihost_runner_orig.py \\
+    --INTERNAL_IP=True \\
+    --USE_EXISTING_FOLDER=True \\
+    --RUN_NAME=maxtext \\
+    --BRANCH=test_new \\
+    --TPU_PREFIX=${{TPU_PREFIX}} \\
+    --COMMAND="
+    export TPU_LOG_DIR=~/tpu_logs
+    export WANDB_API_KEY='7d11bbca76b3081b6bd1efbbcf1572aab26c5d56'
+    source ~/.venvs/maxtext_env/bin/activate
+    ~/.venvs/maxtext_env/bin/python -u -m MaxText.train MaxText/configs/base.yml \\
+        run_name=${{RUN_NAME}} \\
+        {load_path_line}base_output_directory=${{BASE_OUTPUT_DIRECTORY}} \\
+        dataset_type=grain \\
+        grain_train_files=${{DATA_FILES}} \\
+        start_from_file_index=0 \\
+        grain_file_type='arrayrecord' \\
+        grain_worker_count=1 \\
+        grain_worker_count_eval=1 \\
+        enable_data_shuffling=$([ "${{SHUFFLE}}" = "True" ] && echo "true" || echo "false") \\
+        tokenize_train_data=False \\
+        tokenize_eval_data=False \\
+        max_target_length=${{SEQ_LEN}} \\
+        async_checkpointing=${{ASYNC_CHECKPOINTING}} \\
+        enable_single_replica_ckpt_restoring=${{PRIMARY_REPLICA}} \\
+        model_name=${{MODEL_NAME}} \\
+        steps=${{NUM_STEPS}} \\
+        per_device_batch_size=${{BATCH_SIZE}} \\
+        gradient_accumulation_steps=${{GRAD_ACCUM}} \\
+        gradient_clipping_threshold=${{GRAD_CLIP}} \\
+        learning_rate=${{LR}} \\
+        cosine_learning_rate_final_fraction=${{MIN_LR_RATIO}} \\
+        warmup_steps_fraction=${{WARMUP_RATIO}} \\
+        checkpoint_period=500 \\
+        checkpoint_max_to_keep=${{MAX_TO_KEEP}} \\
+        use_wandb=True \\
+        wandb_project=llm_pruning \\
+        wandb_run_name=${{TPU_PREFIX}}_${{RUN_NAME}} \\
+        packing=false \\
+        sparse_model_training=${{SPARSE_MODEL_TRAINING}} \\
         "
     
     # bash scripts/convert.sh gen_param_ckpt \\
@@ -213,6 +237,8 @@ def generate_eval_script(
     
     source scripts/get_tpu_bucket_name.sh
 
+    {SSH_KEY_HELPER}
+
     export TPU_PREFIX="$(get_tpu_name)"
     export BUCKET_NAME="$(get_bucket_name)"
     export NUM_HOSTS=$(get_num_hosts)
@@ -254,6 +280,8 @@ def generate_eval_script(
     # if [ ! -z "${{TAG:-}}" ]; then
     #     export RUN_NAME="${{RUN_NAME}}_${{TAG}}"
     # fi
+
+    ensure_gcloud_ssh_key
     
     CKPT_DIR=$(gsutil ls -d gs://${{BUCKET_NAME}}/model_ckpts/maxtext/${{MODEL_NAME}}_{exp_type}_seqlen_${{SEQ_LEN}}_bs_*_grad_accum_*_lr_${{LR/e/*e}}_min_lr_ratio_${{MIN_LR_RATIO}}_warmup_ratio_${{WARMUP_RATIO}}*/checkpoints/$(( NUM_STEPS - 1 )) )
     RUN_NAME=$(basename "$(dirname "$(dirname "$CKPT_DIR")")")

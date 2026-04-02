@@ -4,6 +4,23 @@ set -euo pipefail
 source scripts/get_tpu_bucket_name.sh
 source scripts/check_updates.sh
 
+ensure_gcloud_ssh_key() {
+    local ssh_dir="$HOME/.ssh"
+    local ssh_key_file="$ssh_dir/google_compute_engine"
+
+    mkdir -p "$ssh_dir"
+
+    if [[ -f "$ssh_key_file" && -f "${ssh_key_file}.pub" ]]; then
+        chmod 600 "$ssh_key_file" "${ssh_key_file}.pub"
+        return
+    fi
+
+    rm -f "$ssh_key_file" "${ssh_key_file}.pub"
+    ssh-keygen -t rsa -f "$ssh_key_file" -N '' -q
+    chmod 600 "$ssh_key_file" "${ssh_key_file}.pub"
+}
+
+
 export TPU_PREFIX="$(get_tpu_name)"
 export TPU_ZONE="$(get_zone)"
 export BUCKET_NAME="$(get_bucket_name)"
@@ -54,8 +71,12 @@ export SPARSE_MODEL_TRAINING=False
 
 export PRIMARY_REPLICA=$([ "$(hostname -s)" == *-0 ] && echo "True" || echo "False")
 
+ensure_gcloud_ssh_key
+
 pip install -r requirements.txt
+export JAX_PLATFORMS=''
 python -u multihost_runner_orig.py \
+    --INTERNAL_IP=True \
     --USE_EXISTING_FOLDER=True \
     --RUN_NAME=maxtext \
     --BRANCH=test_new \
@@ -67,7 +88,7 @@ python -u multihost_runner_orig.py \
     ~/.venvs/maxtext_env/bin/python -u -m MaxText.train MaxText/configs/base.yml \
         run_name=${RUN_NAME} \
         load_parameters_path=gs://${BUCKET_NAME}/model_ckpts/maxtext/Llama-3.1-8B_width_task_wikitext_hidden_size_3072_ffn_hidden_size_9216_calib_size_1024_seqlen_8192_fewshot_0/checkpoints/0/items \
-        base_output_directory=${BASE_OUTPUT_DIRECTORY} \
+            base_output_directory=${BASE_OUTPUT_DIRECTORY} \
         dataset_type=grain \
         grain_train_files=${DATA_FILES} \
         start_from_file_index=0 \
@@ -95,16 +116,16 @@ python -u multihost_runner_orig.py \
         wandb_run_name=${TPU_PREFIX}_${RUN_NAME} \
         packing=false \
         sparse_model_training=${SPARSE_MODEL_TRAINING} \
-    "
+        "
 
-# bash scripts/convert.sh gen_param_ckpt \
-#     --model=${MODEL_NAME} \
-#     --orbax_ckpt_name=${RUN_NAME} \
-#     --step=7499 \
-#     --hf_model_name=Llama-3.1-8B \
-#     --direct_run_name=${RUN_NAME}
+    # bash scripts/convert.sh gen_param_ckpt \
+    #     --model=${MODEL_NAME} \
+    #     --orbax_ckpt_name=${RUN_NAME} \
+    #     --step=7499 \
+    #     --hf_model_name=Llama-3.1-8B \
+    #     --direct_run_name=${RUN_NAME}
 
-# bash scripts/convert.sh eval \
-#     --model=${MODEL_NAME} \
-#     --hf_model_name=Llama-3.1-8B \
-#     --direct_run_name=${RUN_NAME}
+    # bash scripts/convert.sh eval \
+    #     --model=${MODEL_NAME} \
+    #     --hf_model_name=Llama-3.1-8B \
+    #     --direct_run_name=${RUN_NAME}

@@ -50,6 +50,8 @@ from datetime import datetime
 import os
 import re
 
+GCLOUD_SSH_KEY_FILE = os.path.expanduser("~/.ssh/google_compute_engine")
+
 ##### Define flags #####
 def get_project():
   completed_command = subprocess.run(["gcloud", "config", "get", "project"], check=True, capture_output=True)
@@ -104,6 +106,45 @@ if args.USE_EXISTING_FOLDER is True and not args.RUN_NAME:
   raise ValueError("When USE_EXISTING_FOLDER is true, RUN_NAME must be specified.")
 
 Slice = namedtuple('Slice', ['name', 'slice_num', 'num_workers', 'version'])
+
+def _gcloud_tpu_ssh_cmd(tpu_name, worker_num, remote_command):
+  command = [
+      "gcloud", "compute", "tpus", "tpu-vm", "ssh", tpu_name,
+      f"--worker={worker_num}",
+      "--command", remote_command,
+      f"--ssh-key-file={GCLOUD_SSH_KEY_FILE}",
+      "--ssh-flag=-o ConnectionAttempts=2",
+      "--ssh-flag=-o ConnectTimeout=30",
+      "--ssh-flag=-o StrictHostKeyChecking=no",
+      "--ssh-flag=-o UserKnownHostsFile=/dev/null",
+      "--ssh-flag=-o BatchMode=yes",
+      f"--project={args.PROJECT}",
+      f"--zone={args.ZONE}",
+  ]
+  if args.INTERNAL_IP:
+    command.append("--internal-ip")
+  return command
+
+
+def _gcloud_tpu_scp_cmd(local_path, remote_path, tpu_name, worker_num):
+  command = [
+      "gcloud", "compute", "tpus", "tpu-vm", "scp",
+      local_path,
+      f"{tpu_name}:{remote_path}",
+      f"--worker={worker_num}",
+      f"--ssh-key-file={GCLOUD_SSH_KEY_FILE}",
+      "--scp-flag=-o ConnectionAttempts=2",
+      "--scp-flag=-o ConnectTimeout=30",
+      "--scp-flag=-o StrictHostKeyChecking=no",
+      "--scp-flag=-o UserKnownHostsFile=/dev/null",
+      "--scp-flag=-o BatchMode=yes",
+      f"--project={args.PROJECT}",
+      f"--zone={args.ZONE}",
+  ]
+  if args.INTERNAL_IP:
+    command.append("--internal-ip")
+  return command
+
 
 def get_slices():
   """ Returns a list of slices matching TPU_PREFIX """
@@ -197,20 +238,7 @@ def delete_old_run_dirs(slices):
 
   for cur_slice in slices:
     for worker_num in range(cur_slice.num_workers):
-      cmd = [
-          "gcloud", "alpha", "compute", "tpus", "tpu-vm", "ssh",
-          cur_slice.name,
-          f"--worker={worker_num}",
-          "--command", delete_cmd,
-          "--ssh-key-file=~/.ssh/id_rsa",
-          "--strict-host-key-checking=no",
-          f"--project={args.PROJECT}",
-          f"--zone={args.ZONE}",
-      ]
-      if args.INTERNAL_IP:
-        cmd.append("--internal-ip")
-
-      commands.append(cmd)
+      commands.append(_gcloud_tpu_ssh_cmd(cur_slice.name, worker_num, delete_cmd))
       worker_list.append([cur_slice.slice_num, worker_num])
 
   print("🧹 Deleting old ~/2025* and ~/2026* directories on TPU workers...", flush=True)
@@ -245,29 +273,17 @@ def git_clone(slices, run_name_dir, zip_name):
   assert args.BRANCH is not None and args.REMOTE is not None, "When using the git clone method, you must specify both the REMOTE and BRANCH arguments"
   for cur_slice in slices:
     for worker_num in range(cur_slice.num_workers):
-      # command = [
-      #     "gcloud", "compute", "tpus", "tpu-vm", "scp", f"--worker={worker_num}", zip_path,
-      #     f"{cur_slice.name}:~/", "--ssh-key-file=~/.ssh/id_rsa", "--strict-host-key-checking=no", f"--project={args.PROJECT}", f"--zone={args.ZONE}"
-      # ]
       for raw in [
         f"cd ~ && git clone -b {args.BRANCH} {args.REMOTE} {args.RUN_NAME} || true",
         f"cd ~/{args.RUN_NAME} && git pull origin {args.BRANCH} || true",
         # f"cd ~/{args.RUN_NAME} && pip install -r requirements.txt || true",
       ]:
         cmd = f"bash -lc {shlex.quote(raw)}"
-        command = [
-          "gcloud", "alpha", "compute", "tpus", "tpu-vm", "ssh", cur_slice.name, f"--worker={worker_num}", 
-          "--command", cmd,
-          "--ssh-key-file=~/.ssh/id_rsa", "--strict-host-key-checking=no", f"--project={args.PROJECT}", f"--zone={args.ZONE}"
-        ]
-        if args.INTERNAL_IP:
-          command.append("--internal-ip")
-        # pdb.set_trace()
-        commands.append(command)
+        commands.append(_gcloud_tpu_ssh_cmd(cur_slice.name, worker_num, cmd))
       worker_list.append([cur_slice.slice_num, worker_num])
   return_code, _ = run_commands(commands, 0, "GIT CLONE", worker_list)
   if return_code != 0:
-    print("Failed to scp zipped code directory with error code ", return_code)
+    print("Failed to prepare code directory on TPU workers with error code ", return_code)
     return return_code
 
   # Cleanup
@@ -314,13 +330,7 @@ def execute_main_command(main_command, slices, local_log_dir, zip_name):
           main_command
         ]
       remote_command_list_str = " && ".join(remote_command_list)
-      gcloud_command=[
-          "gcloud", "alpha", "compute", "tpus", "tpu-vm", "ssh", cur_slice.name, f"--worker={worker_num}",
-          "--command", remote_command_list_str, "--ssh-key-file=~/.ssh/id_rsa", "--strict-host-key-checking=no",
-          f"--project={args.PROJECT}", f"--zone={args.ZONE}"]
-      if args.INTERNAL_IP:
-        gcloud_command.append("--internal-ip")
-      commands.append(gcloud_command)
+      commands.append(_gcloud_tpu_ssh_cmd(cur_slice.name, worker_num, remote_command_list_str))
       worker_list.append([slice_num, worker_num])
 
   return_code, return_codes = run_commands(commands, 0, "MAIN COMMAND", worker_list, output_logs=output_logs)
