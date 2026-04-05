@@ -3,20 +3,19 @@
 
     source scripts/get_tpu_bucket_name.sh
 
-    ensure_gcloud_ssh_key() {
+    require_jobman_ssh_key() {
     local ssh_dir="$HOME/.ssh"
-    local ssh_key_file="$ssh_dir/google_compute_engine"
+    local ssh_key_file="$ssh_dir/id_rsa"
 
     mkdir -p "$ssh_dir"
 
-    if [[ -f "$ssh_key_file" && -f "${ssh_key_file}.pub" ]]; then
-        chmod 600 "$ssh_key_file" "${ssh_key_file}.pub"
-        return
+    if [[ ! -f "$ssh_key_file" || ! -f "${ssh_key_file}.pub" ]]; then
+        echo "[ERROR] Missing $ssh_key_file or ${ssh_key_file}.pub. Run jobman SSH setup first." >&2
+        exit 1
     fi
 
-    rm -f "$ssh_key_file" "${ssh_key_file}.pub"
-    ssh-keygen -t rsa -f "$ssh_key_file" -N '' -q
-    chmod 600 "$ssh_key_file" "${ssh_key_file}.pub"
+    chmod 600 "$ssh_key_file"
+    chmod 644 "${ssh_key_file}.pub"
 }
 
 
@@ -62,7 +61,7 @@
     #     export RUN_NAME="${RUN_NAME}_${TAG}"
     # fi
 
-    ensure_gcloud_ssh_key
+    require_jobman_ssh_key
 
     CKPT_DIR=$(gsutil ls -d gs://${BUCKET_NAME}/model_ckpts/maxtext/${MODEL_NAME}_Meta_S500_seqlen_${SEQ_LEN}_bs_*_grad_accum_*_lr_${LR/e/*e}_min_lr_ratio_${MIN_LR_RATIO}_warmup_ratio_${WARMUP_RATIO}*/checkpoints/$(( NUM_STEPS - 1 )) )
     RUN_NAME=$(basename "$(dirname "$(dirname "$CKPT_DIR")")")
