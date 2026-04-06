@@ -50,7 +50,7 @@ from datetime import datetime
 import os
 import re
 
-GCLOUD_SSH_KEY_FILE = os.path.expanduser("~/.ssh/id_rsa")
+GCLOUD_SSH_KEY_FILE = os.path.expanduser("~/.ssh/id_ed25519_tpu")
 GCLOUD_SSH_PUB_KEY_FILE = f"{GCLOUD_SSH_KEY_FILE}.pub"
 
 

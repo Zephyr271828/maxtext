@@ -4,7 +4,7 @@ from textwrap import dedent
 SSH_KEY_HELPER = dedent("""\
 require_jobman_ssh_key() {
     local ssh_dir="$HOME/.ssh"
-    local ssh_key_file="$ssh_dir/id_rsa"
+    local ssh_key_file="$ssh_dir/id_ed25519_tpu"
 
     mkdir -p "$ssh_dir"
 
