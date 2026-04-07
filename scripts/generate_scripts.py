@@ -27,6 +27,7 @@ def generate_training_script(
     data_files: str = "~/gcs-data/datasets/dclm/llama3_array_record_with_special_tokens_1T/*.array_record",
     load_parameters_path: str = "",
     output_path: str = None,
+    batch_size: int = 2,
     sparse_model_training: bool = False,
     pretrain_tokens = None,
 ):
@@ -94,7 +95,7 @@ done
 export MODEL_NAME="{model_name}"
 export NUM_STEPS={num_steps}
 export SEQ_LEN={seq_len}
-export BATCH_SIZE=${{BATCH_SIZE:-2}}
+export BATCH_SIZE=${{BATCH_SIZE:-{batch_size}}}
 export GLOBAL_BATCH_SIZE=${{GLOBAL_BATCH_SIZE:-512}}
 export GRAD_ACCUM=$((GLOBAL_BATCH_SIZE / BATCH_SIZE / NUM_HOSTS / 4))
 export GRAD_CLIP=${{GRAD_CLIP:-1.0}}
@@ -198,6 +199,7 @@ def generate_eval_script(
     data_files: str = "~/gcs-data/datasets/dclm/llama3_array_record_with_special_tokens_1T/*.array_record",
     load_parameters_path: str = "",
     output_path: str = None,
+    batch_size: int = 2,
     sparse_model_training: bool = False,
     pretrain_tokens = None,
 ):
@@ -465,6 +467,7 @@ if __name__ == "__main__":
                 num_steps=num_steps,
                 load_parameters_path="model_ckpts/maxtext/flap_ablate_kv5_h4096_m6528_WIFV_UL-MM_Llama-3.1-8B/checkpoints/0/items",
                 pretrain_tokens="Meta",
+                batch_size=1,
                 # load_parameters_path="model_ckpts/llama3.1-4b-depth-orbax/0/items",
                 # load_parameters_path=args.load_parameters_path,
                 # output_path=args.output_path,
