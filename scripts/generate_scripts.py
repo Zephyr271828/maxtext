@@ -468,7 +468,6 @@ if __name__ == "__main__":
                 num_steps=num_steps,
                 load_parameters_path="model_ckpts/maxtext/flap_ablate_kv5_h4096_m6528_WIFV_UL-MM_Llama-3.1-8B/checkpoints/0/items",
                 pretrain_tokens="Meta",
-                batch_size=1,
                 # load_parameters_path="model_ckpts/llama3.1-4b-depth-orbax/0/items",
                 # load_parameters_path=args.load_parameters_path,
                 # output_path=args.output_path,
@@ -480,6 +479,7 @@ if __name__ == "__main__":
             generate_script(
                 model_name=model_name,
                 num_steps=num_steps,
+                batch_size=2,
                 # load_parameters_path="model_ckpts/llama3.1-4b-depth-orbax/0/items",
                 # load_parameters_path=args.load_parameters_path,
                 # output_path=args.output_path,
