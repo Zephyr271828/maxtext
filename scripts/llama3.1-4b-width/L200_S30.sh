@@ -4,20 +4,19 @@ set -euo pipefail
 source scripts/get_tpu_bucket_name.sh
 source scripts/check_updates.sh
 
-ensure_gcloud_ssh_key() {
+require_jobman_ssh_key() {
     local ssh_dir="$HOME/.ssh"
-    local ssh_key_file="$ssh_dir/google_compute_engine"
+    local ssh_key_file="$ssh_dir/id_ed25519_tpu"
 
     mkdir -p "$ssh_dir"
 
-    if [[ -f "$ssh_key_file" && -f "${ssh_key_file}.pub" ]]; then
-        chmod 600 "$ssh_key_file" "${ssh_key_file}.pub"
-        return
+    if [[ ! -f "$ssh_key_file" || ! -f "${ssh_key_file}.pub" ]]; then
+        echo "[ERROR] Missing $ssh_key_file or ${ssh_key_file}.pub. Run jobman SSH setup first." >&2
+        exit 1
     fi
 
-    rm -f "$ssh_key_file" "${ssh_key_file}.pub"
-    ssh-keygen -t rsa -f "$ssh_key_file" -N '' -q
-    chmod 600 "$ssh_key_file" "${ssh_key_file}.pub"
+    chmod 600 "$ssh_key_file"
+    chmod 644 "${ssh_key_file}.pub"
 }
 
 
@@ -71,8 +70,9 @@ export SPARSE_MODEL_TRAINING=False
 
 export PRIMARY_REPLICA=$([ "$(hostname -s)" == *-0 ] && echo "True" || echo "False")
 
-ensure_gcloud_ssh_key
+require_jobman_ssh_key
 
+source ~/.venvs/maxtext_env/bin/activate
 pip install -r requirements.txt
 export JAX_PLATFORMS=''
 python -u multihost_runner_orig.py \
@@ -85,6 +85,7 @@ python -u multihost_runner_orig.py \
     export TPU_LOG_DIR=~/tpu_logs
     export WANDB_API_KEY='7d11bbca76b3081b6bd1efbbcf1572aab26c5d56'
     source ~/.venvs/maxtext_env/bin/activate
+    pip install -r requirements.txt
     ~/.venvs/maxtext_env/bin/python -u -m MaxText.train MaxText/configs/base.yml \
         run_name=${RUN_NAME} \
         load_parameters_path=gs://${BUCKET_NAME}/model_ckpts/maxtext/llama3-8b-l200_width_task_wikitext_hidden_size_3072_ffn_hidden_size_9216_calib_size_128_seqlen_8192/checkpoints/0/items \

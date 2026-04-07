@@ -35,10 +35,10 @@ Common issues:
     gcloud config set project <project_name>
     before running this script.
 
-  You may have to create/authorize ssh-keys when first sshing into the TPUs.
-  For this purpose you may need to first run:
-    gcloud compute os-login ssh-keys add --key-file ~/.ssh/google_compute_engine.pub
-    gcloud compute os-login ssh-keys list # (make sure the key has been added)
+  This runner expects the jobman-managed SSH identity to already exist on the
+  runner host:
+    ~/.ssh/id_rsa
+    ~/.ssh/id_rsa.pub
 """
 
 import argparse
@@ -50,7 +50,18 @@ from datetime import datetime
 import os
 import re
 
-GCLOUD_SSH_KEY_FILE = os.path.expanduser("~/.ssh/google_compute_engine")
+GCLOUD_SSH_KEY_FILE = os.path.expanduser("~/.ssh/id_ed25519_tpu")
+GCLOUD_SSH_PUB_KEY_FILE = f"{GCLOUD_SSH_KEY_FILE}.pub"
+
+
+def _require_jobman_ssh_key():
+  missing = [path for path in (GCLOUD_SSH_KEY_FILE, GCLOUD_SSH_PUB_KEY_FILE) if not os.path.exists(path)]
+  if missing:
+    raise FileNotFoundError(
+        "Missing jobman-managed SSH key(s): "
+        + ", ".join(missing)
+        + ". Run the jobman SSH setup first."
+    )
 
 ##### Define flags #####
 def get_project():
@@ -98,6 +109,7 @@ parser.add_argument("--BRANCH", type=str, default="main", help="The git branch t
 args = parser.parse_args()
 args.USE_EXISTING_FOLDER = args.USE_EXISTING_FOLDER.lower() == "true"
 args.INTERNAL_IP = args.INTERNAL_IP.lower() == "true"
+_require_jobman_ssh_key()
 
 if not args.TPU_PREFIX:
   raise ValueError("--TPU_PREFIX must be a non-empty string specifying your TPU slice names.")

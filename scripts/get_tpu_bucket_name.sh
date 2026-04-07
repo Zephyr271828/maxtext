@@ -1,5 +1,46 @@
 #!/bin/bash
 
+# Older generated launcher scripts still call ensure_gcloud_ssh_key(), which in
+# turn shells out to ssh-keygen/chmod for ~/.ssh/google_compute_engine. The
+# current runner path uses the jobman-managed ~/.ssh/id_rsa instead, so short-
+# circuit those helper calls when the requested output key is the legacy path.
+_jobman_legacy_gcloud_key_path() {
+  printf '%s' "$HOME/.ssh/google_compute_engine"
+}
+
+_jobman_has_id_rsa() {
+  [[ -f "$HOME/.ssh/id_rsa" && -f "$HOME/.ssh/id_rsa.pub" ]]
+}
+
+ssh-keygen() {
+  local out=""
+  local prev=""
+  for arg in "$@"; do
+    if [[ "$prev" == "-f" ]]; then
+      out="$arg"
+      break
+    fi
+    prev="$arg"
+  done
+
+  if _jobman_has_id_rsa && [[ "$out" == "$(_jobman_legacy_gcloud_key_path)" ]]; then
+    return 0
+  fi
+
+  command ssh-keygen "$@"
+}
+
+chmod() {
+  local legacy_key="$(_jobman_legacy_gcloud_key_path)"
+  local legacy_pub="${legacy_key}.pub"
+
+  if _jobman_has_id_rsa && [[ "$#" -eq 3 && "$1" == "600" && "$2" == "$legacy_key" && "$3" == "$legacy_pub" ]]; then
+    return 0
+  fi
+
+  command chmod "$@"
+}
+
 get_tpu_name() {
   local zone ip name
   zone=$(curl -s -H "Metadata-Flavor: Google" \
