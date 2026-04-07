@@ -769,6 +769,26 @@ def print_system_information():
   max_logging.log(f"System Information: Jax Version: {jax.__version__}")
   max_logging.log(f"System Information: Jaxlib Version: {jax.lib.__version__}")
   max_logging.log(f"System Information: Jax Backend: {jax.extend.backend.get_backend().platform_version}")
+  max_logging.log(f"System Information: JAX process index: {jax.process_index()} / {jax.process_count()} total processes")
+  max_logging.log(f"System Information: Local devices: {len(jax.local_devices())} ({[str(d) for d in jax.local_devices()]})")
+  max_logging.log(f"System Information: Global devices: {jax.device_count()}")
+  try:
+    import psutil
+    mem = psutil.virtual_memory()
+    max_logging.log(
+        f"System Information: Host RAM: total={mem.total / 2**30:.1f} GB, "
+        f"available={mem.available / 2**30:.1f} GB, "
+        f"used={mem.used / 2**30:.1f} GB ({mem.percent}%)"
+    )
+  except ImportError:
+    with open("/proc/meminfo") as f:
+      meminfo = {k: v for line in f for k, _, v in [line.partition(":")]}
+    total_kb = int(meminfo["MemTotal"].split()[0])
+    avail_kb = int(meminfo["MemAvailable"].split()[0])
+    max_logging.log(
+        f"System Information: Host RAM: total={total_kb / 2**20:.1f} GB, "
+        f"available={avail_kb / 2**20:.1f} GB"
+    )
 
 
 def permute_to_match_maxtext_rope(arr):
