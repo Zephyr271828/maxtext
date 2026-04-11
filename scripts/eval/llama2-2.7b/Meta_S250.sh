@@ -11,7 +11,9 @@
 
     if [[ ! -f "$ssh_key_file" || ! -f "${ssh_key_file}.pub" ]]; then
         echo "[ERROR] Missing $ssh_key_file or ${ssh_key_file}.pub. Run jobman SSH setup first." >&2
-        exit 1
+        # Exit 2 so jobman's infra-error classifier treats this as a host-provisioning
+        # failure rather than a task failure (does not count against max_retries).
+        exit 2
     fi
 
     chmod 600 "$ssh_key_file"

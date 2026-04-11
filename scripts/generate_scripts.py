@@ -10,7 +10,9 @@ require_jobman_ssh_key() {
 
     if [[ ! -f "$ssh_key_file" || ! -f "${ssh_key_file}.pub" ]]; then
         echo "[ERROR] Missing $ssh_key_file or ${ssh_key_file}.pub. Run jobman SSH setup first." >&2
-        exit 1
+        # Exit 2 so jobman's infra-error classifier treats this as a host-provisioning
+        # failure rather than a task failure (does not count against max_retries).
+        exit 2
     fi
 
     chmod 600 "$ssh_key_file"
@@ -117,7 +119,12 @@ export SPARSE_MODEL_TRAINING={sparse_model_training}
 # gcloud alpha compute tpus tpu-vm ssh zephyr@${{TPU_PREFIX}} --zone ${{TPU_ZONE}} --worker=all --ssh-key-file=~/.ssh/id_rsa --command "cd ~/maxtext && git pull origin test_new" || true
 # gcloud alpha compute tpus tpu-vm ssh zephyr@${{TPU_PREFIX}} --zone ${{TPU_ZONE}} --worker=all --ssh-key-file=~/.ssh/id_rsa --command "source ~/.venvs/maxtext_env/bin/activate && pip install -r ~/maxtext/requirements.txt" || true
 
-export PRIMARY_REPLICA=$([ "$(hostname -s)" == *-0 ] && echo "True" || echo "False")
+# Always use single-replica checkpoint restoring: one host reads from GCS and
+# broadcasts to the rest. Drastically reduces peak host RAM during orbax
+# transform_utils on v4-128 (16 hosts x 400 GB), where the previous per-host
+# restore was being OOM-killed ~50s into `restoring params from ...`.
+# (Previous `[ "$(hostname -s)" == *-0 ]` check was a bash bug: `==` inside
+# `[ ]` does not glob, so PRIMARY_REPLICA was always "False".)
 
 require_jobman_ssh_key
 
@@ -149,7 +156,7 @@ python -u multihost_runner_orig.py \\
         tokenize_eval_data=False \\
         max_target_length=${{SEQ_LEN}} \\
         async_checkpointing=${{ASYNC_CHECKPOINTING}} \\
-        enable_single_replica_ckpt_restoring=${{PRIMARY_REPLICA}} \\
+        enable_single_replica_ckpt_restoring=True \\
         model_name=${{MODEL_NAME}} \\
         steps=${{NUM_STEPS}} \\
         per_device_batch_size=${{BATCH_SIZE}} \\

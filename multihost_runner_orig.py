@@ -494,4 +494,4 @@ def main() -> None:
     return return_code
 
 if __name__ == '__main__':
-  main()
+  sys.exit(main() or 0)
