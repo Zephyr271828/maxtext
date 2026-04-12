@@ -356,17 +356,27 @@ def load_params_from_path(
   assert load_parameters_from_path, "load_parameters_from_path is not defined."
   max_logging.log(f"restoring params from {load_parameters_from_path}")
 
-  # Register single-replica handler so only one host loads from GCS and
-  # broadcasts to the rest.  Without this, every host independently loads the
-  # full checkpoint through transform_utils, which OOM-kills the coordinator
-  # on large pod slices (e.g. v4-128 with 16 hosts x 400 GB).
+  # SingleReplicaArrayHandler has one replica load from GCS and broadcast to
+  # the rest.  This only works when the mesh has a replicated (data-parallel)
+  # axis with dim > 1.  With pure FSDP (DP=1) every device holds a unique
+  # shard so there are no replicas to broadcast to — orbax raises
+  # InvalidShardingError.  Detect this and fall back to standard restore.
   if enable_single_replica_ckpt_restoring:
-    max_logging.log("Enabling single-replica checkpoint restoring for load_parameters_from_path")
-    array_handler = ocp.type_handlers.SingleReplicaArrayHandler(
-        replica_axis_index=0,
-        broadcast_memory_limit_bytes=1024 * 1024 * 1000,  # 1000 MB limit
-    )
-    ocp.type_handlers.register_type_handler(jax.Array, array_handler, override=True)
+    first_leaf = jax.tree_util.tree_leaves(abstract_unboxed_params)[0]
+    replica_axis_dim = first_leaf.sharding.mesh.devices.shape[0]
+    if replica_axis_dim <= 1:
+      max_logging.log(
+          f"Single-replica ckpt restoring requested but mesh axis 0 has dim={replica_axis_dim} "
+          "(no data-parallel replicas). Falling back to standard restore."
+      )
+      enable_single_replica_ckpt_restoring = False
+    else:
+      max_logging.log("Enabling single-replica checkpoint restoring for load_parameters_from_path")
+      array_handler = ocp.type_handlers.SingleReplicaArrayHandler(
+          replica_axis_index=0,
+          broadcast_memory_limit_bytes=1024 * 1024 * 1000,  # 1000 MB limit
+      )
+      ocp.type_handlers.register_type_handler(jax.Array, array_handler, override=True)
 
   # *_concurrent_gb should be set for large models, the default is 96.
   max_logging.log(f"Creating checkpoint manager with ocdbt={use_ocdbt} and zarr3={use_zarr3}")
