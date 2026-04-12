@@ -1,6 +1,9 @@
     #!/bin/bash
     # set -euo pipefail
 
+    # Capture kernel logs on exit for diagnosing SIGKILL/OOM failures
+    trap 'sudo dmesg -T | tail -200 > /tmp/dmesg_on_exit.txt 2>/dev/null' EXIT
+
     source scripts/get_tpu_bucket_name.sh
 
     require_jobman_ssh_key() {
