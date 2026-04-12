@@ -66,6 +66,9 @@ def generate_training_script(
 #!/bin/bash
 set -euo pipefail
 
+# Capture kernel logs on exit for diagnosing SIGKILL/OOM failures
+trap 'sudo dmesg -T | tail -200 > /tmp/dmesg_on_exit.txt 2>/dev/null' EXIT
+
 source scripts/get_tpu_bucket_name.sh
 source scripts/check_updates.sh
 
@@ -244,7 +247,10 @@ def generate_eval_script(
     script = dedent(f"""\
     #!/bin/bash
     # set -euo pipefail
-    
+
+    # Capture kernel logs on exit for diagnosing SIGKILL/OOM failures
+    trap 'sudo dmesg -T | tail -200 > /tmp/dmesg_on_exit.txt 2>/dev/null' EXIT
+
     source scripts/get_tpu_bucket_name.sh
 
     {SSH_KEY_HELPER}
