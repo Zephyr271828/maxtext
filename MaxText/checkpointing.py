@@ -314,6 +314,7 @@ def load_state_if_possible(
         load_parameters_from_path,
         abstract_unboxed_pre_state.params,
         checkpoint_storage_concurrent_gb,
+        enable_single_replica_ckpt_restoring=enable_single_replica_ckpt_restoring,
         use_ocdbt=use_ocdbt,
         use_zarr3=use_zarr3,
     )
@@ -348,11 +349,24 @@ def setup_checkpoint_logger(config) -> Any | None:  # pytype: disable=attribute-
 
 
 def load_params_from_path(
-    load_parameters_from_path, abstract_unboxed_params, checkpoint_storage_concurrent_gb, use_ocdbt=True, use_zarr3=True
+    load_parameters_from_path, abstract_unboxed_params, checkpoint_storage_concurrent_gb,
+    use_ocdbt=True, use_zarr3=True, enable_single_replica_ckpt_restoring=False
 ):
   """Load decode params from checkpoint at specified path."""
   assert load_parameters_from_path, "load_parameters_from_path is not defined."
   max_logging.log(f"restoring params from {load_parameters_from_path}")
+
+  # Register single-replica handler so only one host loads from GCS and
+  # broadcasts to the rest.  Without this, every host independently loads the
+  # full checkpoint through transform_utils, which OOM-kills the coordinator
+  # on large pod slices (e.g. v4-128 with 16 hosts x 400 GB).
+  if enable_single_replica_ckpt_restoring:
+    max_logging.log("Enabling single-replica checkpoint restoring for load_parameters_from_path")
+    array_handler = ocp.type_handlers.SingleReplicaArrayHandler(
+        replica_axis_index=0,
+        broadcast_memory_limit_bytes=1024 * 1024 * 1000,  # 1000 MB limit
+    )
+    ocp.type_handlers.register_type_handler(jax.Array, array_handler, override=True)
 
   # *_concurrent_gb should be set for large models, the default is 96.
   max_logging.log(f"Creating checkpoint manager with ocdbt={use_ocdbt} and zarr3={use_zarr3}")
@@ -369,7 +383,23 @@ def load_params_from_path(
   # Rather than pass the entire abstract state, which could unnecessarily restore opt_state and such and waste
   # memory, we instead specify here that we are just restoring the params field of the checkpoint
   # (which itself may be a dictionary containing a key named 'params').
-  restore_args = ocp.checkpoint_utils.construct_restore_args(abstract_unboxed_params)
+  if enable_single_replica_ckpt_restoring:
+    def _to_single_replica_restore_args(data):
+      pspec = data.sharding.spec
+      mesh = data.sharding.mesh
+      replica_axis_index = 0
+      replica_devices = _replica_devices(mesh.devices, replica_axis_index)
+      replica_mesh = jax.sharding.Mesh(replica_devices, mesh.axis_names)
+      single_replica_sharding = jax.sharding.NamedSharding(replica_mesh, pspec)
+      return ocp.type_handlers.SingleReplicaArrayRestoreArgs(
+          sharding=jax.sharding.NamedSharding(mesh, pspec),
+          single_replica_sharding=single_replica_sharding,
+          global_shape=data.shape,
+          dtype=data.dtype,
+      )
+    restore_args = jax.tree_util.tree_map(_to_single_replica_restore_args, abstract_unboxed_params)
+  else:
+    restore_args = ocp.checkpoint_utils.construct_restore_args(abstract_unboxed_params)
   restored = ckptr.restore(
       epath.Path(load_parameters_from_path),
       item={"params": abstract_unboxed_params},
