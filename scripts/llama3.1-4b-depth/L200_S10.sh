@@ -73,12 +73,9 @@ export SPARSE_MODEL_TRAINING=False
 # gcloud alpha compute tpus tpu-vm ssh zephyr@${TPU_PREFIX} --zone ${TPU_ZONE} --worker=all --ssh-key-file=~/.ssh/id_rsa --command "cd ~/maxtext && git pull origin test_new" || true
 # gcloud alpha compute tpus tpu-vm ssh zephyr@${TPU_PREFIX} --zone ${TPU_ZONE} --worker=all --ssh-key-file=~/.ssh/id_rsa --command "source ~/.venvs/maxtext_env/bin/activate && pip install -r ~/maxtext/requirements.txt" || true
 
-# Always use single-replica checkpoint restoring: one host reads from GCS and
-# broadcasts to the rest. Drastically reduces peak host RAM during orbax
-# transform_utils on v4-128 (16 hosts x 400 GB), where the previous per-host
-# restore was being OOM-killed ~50s into `restoring params from ...`.
-# (Previous `[ "$(hostname -s)" == *-0 ]` check was a bash bug: `==` inside
-# `[ ]` does not glob, so PRIMARY_REPLICA was always "False".)
+# single_replica_ckpt_restoring disabled: setting True causes orbax
+# InvalidShardingError ("All devices are in the primary replica") when all
+# devices land in one replica group (e.g. pruned 4b checkpoints on v4-128).
 
 require_jobman_ssh_key
 
@@ -111,7 +108,7 @@ python -u multihost_runner_orig.py \
         tokenize_eval_data=False \
         max_target_length=${SEQ_LEN} \
         async_checkpointing=${ASYNC_CHECKPOINTING} \
-        enable_single_replica_ckpt_restoring=True \
+        enable_single_replica_ckpt_restoring=False \
         model_name=${MODEL_NAME} \
         steps=${NUM_STEPS} \
         per_device_batch_size=${BATCH_SIZE} \
