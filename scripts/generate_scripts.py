@@ -147,6 +147,7 @@ python -u multihost_runner_orig.py \\
         {load_path_line}base_output_directory=${{BASE_OUTPUT_DIRECTORY}} \\
         dataset_type=grain \\
         grain_train_files=${{DATA_FILES}} \\
+        train_data_columns='["input_ids"]' \\
         start_from_file_index=0 \\
         grain_file_type='arrayrecord' \\
         grain_worker_count=1 \\
