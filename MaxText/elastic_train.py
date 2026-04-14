@@ -41,6 +41,7 @@ from collections.abc import Sequence
 import datetime
 import logging
 import os
+import sys
 import time
 
 from absl import app
@@ -303,6 +304,8 @@ def train_loop(config, elastic_manager, recorder, state=None):
         ) = ret
     except exceptions.StopTraining as error:
       max_logging.log(f"Training stopped: {str(error)}")
+      if error.is_error:
+        sys.exit(1)
 
   checkpointing.maybe_save_checkpoint(checkpoint_manager, state, config, data_iterator)
   metric_logger.flush_metrics_and_cleanup()

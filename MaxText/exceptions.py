@@ -18,5 +18,6 @@
 class StopTraining(Exception):
   """Custom exception to halt a training process."""
 
-  def __init__(self, reason):
+  def __init__(self, reason, is_error=True):
     super().__init__(reason)
+    self.is_error = is_error

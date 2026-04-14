@@ -24,6 +24,7 @@ from typing import Any, Sequence, Tuple
 import datetime
 import functools
 import os
+import sys
 
 from absl import app
 
@@ -705,7 +706,7 @@ def train_loop(config, recorder, state=None):
         metric_logger.record_eval_metrics(step, eval_step_count=eval_step_count)
         if metric_logger.cumulative_eval_metrics["scalar"]["eval/avg_loss"] <= config.target_eval_loss:
           prof.deactivate()
-          raise exceptions.StopTraining(f"Target loss {config.target_eval_loss=} is achieved.")
+          raise exceptions.StopTraining(f"Target loss {config.target_eval_loss=} is achieved.", is_error=False)
 
       prof.maybe_deactivate_profiler(step, state)
 
@@ -718,6 +719,8 @@ def train_loop(config, recorder, state=None):
     checkpointing.maybe_save_checkpoint(checkpoint_manager, state_to_save, config, data_iterator)
   except exceptions.StopTraining as e:
     max_logging.log(f"Training stopped: {str(e)}")
+    if e.is_error:
+      sys.exit(1)
   finally:
     metric_logger.flush_metrics_and_cleanup()
 

@@ -99,7 +99,7 @@ def pretrain_preprocessing_pipeline(dataset, config, data_columns, tokenize, gra
     dataset = dataset.map(_input_pipeline_utils.NormalizeFeatures(data_columns, tokenize))
 
   assert len(data_columns) == 1
-  rekey_dict = {"inputs": "text", "targets": "text"}
+  rekey_dict = {"inputs": data_columns[0], "targets": data_columns[0]}
   dataset = dataset.map(_input_pipeline_utils.Rekey(rekey_dict))
   data_columns = ("inputs", "targets")
 
