@@ -484,6 +484,43 @@ if __name__ == "__main__":
                 # output_path=args.output_path,
             )
             
+    ## llama3.1-4b-shear
+    for model_name in ["llama3.1-4b-shear"]:
+        for num_steps in [2500, 7500, 12500, 62500, 125000]:
+            generate_script(
+                model_name=model_name,
+                num_steps=num_steps,
+                # load_parameters_path="model_ckpts/llama3.1-4b-depth-orbax/0/items",
+                # load_parameters_path=args.load_parameters_path,
+                # output_path=args.output_path,
+            )
+            
+    # L200 fine-tune
+    for model_name in ["llama3.1-4b-shear"]:
+        for num_steps in [2500, 7500, 12500, 62500, 125000]:
+            generate_script(
+                model_name=model_name,
+                num_steps=num_steps,
+                load_parameters_path="model_ckpts/maxtext/shear_ablate_kv8_h3456_m7808_llama3.1-8b-l200/checkpoints/0/items",
+                pretrain_tokens="L200",
+                # load_parameters_path="model_ckpts/llama3.1-4b-depth-orbax/0/items",
+                # load_parameters_path=args.load_parameters_path,
+                # output_path=args.output_path,
+            )
+            
+    # Meta fine-tune        
+    for model_name in ["llama3.1-4b-shear"]:
+        for num_steps in [2500, 7500, 12500, 62500, 125000]:
+            generate_script(
+                model_name=model_name,
+                num_steps=num_steps,
+                load_parameters_path="model_ckpts/maxtext/shear_ablate_kv8_h3456_m7808_Llama-3.1-8B/checkpoints/0/items",
+                pretrain_tokens="Meta",
+                # load_parameters_path="model_ckpts/llama3.1-4b-depth-orbax/0/items",
+                # load_parameters_path=args.load_parameters_path,
+                # output_path=args.output_path,
+            )
+            
     # 8b pretrain
     for model_name in ["llama3.1-8b"]:
         for num_steps in [12500, 25000, 37500, 50000]:
