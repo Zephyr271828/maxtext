@@ -74,7 +74,7 @@
     export JAX_PLATFORMS=tpu
     export SPARSE_MODEL_TRAINING=False
 
-    pip install -r requirements.txt
+    # pip install -r requirements.txt
 
     bash scripts/convert.sh gen_param_ckpt \
         --model=${MODEL_NAME} \

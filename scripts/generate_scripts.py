@@ -129,7 +129,7 @@ export SPARSE_MODEL_TRAINING={sparse_model_training}
 require_jobman_ssh_key
 
 source ~/.venvs/maxtext_env/bin/activate
-pip install -r requirements.txt
+# pip install -r requirements.txt
 export JAX_PLATFORMS=''
 python -u multihost_runner_orig.py \\
     --INTERNAL_IP=True \\
@@ -303,7 +303,7 @@ def generate_eval_script(
     export JAX_PLATFORMS=tpu
     export SPARSE_MODEL_TRAINING={sparse_model_training}
     
-    pip install -r requirements.txt
+    # pip install -r requirements.txt
     
     bash scripts/convert.sh gen_param_ckpt \\
         --model=${{MODEL_NAME}} \\

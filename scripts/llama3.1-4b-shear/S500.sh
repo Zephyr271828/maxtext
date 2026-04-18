@@ -80,7 +80,7 @@ export SPARSE_MODEL_TRAINING=False
 require_jobman_ssh_key
 
 source ~/.venvs/maxtext_env/bin/activate
-pip install -r requirements.txt
+# pip install -r requirements.txt
 export JAX_PLATFORMS=''
 python -u multihost_runner_orig.py \
     --INTERNAL_IP=True \
