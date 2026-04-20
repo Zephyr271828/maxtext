@@ -141,7 +141,25 @@ def load_hf_model(model_size):
     elif model_size == "llama3.1-4b-flap" or model_size == "llama3-4b-flap":
       config.num_attention_heads = 20
       config.num_key_value_heads = 5
-      config.intermediate_size = 6528
+      config.intermediate_size = 6656
+    elif model_size == "llama3.1-4b-shear":
+      config.hidden_size = 3456
+      config.intermediate_size = 7552
+    elif model_size == "llama3.1-1.5b-width":
+      config.hidden_size = 1536
+      config.intermediate_size = 4736
+    elif model_size == "llama3.1-2b-width":
+      config.hidden_size = 1792
+      config.intermediate_size = 6016
+    elif model_size == "llama3.1-3b-width":
+      config.hidden_size = 2432
+      config.intermediate_size = 6144
+    elif model_size == "llama3.1-1.5b-depth":
+      config.num_hidden_layers = 2
+    elif model_size == "llama3.1-2b-depth":
+      config.num_hidden_layers = 4
+    elif model_size == "llama3.1-3b-depth":
+      config.num_hidden_layers = 8
     elif model_size == 'llama3.1-1b' or model_size == 'llama3-1b':
       config.hidden_size = 1024
       config.intermediate_size = 4096

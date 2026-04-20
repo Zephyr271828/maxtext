@@ -152,6 +152,15 @@ MODEL_PARAMS_DICT = {
       "base_emb_dim": 3072,
       "base_mlp_dim": 9216,
     },
+    "llama3.1-1.5b-width": {
+      "num_layers": 32,
+      "num_heads": 32,
+      "num_kv_heads": 8,
+      "dims_per_head": 128,
+      "vocab": 128256,
+      "base_emb_dim": 1536,
+      "base_mlp_dim": 4736,
+    },
     "llama3.1-2b-width": {
       "num_layers": 32,
       "num_heads": 32,
@@ -159,7 +168,7 @@ MODEL_PARAMS_DICT = {
       "dims_per_head": 128,
       "vocab": 128256,
       "base_emb_dim": 1792,
-      "base_mlp_dim": 5632,
+      "base_mlp_dim": 6016,
     },
     "llama3.1-3b-width": {
       "num_layers": 32,
@@ -250,7 +259,16 @@ MODEL_PARAMS_DICT = {
       "dims_per_head": 128,
       "vocab": 128256,
       "base_emb_dim": 4096,
-      "intermediate_size": 6528,
+      "intermediate_size": 6656,
+    },
+    "llama3.1-4b-shear": {
+      "num_layers": 32,
+      "num_heads": 32,
+      "num_kv_heads": 8,
+      "dims_per_head": 128,
+      "vocab": 128256,
+      "base_emb_dim": 3456,
+      "base_mlp_dim": 7552,
     },
     "llama3-8b": {
         "num_layers": 32,
