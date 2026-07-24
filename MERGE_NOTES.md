@@ -70,12 +70,93 @@ based pruned checkpoints were converted with the permute disabled, tell me and I
 
 ---
 
+## Evaluation — two paths available
+
+There are **two** ways to evaluate on this branch. Both reuse the *patched* MaxText
+model, so unscaled (`scale_query=False`) checkpoints score correctly.
+
+### Path A (default for likelihood/ppl): direct-forward `orbax_lm` adapter — **ported**
+`test_new`'s direct-forward lm-eval adapter (`MaxText/inference/orbax_adapter.py`,
+which only implemented `loglikelihood`) was **ported and completed** onto the new
+tree at **`src/maxtext/eval/orbax/`**:
+- `orbax_lm.py` — `OrbaxLM(LM)`, a complete lm-eval model that runs a **direct NNX
+  forward pass** (no vLLM). Implements **all three** request types, so one instance
+  covers every lm-eval task (`evaluator.py` dispatches `getattr(lm, request_type)`):
+  `loglikelihood` (MC/QA), `loglikelihood_rolling` (ppl), `generate_until`
+  (generation). Builds via `model_creation_utils.from_pretrained` → patched
+  `attentions.py`, so the q/k scaling is applied here too.
+- `orbax_eval.py` — driver ported from `scripts/test_orbax_eval.py`: `PPL_TASKS`
+  (c4/wikitext/wikitext2/cnn_dailymail/dclm, custom forward-pass ppl loop) +
+  `ACC_TASKS` (winogrande/arc/hellaswag/mmlu/… via `simple_evaluate`).
+
+```bash
+pip install lm_eval datasets       # no vllm-tpu needed; no harness re-vendoring
+python -m maxtext.eval.orbax.orbax_eval \
+  src/maxtext/configs/base.yml \
+  model_name=llama3.1-4b-depth \
+  load_parameters_path=gs://<bucket>/.../checkpoints/<step>/items \
+  max_target_length=8192 \
+  --hf_model_path=meta-llama/Llama-3.1-8B --limit=1000
+```
+⚠️ `generate_until` here is a **dense** decode loop (one forward pass per token, no
+KV cache) — correct but slow; fine for small/`--limit`-ed gen sets. For heavy
+generation, use Path B. All standard ACC tasks are stock lm-eval tasks (no
+re-vendoring); dclm loads from a local JSONL (`--dclm_path`, default
+`~/gcs-bucket/datasets/dclm/...`). Not runtime-tested here (no jax/TPU) — validate
+on-device (see Verification).
+
+### Path B (for generation / throughput): official vLLM framework
+The official vLLM-server framework under `src/maxtext/eval/runner/` boots the
+tpu-vLLM engine on your checkpoint → OpenAI `/v1/completions` → stock lm-eval
+`local-completions`. Best for generation tasks (efficient paged-attention decode)
+and large-scale runs.
+
+```bash
+pip install "lm_eval[api]"          # + vllm-tpu / tpu_inference on the host
+python -m maxtext.eval.runner.run \
+  --runner lm_eval \
+  --checkpoint_path gs://<bucket>/.../checkpoints/<step>/items \
+  --model_name llama3.1-4b-depth \
+  --hf_path meta-llama/Llama-3.1-8B \
+  --tasks gsm8k ifeval hellaswag arc_challenge winogrande piqa wikitext \
+  --num_fewshot 0 \
+  --base_output_directory gs://<bucket>/ --run_name eval_4b_depth \
+  --max_model_len 8192 --tensor_parallel_size 4 --hf_token $HF_TOKEN
+```
+Multiple-choice → `acc`/`acc_norm`; perplexity → `wikitext` (loglikelihood_rolling;
+server supports it via `echo`+`prompt_logprobs`); generation → gsm8k/ifeval, etc.
+
+**Why this is correct for our unscaled checkpoints:** the vLLM path reuses the
+*patched* model — `MaxTextForCausalLM` →
+`model_creation_utils.from_pretrained(maxtext_config)` → the standard decoder →
+our patched `layers/attentions.py`. The `1/sqrt(head_dim)` forward-scaling
+(`attentions.py` ~L1226-1230) sits **above** the vLLM RPA dispatch (~L1259) and
+`forward_serve_vllm` calls the RPA kernel with **sm_scale=1.0**, so scaling is
+applied exactly once (no double-scale) on the eval path. Pruned configs load by
+`--model_name`.
+
+⚠️ Path B caveats: (1) numbers come through vLLM RPA + KV cache, not a dense
+forward pass — very close but not bit-identical to old `test_new` numbers, so
+**re-baseline** reference checkpoints before comparing. (2) Requires
+`vllm-tpu`/`tpu_inference` on the host. (3) Pruned **width** models
+(emb_dim ≠ heads·head_dim) and **FLAP** (bias) through RPA are the untested
+corners — smoke-test one first.
+
+> **Which to use.** Path A (direct forward pass) uses the *same* dense-forward
+> mechanism as your old `test_new` eval, so it should **reproduce your historical
+> ppl/accuracy numbers** — prefer it for likelihood + ppl and for apples-to-apples
+> comparison with prior results. Use Path B when you need generation throughput or
+> large-scale runs.
+
+---
+
 ## Not ported (available in `test_new` if wanted later)
 Per the "core only" scope:
 - Workflow features: W&B logging, `StopTraining.is_error`/`sys.exit(1)` exit-codes,
   single-replica checkpoint restore, FMS-style LR schedule, sparse/pruning training,
-  resumable grain data-sharding, the `orbax` lm-eval-harness adapter, intermediate-activation
-  `sow`, HF-style embedding init.
+  resumable grain data-sharding, intermediate-activation
+  `sow`, HF-style embedding init. (The `orbax` lm-eval adapter **was ported** — see
+  **Evaluation** Path A.)
 - `base.yml` **global** RoPE default retuning (kept official defaults; put 8k / plain-RoPE
   values in your run configs instead).
 - Conversion extras: fp32 (vs bf16) cast, `.bin` checkpoint support.
