@@ -27,5 +27,5 @@ logits_via_embedding: False
 normalization_layer_epsilon: 1.0e-5
 rope_max_timescale: 500_000
 decoder_block: "llama2" # Uses the same decoder block as llama2
-use_bias_in_projections: True
-use_bias_in_mlp: False
+attention_bias: True
+mlp_bias: False

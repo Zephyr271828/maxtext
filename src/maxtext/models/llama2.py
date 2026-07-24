@@ -100,7 +100,7 @@ class LlamaDecoderLayer(nnx.Module):
         ragged_block_size=config.ragged_block_size,
         model_mode=model_mode,
         attn_logits_soft_cap=config.attn_logits_soft_cap,
-        use_bias_in_projections=config.use_bias_in_projections,
+        use_bias_in_projections=config.attention_bias,
         rngs=rngs,
     )
 
@@ -125,7 +125,7 @@ class LlamaDecoderLayer(nnx.Module):
         mesh=mesh,
         quant=self.quant,
         model_mode=model_mode,
-        use_bias=config.use_bias_in_mlp,
+        use_bias=config.mlp_bias,
         rngs=rngs,
     )
 
