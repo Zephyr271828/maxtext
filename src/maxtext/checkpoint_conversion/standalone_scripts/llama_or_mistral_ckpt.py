@@ -125,6 +125,189 @@ MODEL_PARAMS_DICT = {
         "dims_per_head": 128,
         "vocab": 128256,
     },
+    # --- Pruned / down-scaled Llama variants (width/depth/shear/flap). base_emb_dim
+    # may differ from num_heads*dims_per_head for width-pruned models. ---
+    "llama2-1.3b": {
+        "base_emb_dim": 2048,
+        "base_mlp_dim": 5504,
+        "num_layers": 24,
+        "num_heads": 16,
+        "num_kv_heads": 16,
+        "dims_per_head": 128,
+        "vocab": 32000,
+    },
+    "llama2-2.7b": {
+        "base_emb_dim": 2560,
+        "base_mlp_dim": 6912,
+        "num_layers": 32,
+        "num_heads": 20,
+        "num_kv_heads": 20,
+        "dims_per_head": 128,
+        "vocab": 32000,
+    },
+    "llama3-1.5b-depth": {
+        "num_layers": 2,
+        "num_heads": 32,
+        "num_kv_heads": 8,
+        "dims_per_head": 128,
+        "vocab": 128256,
+        "base_emb_dim": 4096,
+    },
+    "llama3-1b": {
+        "num_layers": 16,
+        "num_heads": 16,
+        "num_kv_heads": 4,
+        "dims_per_head": 128,
+        "vocab": 128256,
+        "base_emb_dim": 2048,
+        "base_mlp_dim": 8192,
+    },
+    "llama3-2b-depth": {
+        "num_layers": 4,
+        "num_heads": 32,
+        "num_kv_heads": 8,
+        "dims_per_head": 128,
+        "vocab": 128256,
+        "base_emb_dim": 4096,
+    },
+    "llama3-2b-width": {
+        "num_layers": 32,
+        "num_heads": 32,
+        "num_kv_heads": 8,
+        "dims_per_head": 128,
+        "vocab": 128256,
+        "base_emb_dim": 1792,
+        "base_mlp_dim": 5632,
+    },
+    "llama3-3b-depth": {
+        "num_layers": 8,
+        "num_heads": 32,
+        "num_kv_heads": 8,
+        "dims_per_head": 128,
+        "vocab": 128256,
+        "base_emb_dim": 4096,
+    },
+    "llama3-3b-width": {
+        "num_layers": 32,
+        "num_heads": 32,
+        "num_kv_heads": 8,
+        "dims_per_head": 128,
+        "vocab": 128256,
+        "base_emb_dim": 2432,
+        "base_mlp_dim": 6144,
+    },
+    "llama3-4b-depth": {
+        "num_layers": 16,
+        "num_heads": 32,
+        "num_kv_heads": 8,
+        "dims_per_head": 128,
+        "vocab": 128256,
+        "base_emb_dim": 4096,
+    },
+    "llama3-4b-width": {
+        "num_layers": 32,
+        "num_heads": 32,
+        "num_kv_heads": 8,
+        "dims_per_head": 128,
+        "vocab": 128256,
+        "base_emb_dim": 3072,
+        "base_mlp_dim": 9216,
+    },
+    "llama3.1-1.5b-depth": {
+        "num_layers": 2,
+        "num_heads": 32,
+        "num_kv_heads": 8,
+        "dims_per_head": 128,
+        "vocab": 128256,
+        "base_emb_dim": 4096,
+    },
+    "llama3.1-1.5b-width": {
+        "num_layers": 32,
+        "num_heads": 32,
+        "num_kv_heads": 8,
+        "dims_per_head": 128,
+        "vocab": 128256,
+        "base_emb_dim": 1536,
+        "base_mlp_dim": 4736,
+    },
+    "llama3.1-1b": {
+        "num_layers": 16,
+        "num_heads": 16,
+        "num_kv_heads": 4,
+        "dims_per_head": 128,
+        "vocab": 128256,
+        "base_emb_dim": 2048,
+        "base_mlp_dim": 8192,
+    },
+    "llama3.1-2b-depth": {
+        "num_layers": 4,
+        "num_heads": 32,
+        "num_kv_heads": 8,
+        "dims_per_head": 128,
+        "vocab": 128256,
+        "base_emb_dim": 4096,
+    },
+    "llama3.1-2b-width": {
+        "num_layers": 32,
+        "num_heads": 32,
+        "num_kv_heads": 8,
+        "dims_per_head": 128,
+        "vocab": 128256,
+        "base_emb_dim": 1792,
+        "base_mlp_dim": 6016,
+    },
+    "llama3.1-3b-depth": {
+        "num_layers": 8,
+        "num_heads": 32,
+        "num_kv_heads": 8,
+        "dims_per_head": 128,
+        "vocab": 128256,
+        "base_emb_dim": 4096,
+    },
+    "llama3.1-3b-width": {
+        "num_layers": 32,
+        "num_heads": 32,
+        "num_kv_heads": 8,
+        "dims_per_head": 128,
+        "vocab": 128256,
+        "base_emb_dim": 2432,
+        "base_mlp_dim": 6144,
+    },
+    "llama3.1-4b-depth": {
+        "num_layers": 16,
+        "num_heads": 32,
+        "num_kv_heads": 8,
+        "dims_per_head": 128,
+        "vocab": 128256,
+        "base_emb_dim": 4096,
+    },
+    "llama3.1-4b-flap": {
+        "num_layers": 32,
+        "num_heads": 20,
+        "num_kv_heads": 5,
+        "dims_per_head": 128,
+        "vocab": 128256,
+        "base_emb_dim": 4096,
+        "intermediate_size": 6656,
+    },
+    "llama3.1-4b-shear": {
+        "num_layers": 32,
+        "num_heads": 32,
+        "num_kv_heads": 8,
+        "dims_per_head": 128,
+        "vocab": 128256,
+        "base_emb_dim": 3456,
+        "base_mlp_dim": 7552,
+    },
+    "llama3.1-4b-width": {
+        "num_layers": 32,
+        "num_heads": 32,
+        "num_kv_heads": 8,
+        "dims_per_head": 128,
+        "vocab": 128256,
+        "base_emb_dim": 3072,
+        "base_mlp_dim": 9216,
+    },
     "llama4-17b-16e": {
         "num_layers": 48,
         "num_heads": 40,
@@ -601,13 +784,21 @@ def _convert_huggingface_to_jax_weights(
   base_num_query_heads = model_params["num_heads"]
   head_dim = model_params["dims_per_head"]
   base_num_kv_heads = model_params["num_kv_heads"]
+  # For width-pruned models the embedding dim is decoupled from num_heads*head_dim,
+  # so use base_emb_dim for the projection reshapes (falls back to the standard
+  # num_heads*head_dim when base_emb_dim is not specified).
+  base_emb_dim = model_params.get("base_emb_dim", base_num_query_heads * head_dim)
   vocab_size = model_params["vocab"]
   num_experts = model_params["num_experts"] if "num_experts" in model_params else None
 
   is_llama4_model = model_size[:6] == "llama4"
   interleave_moe_layer = model_params.get("interleave_moe_layer_step")
   layer_cycle_interval = model_params.get("inhomogeneous_layer_cycle_interval")
-  scale_query = model_params.get("scale_query", True)
+  # Default to NOT scaling the query weights: the 1/sqrt(head_dim) attention
+  # scaling is applied in the forward pass (see layers/attentions.py), so the
+  # stored MaxText query weights stay identical to the source (HF) weights. This
+  # is required for weight-magnitude-based pruning and exact HF round-tripping.
+  scale_query = model_params.get("scale_query", False)
 
   max_logging.log(f"Loading the base model from {base_model_path}")
   ckpt_paths = sorted(pathlib.Path(base_model_path).glob("[!.]*.safetensors"))
@@ -757,9 +948,9 @@ def _convert_huggingface_to_jax_weights(
     wk = chkpt_vars[f"layers.{layer_idx}.attention.wk.weight"].to(torch.float32).numpy().astype(CAST_DTYPE).transpose()
     wv = chkpt_vars[f"layers.{layer_idx}.attention.wv.weight"].to(torch.float32).numpy().astype(CAST_DTYPE).transpose()
 
-    wq = np.reshape(wq, [base_num_query_heads * head_dim, base_num_query_heads, head_dim])
-    wk = np.reshape(wk, [base_num_query_heads * head_dim, base_num_kv_heads, head_dim])
-    wv = np.reshape(wv, [base_num_query_heads * head_dim, base_num_kv_heads, head_dim])
+    wq = np.reshape(wq, [base_emb_dim, base_num_query_heads, head_dim])
+    wk = np.reshape(wk, [base_emb_dim, base_num_kv_heads, head_dim])
+    wv = np.reshape(wv, [base_emb_dim, base_num_kv_heads, head_dim])
 
     if model_size[:8] == "llama3.1":
       wq = max_utils.permute_to_match_maxtext_rope(wq)
@@ -767,7 +958,7 @@ def _convert_huggingface_to_jax_weights(
 
     w_post = chkpt_vars[f"layers.{layer_idx}.attention.wo.weight"].to(torch.float32).numpy().astype(CAST_DTYPE)
 
-    w_post = np.reshape(w_post, [base_num_query_heads * head_dim, base_num_query_heads, head_dim])
+    w_post = np.reshape(w_post, [base_emb_dim, base_num_query_heads, head_dim])
 
     if self_attention["query"]["kernel"] is None:
       self_attention["query"]["kernel"] = np.zeros(stack_shape + wq.shape, dtype=CAST_DTYPE)
@@ -1096,10 +1287,18 @@ def _convert_pytorch_to_jax_weights(base_model_path: str, model_size: str, model
   base_num_query_heads = model_params["num_heads"]
   head_dim = model_params["dims_per_head"]
   base_num_kv_heads = model_params["num_kv_heads"]
+  # For width-pruned models the embedding dim is decoupled from num_heads*head_dim,
+  # so use base_emb_dim for the projection reshapes (falls back to the standard
+  # num_heads*head_dim when base_emb_dim is not specified).
+  base_emb_dim = model_params.get("base_emb_dim", base_num_query_heads * head_dim)
   vocab_size = model_params["vocab"]
   num_experts = model_params["num_experts"] if "num_experts" in model_params else None
   rope_type = model_params.get("rope_type", "")
-  scale_query = model_params.get("scale_query", True)
+  # Default to NOT scaling the query weights: the 1/sqrt(head_dim) attention
+  # scaling is applied in the forward pass (see layers/attentions.py), so the
+  # stored MaxText query weights stay identical to the source (HF) weights. This
+  # is required for weight-magnitude-based pruning and exact HF round-tripping.
+  scale_query = model_params.get("scale_query", False)
 
   chkpt_vars = {}
   ckpt_paths = sorted(pathlib.Path(base_model_path).glob("[!.]*.pth"))
@@ -1235,9 +1434,9 @@ def _convert_pytorch_to_jax_weights(base_model_path: str, model_size: str, model
     wk = wk.transpose()
     wv = wv.transpose()
 
-    wq = np.reshape(wq, [base_num_query_heads * head_dim, base_num_query_heads, head_dim])
-    wk = np.reshape(wk, [base_num_query_heads * head_dim, base_num_kv_heads, head_dim])
-    wv = np.reshape(wv, [base_num_query_heads * head_dim, base_num_kv_heads, head_dim])
+    wq = np.reshape(wq, [base_emb_dim, base_num_query_heads, head_dim])
+    wk = np.reshape(wk, [base_emb_dim, base_num_kv_heads, head_dim])
+    wv = np.reshape(wv, [base_emb_dim, base_num_kv_heads, head_dim])
 
     if model_size[:8] not in llama3_variants and not rope_type.startswith("llama3.1"):
       wq = permute_to_match_maxtext_rope(wq)
@@ -1257,7 +1456,7 @@ def _convert_pytorch_to_jax_weights(base_model_path: str, model_size: str, model
         axis=1,
     )
 
-    w_post = np.reshape(w_post, [base_num_query_heads * head_dim, base_num_query_heads, head_dim])
+    w_post = np.reshape(w_post, [base_emb_dim, base_num_query_heads, head_dim])
 
     if self_attention["query"]["kernel"] is None:
       stack_shape = (base_num_decoder_layers,)

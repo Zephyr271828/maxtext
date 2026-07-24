@@ -1155,6 +1155,12 @@ enable_padding_causal_mask: true
 # NOTE: non-Llama4 models use RMSNorm before RoPE
 # whereas Llama4 models use L2Norm after RoPE
 use_qk_norm: false
+
+# Add a learnable bias to the attention Q/K/V/O projections (use_bias_in_projections)
+# and to the MLP dense layers (use_bias_in_mlp). Off by default; needed e.g. for
+# FLAP-pruned models, which keep a compensation bias for pruned components.
+use_bias_in_projections: false
+use_bias_in_mlp: false
 # Every `X` layers will NOT use RoPE
 nope_layer_interval: -1
 # Every `X` layers is MoE layer

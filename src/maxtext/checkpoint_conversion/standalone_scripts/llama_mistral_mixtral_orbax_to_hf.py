@@ -58,10 +58,17 @@ from maxtext.utils.max_utils import unpermute_from_match_maxtext_rope
 
 def reverse_scale(arr, scale):
   """
-  MaxText has the scaling factor included into the weights,
-  we reverse it when writing out the HuggingFace checkpoint
+  No-op on this branch.
+
+  Historically MaxText folded the 1/sqrt(head_dim) attention scaling into the
+  query weights (see `scale_query` in llama_or_mistral_ckpt.py), so the HF export
+  had to multiply it back out (`arr * np.sqrt(scale)`). On this branch the scaling
+  is applied in the forward pass instead (see layers/attentions.py) and the query
+  weights are stored UNSCALED (identical to the source HF weights), so there is
+  nothing to reverse here. Kept as a call-site-compatible identity function.
   """
-  return arr * np.sqrt(scale)
+  del scale  # unused; kept for signature compatibility
+  return arr
 
 
 def load_hf_model(model_size):

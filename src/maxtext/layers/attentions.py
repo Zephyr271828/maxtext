@@ -587,21 +587,19 @@ class Attention(nnx.Module):
   def init_query_w(self, inputs_q_shape: Tuple) -> nnx.Module:
     """Query projection initialization."""
 
-    # NOTE: T5 does not explicitly rescale the attention logits by
-    #       1/sqrt(depth_kq)!  This is folded into the initializers of the
-    #       linear transformations, which is equivalent under Adafactor.
-    # We disable depth_scaling when using qk_norm or a query_pre_attn_scalar
-    # to avoid applying scaling twice.
-    if getattr(self.config, "use_qk_norm", False) or (
-        self.query_pre_attn_scalar is not None and self.query_pre_attn_scalar != 1.0
-    ):
-      depth_scaling = 1.0
-    else:
-      depth_scaling = jnp.sqrt(self.head_dim).astype(self.dtype)
-
+    # NOTE: The 1/sqrt(head_dim) attention-logit scaling is applied in the forward
+    # pass (see __call__ below) rather than being folded into the query-projection
+    # weights here. The historical T5/MaxText approach folds 1/sqrt(head_dim) into
+    # the query initializer (and, for converted checkpoints, into the stored query
+    # weights via `scale_query`). That makes the stored query weights differ from
+    # the reference (e.g. HuggingFace) weights by a 1/sqrt(head_dim) factor, which
+    # corrupts weight-magnitude-based pruning and exact HF round-tripping. Keeping
+    # the projection unscaled preserves weights == reference weights. Models that
+    # use qk_norm or query_pre_attn_scalar never folded scaling into the weights,
+    # so their behavior is unchanged.
     def query_init(*args):
       # pylint: disable=no-value-for-parameter
-      return self.kernel_init(*args) / depth_scaling
+      return self.kernel_init(*args)
 
     kernel_axes = (
         (None, None, None) if self.config.ici_context_autoregressive_parallelism > 1 else ("embed", "q_heads", "kv")
@@ -1217,9 +1215,19 @@ class Attention(nnx.Module):
       if not use_shared_kv:
         key = l2_norm(key)
 
-    # apply query_pre_attn_scalar if it's present.
+    # Apply the query pre-attention scaling in the forward pass. Models that set
+    # query_pre_attn_scalar (e.g. Qwen3 uses head_dim**-0.5, Gemma its own value)
+    # use that; standard models fall back to the 1/sqrt(head_dim) scaling that
+    # historically was folded into the query weights (see init_query_w). Applying
+    # it here keeps the query-projection weights identical to the reference (HF)
+    # weights, and the gate below (query_pre_attn_scalar / use_qk_norm) fires the
+    # 1/sqrt(head_dim) branch on exactly the models that previously folded it into
+    # the weights, so qk_norm / query_pre_attn_scalar models are unchanged.
     if self.query_pre_attn_scalar and self.query_pre_attn_scalar != 1.0:
       query = query * self.query_pre_attn_scalar
+    elif not getattr(self.config, "use_qk_norm", False):
+      inv_sqrt_head_dim = (1.0 / jnp.sqrt(jnp.asarray(self.head_dim, dtype=query.dtype))).astype(query.dtype)
+      query = query * inv_sqrt_head_dim
 
     if self.temperature_tuning and not use_rope:
       attn_scales = (
