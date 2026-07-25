@@ -1,0 +1,18 @@
+# Root requirements for the merge-official-latest branch (TPU training/eval).
+#
+# The canonical dependency source is the pyproject `[tpu]` extra. This file mirrors
+# it so environments that install via `pip install -r requirements.txt` (e.g. the
+# tpu-skills bootstrap) work without having to resolve pyproject optional-deps.
+#
+# Install the maxtext package itself alongside these deps with:
+#     pip install -e . --no-deps
+#
+# Requires Python >= 3.11 (see pyproject `requires-python`). Python 3.11 is present
+# on the TPU VM base image, so no separate interpreter install is needed.
+
+# All TPU runtime deps (jax, jaxlib, libtpu, flax, orbax, transformers, ...).
+-r src/dependencies/requirements/generated_requirements/tpu-requirements.txt
+
+# Direct-forward (Path A) Orbax lm-eval extras — see MERGE_NOTES.md "Evaluation".
+lm_eval
+datasets
