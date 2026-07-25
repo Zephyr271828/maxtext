@@ -797,15 +797,69 @@ def create_models_and_meshes(trainer_config, sampler_config, trainer_devices, sa
   return reference_model, reference_mesh, actor_model, actor_mesh, rollout_mesh
 
 
+def _infer_scan_layers_from_checkpoint(load_parameters_path):
+  """Infer scan_layers from a checkpoint's parameter tree structure.
+
+  Legacy checkpoints (e.g. old Flax Linen MaxText, predating the custom_metadata
+  scan_layers flag) don't record scan_layers. Infer it from the on-disk layout:
+  a SCANNED checkpoint stores decoder layers under a single ``layers`` node (with a
+  leading layer axis); an UNSCANNED one stores per-layer ``layers_0``, ``layers_1``,
+  … nodes. Returns True (scanned), False (unscanned), or None if it can't be
+  determined (e.g. metadata unreadable, or both/neither node kinds present).
+  """
+  try:
+    ckptr = ocp.Checkpointer(ocp.PyTreeCheckpointHandler())
+    metadata = ckptr.metadata(load_parameters_path)
+  except Exception as e:  # pylint: disable=broad-except
+    max_logging.log(f"Could not read checkpoint metadata to infer scan_layers: {e}")
+    return None
+
+  tree = getattr(metadata, "item_metadata", metadata)
+  tree = getattr(tree, "tree", tree)
+
+  names = set()
+
+  def _collect(node):
+    if hasattr(node, "items"):
+      for key, value in node.items():
+        names.add(str(key))
+        _collect(value)
+
+  try:
+    _collect(tree)
+  except Exception:  # pylint: disable=broad-except
+    return None
+
+  has_scanned = "layers" in names
+  has_unscanned = any(n.startswith("layers_") and n[len("layers_") :].isdigit() for n in names)
+  if has_unscanned and not has_scanned:
+    return False
+  if has_scanned and not has_unscanned:
+    return True
+  return None
+
+
 def verify_and_sync_scan_layers(config):
-  """Verify and sync scan_layers based on checkpoint metadata."""
+  """Verify and sync scan_layers based on checkpoint metadata.
+
+  For checkpoints that record scan_layers in custom_metadata, honor it (raising on
+  an explicit mismatch). For legacy checkpoints that don't record it, infer the
+  layout from the parameter tree and sync the model to it, so an unscanned Linen
+  checkpoint loads into an unscanned model (and vice versa) instead of silently
+  dropping / mis-mapping the per-layer weights.
+  """
   if not config.load_parameters_path:
     return config
 
   custom_metadata = checkpointing.load_checkpoint_metadata(config.load_parameters_path)
   saved_scan_layers = custom_metadata.get("scan_layers")
+  inferred_scan_layers = False
   if not isinstance(saved_scan_layers, bool):
-    return config
+    # Legacy checkpoint with no recorded flag: fall back to the on-disk tree.
+    saved_scan_layers = _infer_scan_layers_from_checkpoint(config.load_parameters_path)
+    if not isinstance(saved_scan_layers, bool):
+      return config
+    inferred_scan_layers = True
 
   if saved_scan_layers == config.scan_layers:
     return config
@@ -817,20 +871,25 @@ def verify_and_sync_scan_layers(config):
   # If model metadata tracking isn't supported, fall back to matching check (True)
   is_explicit = "scan_layers" in model_fields_set if model_fields_set is not None else True
 
-  if is_explicit:
-    if saved_scan_layers != config.scan_layers:
-      raise ValueError(
-          f"Configuration mismatch: Your run specifies scan_layers={config.scan_layers}, "
-          f"but the checkpoint was saved with scan_layers={saved_scan_layers}."
-      )
+  # When scan_layers was inferred from the parameter tree, the on-disk layout is
+  # ground truth for loading — always sync the model to it rather than raising, so a
+  # legacy checkpoint loads correctly without the caller having to know its layout.
+  # Keep the strict explicit-mismatch guard only when the checkpoint itself recorded
+  # scan_layers (a deliberate, trustworthy signal).
+  if is_explicit and not inferred_scan_layers:
+    raise ValueError(
+        f"Configuration mismatch: Your run specifies scan_layers={config.scan_layers}, "
+        f"but the checkpoint was saved with scan_layers={saved_scan_layers}."
+    )
+
+  source = "inferred from checkpoint parameter tree" if inferred_scan_layers else "loaded from checkpoint metadata"
+  max_logging.log(f"Setting scan_layers={saved_scan_layers} ({source}).")
+  new_pydantic_config = pydantic_config.model_copy(update={"scan_layers": saved_scan_layers})
+  # Wrap back in HyperParameters if the original config was wrapped
+  if getattr(config, "_pydantic_config", None) is not None:
+    config = pyconfig.HyperParameters(new_pydantic_config)
   else:
-    max_logging.log(f"Setting scan_layers={saved_scan_layers} loaded from checkpoint metadata.")
-    new_pydantic_config = pydantic_config.model_copy(update={"scan_layers": saved_scan_layers})
-    # Wrap back in HyperParameters if the original config was wrapped
-    if getattr(config, "_pydantic_config", None) is not None:
-      config = pyconfig.HyperParameters(new_pydantic_config)
-    else:
-      config = new_pydantic_config
+    config = new_pydantic_config
 
   return config
 
