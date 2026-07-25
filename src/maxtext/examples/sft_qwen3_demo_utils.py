@@ -132,7 +132,7 @@ def evaluate_model(dataset, vllm_rollout, debug=True):
         print("----------------------------------------")
         print(f"Model Generated Response: {batch_response.text[i]}")
         print("----------------------------------------")
-        print(f"Target Response: {batch["target_answer"][i]}")
+        print(f"Target Response: {batch['target_answer'][i]}")
         print("========================================")
 
       is_correct, is_partially_correct, has_correct_format = score_response(
