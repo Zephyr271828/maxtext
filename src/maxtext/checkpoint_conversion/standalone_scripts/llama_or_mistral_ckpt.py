@@ -297,7 +297,7 @@ MODEL_PARAMS_DICT = {
         "dims_per_head": 128,
         "vocab": 128256,
         "base_emb_dim": 3456,
-        "base_mlp_dim": 7552,
+        "base_mlp_dim": 7808,
     },
     "llama3.1-4b-width": {
         "num_layers": 32,
