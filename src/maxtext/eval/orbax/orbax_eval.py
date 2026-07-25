@@ -89,14 +89,17 @@ def _dclm_default_path() -> str:
 
 def get_ppl_enc(task, tokenizer, add_special_tokens: bool = True, dclm_path: str | None = None):
   """Load a raw dataset for ``task`` and return one long tokenized tensor [1, N]."""
+  # Use namespaced HF repo ids and drop trust_remote_code: newer `datasets`
+  # (>=3) removed dataset loading scripts, so bare ids like "wikitext" +
+  # trust_remote_code now raise "Repository id must be 'namespace/name'".
   if task == "wikitext":
-    dataset = load_dataset("wikitext", "wikitext-103-v1", split="train", trust_remote_code=True)
+    dataset = load_dataset("Salesforce/wikitext", "wikitext-103-raw-v1", split="train")
     text = "\n\n".join(dataset[:32768]["text"])
   elif task == "wikitext2":
-    dataset = load_dataset("wikitext", "wikitext-2-raw-v1", split="train", trust_remote_code=True)
+    dataset = load_dataset("Salesforce/wikitext", "wikitext-2-raw-v1", split="train")
     text = "\n\n".join(dataset[:32768]["text"])
   elif task == "cnn_dailymail":
-    dataset = load_dataset("cnn_dailymail", "3.0.0", split="train", trust_remote_code=True)
+    dataset = load_dataset("abisee/cnn_dailymail", "3.0.0", split="train")
     text = " ".join(dataset[:16384]["article"])
   elif task == "c4":
     dataset = load_dataset(
@@ -104,7 +107,6 @@ def get_ppl_enc(task, tokenizer, add_special_tokens: bool = True, dclm_path: str
         data_files={"train": "en/c4-train.00000-of-01024.json.gz"},
         split="train",
         verification_mode="no_checks",
-        trust_remote_code=True,
     )
     text = " ".join(dataset[:8192]["text"])
   elif task == "dclm":
