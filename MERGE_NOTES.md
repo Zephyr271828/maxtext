@@ -150,10 +150,32 @@ corners — smoke-test one first.
 
 ---
 
+## Ported after the initial merge (2026-07-25)
+- **`sparse_model_training` (prune-and-freeze), from test_new** — keeps externally-pruned
+  weights frozen at 0 during continued training by masking gradients where the weight is
+  exactly 0 (so optimizer moments stay 0). Sparsity-pattern-agnostic (unstructured
+  Wanda/SparseGPT or 2:4). Implementation:
+  - `utils/maxtext_utils.py`: `apply_gradient_mask(grads, params, ref_params=None)` and
+    `check_sparsity(params)` (logs achieved sparsity).
+  - `configs/types.py` `Optimizer.sparse_model_training` field + `configs/base.yml` key.
+  - `trainers/pre_train/train.py` `train_step` (**Linen path**): mask grads after clipping,
+    gated OFF when the qwix N:M `weight_sparsity_n/m` path is active (it re-wraps grads into
+    a `{'params',...}` dict), and log `learning/zeros` + `learning/params`.
+  - ⚠️ **Linen-only** (mirrors test_new). The NNX `train_step` branch is NOT covered — if a
+    pruned run uses the NNX trainer, add an NNX-specific mask (against `nnx.state(model, nnx.Param)`).
+  - Distinct from official's qwix N:M `weight_sparsity` (which *creates* structured masks by
+    magnitude during training); this *preserves* an externally-produced mask of any pattern.
+- **Config-strictness fixes** (current official validates config against a strict pydantic
+  schema, `extra="forbid"` + `Literal`-validated `model_name` — the old free-form assumption
+  in this doc is wrong): (1) the FLAP bias plumbing now uses official's registered
+  `attention_bias`/`mlp_bias` instead of the custom `use_bias_in_projections`/`use_bias_in_mlp`
+  keys (which broke every model load); (2) the 23 pruned model config names are registered in
+  the `ModelName` Literal in `configs/types.py` (files alone were not enough).
+
 ## Not ported (available in `test_new` if wanted later)
 Per the "core only" scope:
 - Workflow features: W&B logging, `StopTraining.is_error`/`sys.exit(1)` exit-codes,
-  single-replica checkpoint restore, FMS-style LR schedule, sparse/pruning training,
+  single-replica checkpoint restore, FMS-style LR schedule,
   resumable grain data-sharding, intermediate-activation
   `sow`, HF-style embedding init. (The `orbax` lm-eval adapter **was ported** — see
   **Evaluation** Path A.)
@@ -170,7 +192,22 @@ Per the "core only" scope:
 ---
 
 ## Verification status
-- All edited Python files pass `py_compile`. **No runtime/TPU test was possible** in this
-  environment (no `jax`). Recommend running your parity tests (`test_eq.py`, `hf_out_test.py`)
-  after `pip install` on a TPU/GPU host, converting one Llama-3.1 checkpoint with the new
-  converter and checking logits against HF.
+- All edited Python files pass `py_compile`.
+- **On-device test (2026-07-25, v4-8 TPU, us-central2-b).** Validated: the branch installs
+  (uv Python 3.12 + `pip install -e '.[tpu]'`, jax 0.11.0, 4 devices), config loads, an 8B
+  Orbax checkpoint **restores**, and the HF tokenizer loads. This test is what surfaced the
+  two config-strictness bugs fixed above. Install prerequisite: py≥3.12 + pyproject `.[tpu]`
+  (the stock `maxtext_bootstrap.sh`, which builds a py3.10 venv from a now-absent
+  `requirements.txt`, does NOT install this branch and needs updating).
+- **KNOWN OPEN BUG — Path A numeric eval blocked (orthogonal to this merge's code).**
+  `model_creation_utils.from_pretrained` restoring a **scanned Linen checkpoint into the NNX
+  model** silently drops all 9 scanned `decoder.layers.*` leaves (mlp wi_0/wi_1/wo, both
+  layernorms, self_attention q/k/v/out); non-scanned params restore fine; **dtype-independent**
+  (same at float32 and bf16). Because `from_pretrained` pre-frees the init buffers
+  (`_free_device_memory`) and `nnx.update(model, checkpoint)` only writes back keys present in
+  the aligned tree, the dropped layers keep freed buffers → `RuntimeError: Array has been
+  deleted` on the first forward. Root cause is the Linen→NNX key/scan mapping for the `layers`
+  subtree, NOT the q/k / pruned-config / eval-adapter changes. Fix: correct the scanned
+  Linen→NNX restore mapping, or load via a Linen path (as test_new's original adapter did).
+- Still recommended once the above is fixed: run the parity checks (`test_eq.py`,
+  `hf_out_test.py`) on a TPU/GPU host and diff logits against HF.
