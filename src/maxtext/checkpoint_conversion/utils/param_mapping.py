@@ -2484,16 +2484,16 @@ def LLAMA31_MAXTEXT_TO_HF_PARAM_HOOK_FN(config, maxtext_config, scan_layers=Fals
   nlayers = config["num_hidden_layers"]
 
   def scale_query_layer(input_tensor, target_shape):
-    if saving_to_hf:
-      depth_scale = np.dtype("float32").type(np.sqrt(config["head_dim"]))
-      original_dtype = input_tensor.dtype
-      output_tensor = input_tensor.astype(np.float32) * depth_scale
-      return output_tensor.astype(original_dtype)
-    else:
-      depth_scale = np.dtype("float32").type(1 / np.sqrt(config["head_dim"]))
-      original_dtype = input_tensor.dtype
-      output_tensor = input_tensor.astype(np.float32) * depth_scale
-      return output_tensor.astype(original_dtype)
+    # Merge q/k fix: MaxText stores UNSCALED query weights for standard llama3.1 —
+    # attentions.py applies 1/sqrt(head_dim) in the FORWARD (see attentions.py) and
+    # the standalone converter uses scale_query=False — matching HF's unscaled query.
+    # So HF<->MaxText query conversion is IDENTITY here. Folding 1/sqrt(head_dim) (the
+    # old behavior) double-scales against the patched forward -> broken attention /
+    # gibberish output. (key weights are already never scaled: key_hook_chain has no
+    # scale hook.) llama3.1 has no qk_norm/query_pre_attn_scalar, so this is
+    # unconditional for this HOOK_FN, mirroring the forward's standard-model branch.
+    del target_shape
+    return input_tensor
 
   def adjust_rope(input_tensor, target_shape):
     arr = input_tensor
