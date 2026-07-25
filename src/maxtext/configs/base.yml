@@ -908,6 +908,10 @@ gradient_clipping_threshold: 1.0
 # batch by accumulating the gradient over a set of steps.
 gradient_accumulation_steps: 1
 
+# Prune-and-freeze sparse training: if true, mask the grads at positions where
+# the weight == 0 so externally-pruned (sparse) weights stay frozen at 0.
+sparse_model_training: false
+
 opt_type: "adamw"  # one of "adamw", "adam_pax", "sgd", or "muon"
 
 # If true, skip the training step when loss or gradient spike is detected

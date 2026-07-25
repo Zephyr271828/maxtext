@@ -1434,6 +1434,41 @@ def apply_gradient_clipping(raw_grads, state, clipping_threshold):
   return grads
 
 
+def apply_gradient_mask(grads, params, ref_params=None):
+  """Zero gradients where the (reference) weight is exactly 0 — prune-and-freeze.
+
+  Keeps externally-pruned weights (stored as exact 0.0) frozen during training:
+  masking their gradients means their optimizer moments stay 0, so the entries
+  never move off zero. Sparsity-pattern-agnostic (unstructured or N:M). Pass
+  ``ref_params`` to mask against a reference pytree instead of the live params.
+
+  Args:
+    grads: A pytree of gradients.
+    params: The live parameter pytree (same structure as ``grads``).
+    ref_params: Optional reference pytree to derive the mask from instead of ``params``.
+
+  Returns:
+    A pytree of gradients with entries at zero-valued (reference) weights set to 0.
+  """
+  mask_fn = lambda g, p: jnp.where(p == 0, 0.0, g)
+  reference = ref_params if ref_params is not None else params
+  return jax.tree_util.tree_map(mask_fn, grads, reference)
+
+
+def check_sparsity(params):
+  """Return ``(total_zeros, total_params)`` across a param pytree as float32 scalars.
+
+  Used to log the achieved sparsity (learning/zeros, learning/params) so a
+  prune-and-freeze run can be verified to hold its mask. JAX-safe reductions
+  (no Python ``sum``/``int``) so it stays traceable under jit.
+  """
+  zero_counts = jax.tree_util.tree_map(lambda x: jnp.sum(x == 0).astype(jnp.float32), params)
+  total_counts = jax.tree_util.tree_map(lambda x: jnp.array(x.size, dtype=jnp.float32), params)
+  total_zeros = jax.tree_util.tree_reduce(lambda a, b: a + b, zero_counts)
+  total_params = jax.tree_util.tree_reduce(lambda a, b: a + b, total_counts)
+  return total_zeros, total_params
+
+
 def get_nested_value(dictionary, nested_key, default=None):
   """
   Retrieves a value from a nested key in a dictionary.

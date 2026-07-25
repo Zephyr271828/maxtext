@@ -455,6 +455,12 @@ def train_step(model, config, state_mesh_shardings, params_shardings, state, dat
       grads = maxtext_utils.apply_gradient_clipping(raw_grads, state, config.gradient_clipping_threshold)
     else:
       grads = raw_grads
+    # Prune-and-freeze sparse training: keep externally-pruned (exact-zero) weights
+    # frozen by zeroing their gradients. Mutually exclusive with the qwix N:M
+    # weight_sparsity path below (which re-wraps grads into a {'params', ...} dict,
+    # so masking against state.params would mismatch structure).
+    if config.sparse_model_training and not (config.weight_sparsity_n and config.weight_sparsity_m):
+      grads = maxtext_utils.apply_gradient_mask(grads, state.params)
     if config.optimizer_memory_host_offload:
       state = state.replace(
           opt_state=jax.device_put(
@@ -553,6 +559,12 @@ def train_step(model, config, state_mesh_shardings, params_shardings, state, dat
       "learning/mtp_loss": mtp_loss,
       "learning/total_weights": total_weights,
   }
+  # Surface achieved sparsity so a prune-and-freeze run can be verified to hold its
+  # mask (Linen path only, mirroring where the gradient mask is applied above).
+  if config.sparse_model_training and isinstance(model, nn.Module):
+    zeros, param_counts = maxtext_utils.check_sparsity(state.params)
+    scalar_metrics["learning/zeros"] = zeros
+    scalar_metrics["learning/params"] = param_counts
   if config.use_qk_clip:
     if isinstance(model, nn.Module):
       new_state = qk_clip_utils.apply_qk_clip(new_state, intermediate_outputs, config)

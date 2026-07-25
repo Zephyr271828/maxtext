@@ -281,6 +281,30 @@ ModelName = Literal[
     "olmo3-7b",
     "olmo3-7b-pt",
     "olmo3-32b",
+    # Pruned / down-scaled Llama variants (Minitron depth/width, FLAP, Sheared, scaled-down)
+    "llama2-1.3b",
+    "llama2-2.7b",
+    "llama3-1.5b-depth",
+    "llama3-2b-depth",
+    "llama3-2b-width",
+    "llama3-3b-depth",
+    "llama3-3b-width",
+    "llama3-4b-depth",
+    "llama3-4b-flap",
+    "llama3-4b-width",
+    "llama3.1-1.5b-depth",
+    "llama3.1-1.5b-width",
+    "llama3.1-1b",
+    "llama3.1-2b-depth",
+    "llama3.1-2b-width",
+    "llama3.1-3b",
+    "llama3.1-3b-depth",
+    "llama3.1-3b-width",
+    "llama3.1-440m",
+    "llama3.1-4b-depth",
+    "llama3.1-4b-flap",
+    "llama3.1-4b-shear",
+    "llama3.1-4b-width",
 ]
 
 
@@ -1675,6 +1699,12 @@ class Optimizer(BaseModel):
   )
   gradient_clipping_threshold: NonNegativeFloat = Field(
       1.0, description="The threshold for gradient clipping. 0 disables clipping."
+  )
+  sparse_model_training: bool = Field(
+      False,
+      description="Prune-and-freeze sparse training: if True, mask gradients at positions where the "
+      "weight is exactly 0 so externally-pruned (sparse) weights stay frozen at 0 during training. "
+      "Sparsity-pattern-agnostic (unstructured or N:M). Distinct from the qwix weight_sparsity_n/m path.",
   )
   learning_rate: NonNegativeFloat = Field(3.0e-5, description="The peak learning rate.")
   lr_schedule_type: LearningRateScheduleType = Field(
