@@ -276,7 +276,7 @@ class MaxTextDistillationTrainer(peft_trainer.PeftTrainer):
 
   # Inherits _shard_optimizer from PeftTrainer.
 
-  def _train_step(self, model, optimizer, inputs):
+  def _train_step(self, model, optimizer, grad_accumulator, inputs, is_update_step):
     """Overrides the main JIT block to natively handle ModelBundle module.
 
     Uses jax.value_and_grad with explicit split/merge to avoid nesting
@@ -284,7 +284,38 @@ class MaxTextDistillationTrainer(peft_trainer.PeftTrainer):
     conflicting outer_index values and raises:
       ValueError: The graph structure of a node added to cached_partial was
       mutated inside the transformation.
+
+    Signature note (2026-07-28): this override previously took only
+    (model, optimizer, inputs). Upstream tunix's PeftTrainer has since grown
+    gradient accumulation, and now both donates and passes `grad_accumulator`
+    and `is_update_step` into the train step it drives. Because tunix is
+    installed unpinned from git main, that drift landed silently underneath the
+    50B distillation runs and produced two failures that looked unrelated:
+
+      ValueError: Jitted function has invalid argnames {'grad_accumulator'}
+                  in donate_argnames. Function does not take these args.
+      TypeError: MaxTextDistillationTrainer._train_step() got an unexpected
+                 keyword argument 'is_update_step'
+
+    Both are the same contract mismatch. Accepting the parameters restores it.
+
+    `grad_accumulator` is accepted but intentionally NOT used: this step still
+    applies the optimizer update every call, which is only equivalent to the
+    base implementation when gradient_accumulation_steps == 1 (the default, and
+    what every distill-*-l200-50b config uses). Honouring the accumulator would
+    mean staging grads and applying them under `is_update_step`, which cannot be
+    done by mutating nnx state inside a lax.cond without reworking this step.
+    The guard below fails loudly rather than silently training on 1/N of the
+    intended batch if accumulation is ever switched on.
     """
+    if getattr(self.config, "gradient_accumulation_steps", 1) not in (None, 1):
+      raise NotImplementedError(
+          "MaxTextDistillationTrainer._train_step does not implement gradient "
+          "accumulation: it applies the optimizer update on every step and "
+          "ignores `grad_accumulator`/`is_update_step`. Set "
+          "gradient_accumulation_steps=1, or implement accumulation here first "
+          "-- otherwise each update would use only one micro-batch of grads."
+      )
     batch = self.gen_model_input_fn(inputs)
     student = model.student_model
     teacher = model.teacher_model
