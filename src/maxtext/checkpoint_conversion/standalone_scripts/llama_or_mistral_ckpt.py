@@ -481,6 +481,20 @@ def _hf_to_maxtext_mapping(layer_idx: int = -1, expert_idx: int = -1) -> dict:
       f"model.layers.{layer_idx}.mlp.gate_proj.weight": f"layers.{layer_idx}.feed_forward.w1.weight",
       f"model.layers.{layer_idx}.mlp.up_proj.weight": f"layers.{layer_idx}.feed_forward.w2.weight",
       f"model.layers.{layer_idx}.mlp.down_proj.weight": f"layers.{layer_idx}.feed_forward.w3.weight",
+      # Bias terms. Standard Llama has none, but FLAP-pruned checkpoints carry
+      # bias compensation for the channels it removed, and the loader at
+      # _convert_huggingface_to_jax_weights() maps every key the checkpoint
+      # actually contains -- so a missing entry is a hard KeyError, not a skip:
+      #     KeyError: 'model.layers.0.mlp.down_proj.bias'
+      # That blocked convert-flap-init (and hence distill-flap / ce-flap).
+      # Names mirror the test_new branch, which loads these checkpoints today.
+      f"model.layers.{layer_idx}.self_attn.q_proj.bias": f"layers.{layer_idx}.attention.wq.bias",
+      f"model.layers.{layer_idx}.self_attn.k_proj.bias": f"layers.{layer_idx}.attention.wk.bias",
+      f"model.layers.{layer_idx}.self_attn.v_proj.bias": f"layers.{layer_idx}.attention.wv.bias",
+      f"model.layers.{layer_idx}.self_attn.o_proj.bias": f"layers.{layer_idx}.attention.wo.bias",
+      f"model.layers.{layer_idx}.mlp.gate_proj.bias": f"layers.{layer_idx}.feed_forward.w1.bias",
+      f"model.layers.{layer_idx}.mlp.up_proj.bias": f"layers.{layer_idx}.feed_forward.w2.bias",
+      f"model.layers.{layer_idx}.mlp.down_proj.bias": f"layers.{layer_idx}.feed_forward.w3.bias",
       # llama4
       "language_model.model.embed_tokens.weight": "tok_embeddings.weight",
       "language_model.model.norm.weight": "norm.weight",
@@ -819,6 +833,23 @@ def _convert_huggingface_to_jax_weights(
           layer = int(parts[2]) if "layers" in key else 0
         mapped_key = _hf_to_maxtext_mapping(layer)[key]
         chkpt_vars[mapped_key] = f.get_tensor(key)
+
+  # FLAP checkpoints carry bias compensation for the channels FLAP removed. The
+  # mapping above now recognises those keys (previously a hard KeyError), but the
+  # jax_weights builder below does NOT yet read them -- so they would be loaded
+  # and silently dropped, yielding a FLAP model missing the very terms that make
+  # it FLAP. A quietly-wrong checkpoint is worse than a failed conversion, so
+  # refuse instead. The test_new branch has the downstream half (it writes
+  # self_attention[...]["bias"] and the FFN equivalents); port that before
+  # converting any biased checkpoint.
+  bias_keys = [k for k in chkpt_vars if k.endswith(".bias")]
+  if bias_keys:
+    raise NotImplementedError(
+        f"Checkpoint contains {len(bias_keys)} bias tensor(s) (e.g. {bias_keys[0]}), "
+        "which this converter maps but does not yet apply. Converting would drop "
+        "them and produce an incorrect model. Port the bias handling from the "
+        "test_new branch (see _convert_huggingface_to_jax_weights there) first."
+    )
 
   logging.debug("Memory usage: %f GB", mem_info.memory_info().rss / (1024**3))
 
