@@ -19,6 +19,7 @@ model structures with Tunix's training interfaces.
 """
 
 import abc
+import itertools
 from typing import Any, Callable, Iterator, List, Literal, Optional, Sequence
 
 import flax
@@ -135,6 +136,32 @@ class MaxTextToTunixIterator:
         top_k_logits=batch.get("top_k_logits"),
         top_k_indices=batch.get("top_k_indices"),
     )
+
+
+class BoundedIterator:
+  """Yields at most `max_steps` batches per `iter()` call.
+
+  Tunix's `PeftTrainer._run_eval` drains its eval dataset until StopIteration,
+  but MaxText's grain iterators repeat forever -- so handing the raw eval
+  iterator to Tunix makes the step-0 evaluation an infinite loop and training
+  never starts. Bounding it here is what makes `eval_steps` mean what the
+  config says it means.
+
+  `__iter__` returns a fresh bounded view each call while continuing to consume
+  the same underlying stream, so every evaluation sees the next `max_steps`
+  batches rather than replaying (or exhausting) the first ones.
+  """
+
+  def __init__(self, iterator: Iterator, max_steps: int):
+    self._iterator = iterator
+    # MaxText spells "use the whole eval set" as eval_steps <= 0; keep that
+    # meaning rather than letting islice reject a negative bound.
+    self._max_steps = max_steps if max_steps > 0 else None
+
+  def __iter__(self):
+    if self._max_steps is None:
+      return iter(self._iterator)
+    return itertools.islice(self._iterator, self._max_steps)
 
 
 # -----------------------------------------------------------------------------

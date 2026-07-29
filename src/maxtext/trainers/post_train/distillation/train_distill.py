@@ -820,8 +820,17 @@ def train_distill(
 
     eval_iter = None
     if raw_eval_iter is not None:
-      max_logging.log("Evaluation iterator successfully initialized.")
-      eval_iter = distillation_utils.MaxTextToTunixIterator(raw_eval_iter)
+      if student_config.eval_steps > 0:
+        max_logging.log(f"Evaluation iterator successfully initialized (bounded to {student_config.eval_steps} steps).")
+      else:
+        max_logging.log(
+            "Warning: eval_steps <= 0 means evaluation drains the whole eval set. "
+            "With a repeating (e.g. grain) eval iterator this never terminates and "
+            "training will hang at step 0; set eval_steps > 0."
+        )
+      eval_iter = distillation_utils.BoundedIterator(
+          distillation_utils.MaxTextToTunixIterator(raw_eval_iter), student_config.eval_steps
+      )
     elif student_config.eval_interval > 0:
       max_logging.log("Warning: eval_interval > 0 but create_data_iterator returned None for eval_iter.")
 
