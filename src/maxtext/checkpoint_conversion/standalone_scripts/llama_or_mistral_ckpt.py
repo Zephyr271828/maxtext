@@ -831,6 +831,16 @@ def _convert_huggingface_to_jax_weights(
             continue
         else:
           layer = int(parts[2]) if "layers" in key else 0
+        # SparseGPT/Wanda pruned checkpoints ship a `*.sparse_mask` tensor next to
+        # every pruned weight (224 of them in llama3.1_8b_L200_sparsegpt_2:4_0.5_hf).
+        # They are pure redundancy here: the mask IS the zero pattern already present
+        # in the weight, and sparse_model_training=True recovers it by testing
+        # weight == 0. Mapping them would add non-parameter entries to the Orbax tree;
+        # not mapping them was a hard KeyError that blocked every sparsegpt convert:
+        #     KeyError: 'model.layers.0.mlp.down_proj.sparse_mask'
+        # So skip them explicitly rather than inventing a MaxText param name.
+        if key.endswith(".sparse_mask"):
+          continue
         mapped_key = _hf_to_maxtext_mapping(layer)[key]
         chkpt_vars[mapped_key] = f.get_tensor(key)
 
